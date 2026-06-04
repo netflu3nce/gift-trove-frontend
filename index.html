@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>GiftTrove</title>
+    <!-- This loads the Tailwind engine instantly via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- This requires the standard Telegram SDK script for Mini Apps -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
-  <body>
+  <body class="bg-[#0f172a] text-white selection:bg-emerald-500/30 antialiased overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
