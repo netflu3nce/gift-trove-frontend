@@ -2,18 +2,86 @@ import React, { useState, useEffect } from "react";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
 const GIFTS = [
+  // Original / Wave 1
   "Plush Pepe", "Durov's Cap", "Jelly Bunny", "Magic Potion", "Loot Bag",
   "Vintage Cigar", "Eternal Candle", "Homemade Cake", "Sharp Tongue",
   "Spy Agaric", "Sakura Flower", "Spiced Wine", "Diamond Ring", "Evil Eye",
   "Frightful Egg", "Astral Shard", "Trapped Heart", "Skeleton Watch",
   "Voodoo Doll", "Hypno Lollipop", "Tama Gotchi", "Bunny Muffin",
-  "Cookie Heart", "Witch Hat"
+  "Cookie Heart", "Witch Hat",
+  // Wave 2 — Holiday & Seasonal
+  "Santa Hat", "Candy Cane", "Ginger Cookie", "Xmas Stocking", "Snow Globe",
+  "Snow Mittens", "Jingle Bells", "Sleigh Bell", "Winter Wreath", "Holiday Drink",
+  // Wave 3 — Nature & Mystical
+  "Eternal Rose", "Sakura Flower", "Skull Flower", "Precious Peach",
+  "Berry Box", "Kissed Frog", "Lunar Snake", "Pet Snake", "Snake Box",
+  "Flying Broom", "Hex Pot", "Genie Lamp", "Mad Pumpkin", "Scared Cat",
+  // Wave 4 — Collectibles & Luxury
+  "Gem Signet", "Signet Ring", "Swiss Watch", "Perfume Bottle",
+  "Record Player", "Mini Oscar", "Star Notepad", "Crystal Ball",
+  "Ion Gem", "Electric Skull", "Desk Calendar",
+  // Wave 5 — Celebratory
+  "Party Sparkler", "Jester Hat", "Hanging Star", "Love Candle",
+  "Lol Pop", "Heart Locket",
+  // Wave 6 — Special / Collab
+  "Tama Gadget"
 ];
 
-const MODELS = ["Common", "Rare", "Epic", "Legendary", "Mythical"];
-const BACKDROPS = ["Space", "Nature", "Urban", "Abstract", "Fire", "Ice", "Gold", "Neon"];
-const SYMBOLS = ["Moon", "Star", "Sun", "Heart", "Diamond", "Skull", "Crown", "Lightning"];
-const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Telegram"];
+const MODELS = [
+  // Generic rarity tiers
+  "Common", "Rare", "Epic", "Legendary", "Mythical",
+  // Real model names found in live NFT listings
+  "Hothead", "Krueger", "Pickle Rick", "Toading", "Pumpkin", "Lucipop",
+  "Golden", "Diamond", "Platinum", "Silver", "Bronze",
+  "Cyber", "Neon", "Shadow", "Flame", "Frost", "Void",
+  "Crystal", "Emerald", "Ruby", "Sapphire", "Onyx"
+];
+
+// Full backdrop colour list sourced from Telegram gift constructor data
+const BACKDROPS = [
+  // Dark / Black
+  "Black", "Onyx Black", "Midnight Blue", "Battleship Grey",
+  // Purple family
+  "Electric Purple", "Lavender", "Cyberpunk", "Electric Indigo",
+  "Purple", "Grape", "Dark Lilac", "English Violet", "Fandango", "Burgundy",
+  // Blue family
+  "Neon Blue", "Navy Blue", "Sapphire", "Sky Blue", "Azure Blue",
+  "Pacific Cyan", "Cobalt Blue", "French Blue", "Indigo Dye", "Marine Blue",
+  // Teal / Green family
+  "Aquamarine", "Pacific Green", "Emerald", "Mint Green", "Malachite",
+  "Shamrock Green", "Turquoise", "Jade Green", "Tactical Pine", "Gunship Green",
+  "Pine Green", "Hunter Green", "Pistachio",
+  // Yellow / Gold family
+  "Lemongrass", "Light Olive", "Satin Gold", "Pure Gold", "Amber",
+  "Caramel", "Orange", "Khaki Green", "Desert Sand",
+  // Red / Orange family
+  "Carrot Juice", "Coral Red", "Persimmon", "Strawberry", "Raspberry",
+  "Rosewood",
+  // Pink / Pearl
+  "Mystic Pearl",
+  // Neutral / Grey
+  "Steel Grey", "Silver Blue", "Roman Silver", "Platinum", "Ivory White",
+  "Cappuccino", "Moonstone"
+];
+
+// Symbol trait names sourced from live Telegram NFT marketplace listings
+const SYMBOLS = [
+  // Animals
+  "Arabian Horse", "Calm Wolf", "Hedgehog", "Sumerian Bird",
+  "Boat", "Owl", "Eagle", "Raven", "Phoenix", "Dragon",
+  "Butterfly", "Bee", "Turtle", "Frog", "Cat", "Dog",
+  "Bear", "Fox", "Rabbit", "Snake",
+  // Objects & Mystical
+  "Coin", "Crown", "Star", "Moon", "Sun",
+  "Heart", "Diamond", "Skull", "Lightning", "Shield",
+  "Sword", "Flame", "Crystal", "Key", "Anchor",
+  "Hourglass", "Eye", "Feather", "Leaf", "Rose",
+  // Celestial / Abstract
+  "Comet", "Nebula", "Galaxy", "Aurora", "Prism",
+  "Rune", "Sigil", "Glyph", "Totem", "Amulet"
+];
+
+const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Telegram", "Fragment", "Tonnel"];
 
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
