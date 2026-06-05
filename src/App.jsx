@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
 const GIFTS = [
@@ -58,6 +58,11 @@ const T = {
     view_details: "Details",
     gift_required: "Please select a gift to scout",
     duration_required: "Please select a duration",
+    appearance: "Appearance",
+    language: "Language",
+    stats_title: "Scout Statistics",
+    total_scouts: "Total Scouts",
+    stars_spent: "Stars Spent",
   },
   RU: {
     terms_title: "Условия использования",
@@ -92,6 +97,11 @@ const T = {
     view_details: "Подробнее",
     gift_required: "Выберите подарок",
     duration_required: "Выберите длительность",
+    appearance: "Внешний вид",
+    language: "Язык",
+    stats_title: "Статистика",
+    total_scouts: "Всего поисков",
+    stars_spent: "Потрачено Stars",
   },
   ZH: {
     terms_title: "使用条款",
@@ -126,6 +136,11 @@ const T = {
     view_details: "查看详情",
     gift_required: "请选择礼品",
     duration_required: "请选择侦测时长",
+    appearance: "外观",
+    language: "语言",
+    stats_title: "侦测统计",
+    total_scouts: "总侦测次数",
+    stars_spent: "消耗 Stars",
   }
 };
 
@@ -151,117 +166,103 @@ function formatDate(ts) {
   return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-// SVG Icons
-const IconSearch = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-  </svg>
-);
-const IconRadar = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><circle cx="12" cy="12" r="2"/>
-  </svg>
-);
-const IconClock = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-  </svg>
-);
-const IconUser = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-  </svg>
-);
-const IconChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6"/>
-  </svg>
-);
-const IconStar = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-  </svg>
-);
-const IconGlobe = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-  </svg>
-);
-const IconZap = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-  </svg>
-);
-const IconCheck = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-);
-const IconX = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-  </svg>
-);
-const IconGift = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-  </svg>
-);
+// ─── SVG ICONS ────────────────────────────────────────────────────────────────
+const IconSearch = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
+const IconRadar = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><circle cx="12" cy="12" r="2"/></svg>;
+const IconClock = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+const IconUser = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconStar = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>;
+const IconGlobe = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+const IconZap = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IconCheck = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IconGift = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
+const IconSun = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
+const IconMoon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+const IconTrending = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
 
+// ─── APPLE MORPHISM STYLES ─────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg-deep: #0a0e1a;
-    --bg-mid: #0d1220;
-    --bg-card: rgba(255,255,255,0.04);
-    --bg-card-hover: rgba(255,255,255,0.07);
-    --tg-blue: #2AABEE;
-    --tg-blue-dim: rgba(42,171,238,0.15);
-    --tg-blue-glow: rgba(42,171,238,0.35);
-    --tg-blue-border: rgba(42,171,238,0.25);
-    --accent: #2AABEE;
-    --accent-2: #1e96d4;
-    --gold: #f5c842;
-    --gold-dim: rgba(245,200,66,0.12);
-    --text-primary: #e8edf5;
-    --text-secondary: rgba(232,237,245,0.5);
-    --text-muted: rgba(232,237,245,0.3);
-    --border: rgba(255,255,255,0.08);
-    --border-blue: rgba(42,171,238,0.2);
-    --radius-lg: 20px;
-    --radius-md: 14px;
+    /* DARK MODE (Default) */
+    --bg-base: #000000;
+    --bg-gradient-1: rgba(10, 132, 255, 0.15);
+    --bg-gradient-2: rgba(48, 209, 88, 0.08);
+    --bg-sheet: #1c1c1e;
+    --bg-card: rgba(28, 28, 30, 0.55);
+    --bg-card-hover: rgba(44, 44, 46, 0.7);
+    --tg-blue: #0a84ff;
+    --tg-blue-dim: rgba(10, 132, 255, 0.15);
+    --tg-blue-glow: rgba(10, 132, 255, 0.4);
+    --accent-grad: linear-gradient(135deg, #0a84ff, #30d158);
+    --gold: #ffd60a;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(235, 235, 245, 0.6);
+    --text-muted: rgba(235, 235, 245, 0.3);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-blue: rgba(10, 132, 255, 0.25);
+    --shadow-sm: 0 4px 16px rgba(0,0,0,0.2);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
+    --glass-blur: blur(30px) saturate(1.8);
+    
+    --radius-lg: 24px;
+    --radius-md: 16px;
     --radius-sm: 10px;
-    --tab-h: 76px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --font: 'Sora', sans-serif;
+    --tab-h: 84px;
+    --safe-bottom: env(safe-area-inset-bottom, 12px);
+    --font: 'Sora', -apple-system, sans-serif;
     --mono: 'JetBrains Mono', monospace;
+    --bounce: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-theme="light"] {
+    --bg-base: #f2f2f7;
+    --bg-gradient-1: rgba(0, 122, 255, 0.1);
+    --bg-gradient-2: rgba(52, 199, 89, 0.05);
+    --bg-sheet: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.65);
+    --bg-card-hover: rgba(255, 255, 255, 0.9);
+    --tg-blue: #007aff;
+    --tg-blue-dim: rgba(0, 122, 255, 0.1);
+    --tg-blue-glow: rgba(0, 122, 255, 0.25);
+    --accent-grad: linear-gradient(135deg, #007aff, #34c759);
+    --gold: #ff9500;
+    --text-primary: #000000;
+    --text-secondary: rgba(60, 60, 67, 0.65);
+    --text-muted: rgba(60, 60, 67, 0.35);
+    --border: rgba(0, 0, 0, 0.06);
+    --border-blue: rgba(0, 122, 255, 0.15);
+    --shadow-sm: 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
   }
 
   html, body, #root { height: 100%; overflow: hidden; }
 
   body {
     font-family: var(--font);
-    background: var(--bg-deep);
+    background: var(--bg-base);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
+    transition: background 0.4s var(--bounce), color 0.4s var(--bounce);
   }
 
   /* BACKGROUND */
   .bg-canvas {
     position: fixed; inset: 0; z-index: 0;
     background:
-      radial-gradient(ellipse 70% 50% at 15% 5%, rgba(42,171,238,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 40% at 85% 90%, rgba(30,150,212,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10,14,26,0.99) 0%, #070a14 100%);
+      radial-gradient(circle at 15% 10%, var(--bg-gradient-1) 0%, transparent 50%),
+      radial-gradient(circle at 85% 90%, var(--bg-gradient-2) 0%, transparent 50%);
+    transition: all 0.5s ease;
   }
   .bg-noise {
-    position: fixed; inset: 0; z-index: 0; opacity: 0.025;
+    position: fixed; inset: 0; z-index: 0; opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
+    pointer-events: none;
   }
 
   /* LAYOUT */
@@ -269,396 +270,186 @@ const styles = `
 
   .content-area {
     flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 12px 16px calc(var(--tab-h) + var(--safe-bottom) + 20px);
+    padding: 16px 20px calc(var(--tab-h) + var(--safe-bottom) + 20px);
     scroll-behavior: smooth;
   }
   .content-area::-webkit-scrollbar { display: none; }
 
-  /* GLASS CARD */
+  /* GLASS CARD (Apple Morphism) */
   .glass {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s var(--bounce), background 0.3s ease;
   }
-
-  /* LOADING SCREEN */
-  .loading-screen {
-    position: fixed; inset: 0; z-index: 999;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--bg-deep);
-    flex-direction: column; gap: 0;
-    animation: fadeOut 0.5s ease 2s forwards;
-  }
-  .loading-img {
-    width: 100%; height: 100%; object-fit: cover;
-    position: absolute; inset: 0;
-  }
-  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
-
-  /* TERMS SCREEN */
-  .terms-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: flex-end; justify-content: center;
-    background: rgba(7,10,20,0.9);
-    backdrop-filter: blur(12px);
-  }
-  .terms-sheet {
-    width: 100%; max-height: 90vh;
-    border-radius: 28px 28px 0 0;
-    padding: 8px 24px 32px;
-    display: flex; flex-direction: column; gap: 16px;
-    background: var(--bg-mid);
-    border-top: 1px solid var(--border-blue);
-    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .terms-drag { width: 40px; height: 4px; background: var(--border); border-radius: 99px; margin: 12px auto 4px; }
-  .terms-header { display: flex; align-items: center; gap: 12px; }
-  .terms-logo-img { height: 32px; object-fit: contain; }
-  .terms-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-  .terms-scroll { flex: 1; overflow-y: auto; font-size: 13px; line-height: 1.8; color: var(--text-secondary); white-space: pre-line; max-height: 40vh; padding-right: 4px; }
-  .terms-scroll::-webkit-scrollbar { display: none; }
-  .lang-row { display: flex; gap: 6px; justify-content: flex-end; flex-shrink: 0; }
-  .lang-btn {
-    font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 99px; cursor: pointer; border: none;
-    background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border); transition: all 0.2s;
-    font-family: var(--font);
-  }
-  .lang-btn.active { background: var(--tg-blue-dim); color: var(--tg-blue); border-color: var(--tg-blue-border); }
 
   /* HEADER */
   .header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px 6px;
-    flex-shrink: 0;
+    padding: 20px 20px 10px; flex-shrink: 0;
   }
-  .logo { display: flex; align-items: center; }
-  .logo-img { height: 30px; object-fit: contain; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .lang-pill {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 99px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    color: var(--text-secondary); cursor: pointer; font-family: var(--font);
-  }
+  .logo-img { height: 28px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1)); }
 
-  /* TAB BAR - Hoton style pill selector */
+  /* TAB BAR (Floating Pill Style) */
   .tab-bar-wrap {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
-    padding-bottom: var(--safe-bottom);
-    background: rgba(10,14,26,0.92);
-    border-top: 1px solid var(--border);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    position: fixed; bottom: var(--safe-bottom); left: 20px; right: 20px; z-index: 60;
   }
   .tab-bar {
     display: flex; align-items: center; justify-content: space-around;
-    padding: 10px 12px 8px;
-    height: var(--tab-h);
-    position: relative;
+    padding: 8px; height: 68px; border-radius: 34px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-lg);
   }
   .tab-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-    cursor: pointer; padding: 6px 4px; border-radius: 14px; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-    border: none; background: none; color: var(--text-muted); position: relative;
-    font-family: var(--font);
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; border-radius: 26px; cursor: pointer; border: none; background: none;
+    color: var(--text-muted); font-family: var(--font); transition: all 0.3s var(--bounce);
   }
-  .tab-item.active { color: var(--tg-blue); }
-  .tab-icon-pill {
-    width: 44px; height: 30px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .tab-item.active .tab-icon-pill {
-    background: var(--tg-blue-dim);
-    box-shadow: 0 0 16px var(--tg-blue-glow);
-    transform: translateY(-2px);
-  }
-  .tab-label { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; transition: color 0.2s; }
+  .tab-item.active { color: var(--text-primary); background: var(--bg-card-hover); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .tab-icon-pill { margin-bottom: 2px; transition: transform 0.3s var(--bounce); }
+  .tab-item.active .tab-icon-pill { transform: translateY(-2px); color: var(--tg-blue); filter: drop-shadow(0 2px 6px var(--tg-blue-glow)); }
+  .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
 
-  /* SECTION TITLE */
-  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding-left: 4px; }
-
-  /* SCOUT TAB */
-  .scout-card { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  .cost-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px; border-radius: var(--radius-md);
-    background: var(--tg-blue-dim); border: 1px solid var(--tg-blue-border);
+  /* TYPOGRAPHY & CHIPS */
+  .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 12px; padding-left: 4px; }
+  .filter-label { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .optional-tag { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  .cost-tag { font-size: 11px; color: var(--tg-blue); font-weight: 700; background: var(--tg-blue-dim); padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
+  
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 10px 16px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--bg-sheet);
+    color: var(--text-secondary); transition: all 0.25s var(--bounce);
   }
-  .cost-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
-  .cost-value { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--tg-blue); display: flex; align-items: center; gap: 6px; }
-  .cost-star-icon { color: var(--gold); display: flex; }
+  .chip:active { transform: scale(0.92); }
+  .chip.selected { background: var(--tg-blue); border-color: var(--tg-blue); color: white; box-shadow: 0 4px 12px var(--tg-blue-glow); }
 
-  /* Gift search */
+  /* INPUTS */
   .gift-search-wrap { position: relative; }
   .gift-search-input {
-    width: 100%; padding: 12px 14px 12px 40px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-md); color: var(--text-primary); font-family: var(--font); font-size: 14px;
-    outline: none; transition: border-color 0.2s;
+    width: 100%; padding: 14px 16px 14px 44px; border-radius: var(--radius-md);
+    background: var(--bg-sheet); border: 1px solid var(--border);
+    color: var(--text-primary); font-family: var(--font); font-size: 15px; outline: none; transition: all 0.3s;
   }
-  .gift-search-input:focus { border-color: var(--tg-blue-border); background: rgba(42,171,238,0.04); }
-  .gift-search-input::placeholder { color: var(--text-muted); }
-  .gift-search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: flex; }
-  .gift-dropdown {
-    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20;
-    max-height: 200px; overflow-y: auto; border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: rgba(13,18,32,0.98); backdrop-filter: blur(24px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  .gift-dropdown::-webkit-scrollbar { display: none; }
-  .gift-option {
-    padding: 11px 14px; font-size: 13.5px; cursor: pointer; transition: background 0.15s;
-    display: flex; align-items: center; gap: 10px; color: var(--text-secondary);
-  }
-  .gift-option:hover, .gift-option.selected { background: var(--tg-blue-dim); color: var(--text-primary); }
-  .gift-option-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
-  .gift-option.selected .gift-option-dot { background: var(--tg-blue); }
-  .gift-check { margin-left: auto; color: var(--tg-blue); display: flex; }
-
-  /* Filter chips */
-  .filter-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; letter-spacing: 0.2px; }
-  .filter-label-tags { display: flex; gap: 4px; align-items: center; }
-  .optional-tag { font-size: 10px; color: var(--text-muted); font-weight: 500; }
-  .cost-tag { font-size: 10px; color: var(--tg-blue); font-weight: 700; background: var(--tg-blue-dim); padding: 2px 7px; border-radius: 99px; display: flex; align-items: center; gap: 3px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .chip {
-    padding: 7px 14px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s; border: 1px solid var(--border);
-    background: var(--bg-card); color: var(--text-secondary);
-    user-select: none; -webkit-user-select: none; font-family: var(--font);
-  }
-  .chip:active { transform: scale(0.95); }
-  .chip.selected { background: var(--tg-blue-dim); border-color: var(--tg-blue-border); color: var(--tg-blue); }
-
-  /* Value range */
-  .range-row { display: flex; gap: 8px; }
-  .range-input {
-    flex: 1; padding: 11px 12px; border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font);
-    background: var(--bg-card); border: 1px solid var(--border);
-    color: var(--text-primary); outline: none; transition: border-color 0.2s;
-  }
-  .range-input:focus { border-color: var(--tg-blue-border); }
-  .range-input::placeholder { color: var(--text-muted); font-size: 12px; }
-
-  /* Duration */
-  .duration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .duration-card {
-    padding: 13px; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;
-    border: 1px solid var(--border); background: var(--bg-card);
-    display: flex; flex-direction: column; gap: 3px;
-    user-select: none; -webkit-user-select: none;
-  }
-  .duration-card:active { transform: scale(0.97); }
-  .duration-card.selected { border-color: var(--tg-blue-border); background: var(--tg-blue-dim); }
-  .duration-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
-  .duration-stars { font-size: 11.5px; color: var(--gold); font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
-
-  /* Launch button */
+  .gift-search-input:focus { border-color: var(--tg-blue); box-shadow: 0 0 0 4px var(--tg-blue-dim); }
+  .gift-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  
+  /* BUTTONS */
   .launch-btn {
-    width: 100%; padding: 16px; border-radius: var(--radius-md); border: none; cursor: pointer;
-    font-family: var(--font); font-size: 15px; font-weight: 700;
-    background: linear-gradient(135deg, var(--tg-blue), var(--accent-2));
-    color: white; letter-spacing: 0.3px;
-    box-shadow: 0 4px 24px var(--tg-blue-glow);
-    transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 18px; border-radius: var(--radius-md); border: none; cursor: pointer;
+    font-family: var(--font); font-size: 16px; font-weight: 700; color: white;
+    background: var(--accent-grad); box-shadow: 0 6px 20px var(--tg-blue-glow);
+    transition: all 0.3s var(--bounce); display: flex; align-items: center; justify-content: center; gap: 10px;
   }
-  .launch-btn:active { transform: scale(0.98); box-shadow: 0 2px 12px var(--tg-blue-glow); }
-  .launch-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
-  .launch-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .launch-btn:active { transform: scale(0.96); box-shadow: 0 2px 10px var(--tg-blue-glow); }
+  .launch-btn:disabled { opacity: 0.5; filter: grayscale(1); transform: none; box-shadow: none; cursor: not-allowed; }
 
-  /* FREE TRIAL BUBBLE */
-  .trial-bubble {
-    position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); right: 14px;
-    z-index: 50; cursor: pointer;
-    animation: float 3s ease-in-out infinite;
-  }
-  .trial-bubble-inner {
-    background: linear-gradient(135deg, #1e3a5f, #154a7a);
-    border: 1px solid var(--tg-blue-border);
-    border-radius: 50px; padding: 8px 14px;
-    display: flex; align-items: center; gap: 6px;
-    box-shadow: 0 4px 20px var(--tg-blue-glow);
-    font-size: 12px; font-weight: 700; color: var(--tg-blue);
-  }
-
-  /* RADAR TAB */
-  .scout-item {
-    padding: 15px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px;
-    margin-bottom: 10px;
-  }
-  .scout-item-header { display: flex; align-items: center; justify-content: space-between; }
-  .scout-item-name { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
-  .badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 99px; letter-spacing: 0.5px; }
-  .badge-active { background: rgba(42,171,238,0.15); color: var(--tg-blue); border: 1px solid var(--tg-blue-border); }
-  .badge-done { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); }
-  .scout-item-meta { display: flex; flex-wrap: wrap; gap: 5px; }
-  .meta-chip { font-size: 11px; padding: 3px 9px; border-radius: 99px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
-  .scout-item-footer { display: flex; align-items: center; justify-content: space-between; }
-  .time-left { font-family: var(--mono); font-size: 12px; color: var(--tg-blue); }
-  .results-count { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-  .detail-btn {
-    font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; cursor: pointer;
-    background: var(--tg-blue-dim); border: 1px solid var(--tg-blue-border); color: var(--tg-blue);
-    font-family: var(--font); transition: all 0.2s;
-  }
-  .detail-btn:active { transform: scale(0.96); }
-  .pulse-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--tg-blue);
-    animation: pulseAnim 2s ease-in-out infinite; flex-shrink: 0;
-    box-shadow: 0 0 8px var(--tg-blue);
-  }
-  .empty-state { padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .empty-icon-wrap { width: 64px; height: 64px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-  .empty-text { font-size: 14px; color: var(--text-secondary); }
-
-  /* HISTORY TAB */
-  .history-item { padding: 15px; border-radius: var(--radius-md); margin-bottom: 10px; }
-  .history-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .history-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-  .history-date { font-size: 11px; color: var(--text-muted); }
-  .history-filters { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-  .history-footer { display: flex; justify-content: space-between; align-items: center; }
-  .stars-cost { font-family: var(--mono); font-size: 12.5px; color: var(--gold); display: flex; align-items: center; gap: 5px; }
-  .results-num { font-size: 12px; color: var(--text-muted); }
-
-  /* PROFILE TAB */
+  /* ── PROFILE IOS SETTINGS STYLE ── */
   .profile-hero {
-    padding: 28px 20px 24px; text-align: center;
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-    border-radius: var(--radius-lg); margin-bottom: 12px;
-    background: var(--bg-card); border: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 30px 20px 20px;
   }
   .avatar-ring {
-    width: 80px; height: 80px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--tg-blue), var(--accent-2));
-    padding: 3px;
-    box-shadow: 0 0 20px var(--tg-blue-glow), 0 0 40px rgba(42,171,238,0.15);
-    animation: avatarGlow 3s ease-in-out infinite;
+    width: 90px; height: 90px; border-radius: 50%; padding: 4px;
+    background: var(--accent-grad);
+    box-shadow: 0 8px 30px var(--tg-blue-glow);
+    margin-bottom: 16px; position: relative;
   }
-  .avatar-inner {
-    width: 100%; height: 100%; border-radius: 50%;
-    background: var(--bg-mid);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px;
+  .avatar-pfp-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-base); }
+  .change-pfp-badge {
+    position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg-sheet); border: 2px solid var(--bg-base);
+    display: flex; align-items: center; justify-content: center; color: var(--text-primary); cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.2s;
   }
-  @keyframes avatarGlow {
-    0%, 100% { box-shadow: 0 0 20px var(--tg-blue-glow), 0 0 40px rgba(42,171,238,0.15); }
-    50% { box-shadow: 0 0 30px var(--tg-blue-glow), 0 0 60px rgba(42,171,238,0.25); }
-  }
-  .profile-name { font-size: 20px; font-weight: 800; color: var(--text-primary); }
-  .profile-id { font-family: var(--mono); font-size: 11.5px; color: var(--text-muted); }
+  .change-pfp-badge:active { transform: scale(0.9); }
+  .profile-name { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .profile-id { font-family: var(--mono); font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
-  /* Stars promo - Billy Westor image */
-  .stars-promo-wrap {
-    display: block; margin-bottom: 12px; border-radius: var(--radius-lg);
-    overflow: hidden; border: 1px solid rgba(245,200,66,0.2);
-    text-decoration: none; cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .stars-promo-wrap:active { transform: scale(0.98); }
-  .stars-promo-img { width: 100%; display: block; }
-
-  /* Sticker cards */
-  .sticker-links { display: flex; gap: 10px; margin-bottom: 12px; }
-  .sticker-card {
-    flex: 1; padding: 16px 12px; border-radius: var(--radius-lg);
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    padding: 16px; border-radius: var(--radius-md); text-align: center;
     background: var(--bg-card); border: 1px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    text-decoration: none; color: var(--text-primary); cursor: pointer;
-    transition: all 0.2s; overflow: hidden;
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   }
-  .sticker-card:active { transform: scale(0.97); background: var(--bg-card-hover); }
-  .sticker-img { width: 60px; height: 60px; object-fit: contain; }
-  .sticker-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-align: center; }
+  .stat-value { font-size: 24px; font-weight: 800; color: var(--text-primary); font-family: var(--mono); margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-  /* Profile links */
-  .profile-links { border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
-  .profile-link {
-    padding: 16px; display: flex; align-items: center; gap: 14px;
-    cursor: pointer; text-decoration: none; color: var(--text-primary);
-    transition: background 0.2s; border: none; background: none; width: 100%; font-family: var(--font);
+  .ios-group {
+    background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border);
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-sm);
   }
-  .profile-link:active { background: var(--bg-card-hover); }
-  .link-icon-wrap {
-    width: 38px; height: 38px; border-radius: 12px;
-    background: var(--tg-blue-dim); border: 1px solid var(--tg-blue-border);
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; flex-shrink: 0;
+  .ios-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
+    border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;
   }
-  .link-icon-img { width: 38px; height: 38px; object-fit: cover; border-radius: 11px; }
-  .link-text { font-size: 14px; font-weight: 600; flex: 1; text-align: left; }
-  .link-arrow { color: var(--text-muted); display: flex; }
-  .divider { height: 1px; background: var(--border); margin: 0 16px; }
+  .ios-row:active { background: var(--bg-card-hover); }
+  .ios-row:last-child { border-bottom: none; }
+  .ios-row-left { display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 600; }
+  .ios-icon-wrap {
+    width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;
+  }
+  .ios-row-right { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 15px; }
 
-  /* MODAL */
+  /* MODALS & SHEETS */
   .modal-overlay {
-    position: fixed; inset: 0; z-index: 80;
-    background: rgba(7,10,20,0.85); backdrop-filter: blur(12px);
-    display: flex; align-items: flex-end;
-    animation: fadeIn 0.2s ease;
+    position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px); display: flex; align-items: flex-end;
   }
   .modal-sheet {
-    width: 100%; max-height: 80vh; border-radius: 28px 28px 0 0;
-    padding: 8px 20px 32px; overflow-y: auto;
-    background: var(--bg-mid);
-    border-top: 1px solid var(--border-blue);
-    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    width: 100%; max-height: 85vh; border-radius: 32px 32px 0 0; padding: 12px 24px 40px; overflow-y: auto;
+    background: var(--bg-sheet); border-top: 1px solid var(--border);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2); animation: slideUp 0.4s var(--bounce);
   }
-  .modal-sheet::-webkit-scrollbar { display: none; }
-  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 99px; margin: 14px auto 16px; }
-  .modal-title { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .modal-label { font-size: 12px; color: var(--text-muted); }
-  .modal-value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-  .close-btn {
-    width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border);
-    background: var(--bg-card); color: var(--text-secondary); font-family: var(--font);
-    font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: all 0.2s;
-  }
-  .close-btn:active { background: var(--bg-card-hover); }
+  .modal-handle { width: 48px; height: 5px; background: var(--border); border-radius: 100px; margin: 0 auto 20px; }
 
-  /* TOAST */
-  .toast {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
-    padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600;
-    background: var(--bg-mid); border: 1px solid var(--tg-blue-border); color: var(--text-primary);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-    white-space: nowrap; font-family: var(--font);
-  }
+  /* PFP Grid */
+  .pfp-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 10px; }
+  .pfp-picker-item { aspect-ratio: 1; border-radius: 20px; overflow: hidden; position: relative; border: 3px solid transparent; transition: all 0.2s var(--bounce); }
+  .pfp-picker-item:active { transform: scale(0.92); }
+  .pfp-picker-item.selected { border-color: var(--tg-blue); box-shadow: 0 4px 20px var(--tg-blue-glow); transform: scale(1.05); z-index: 2; }
+  .pfp-picker-img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* ANIMATIONS */
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  @keyframes pulseAnim { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
-  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
-  @keyframes tabIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  .tab-content { animation: tabIn 0.25s ease; }
+  @keyframes tabIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .tab-content { animation: tabIn 0.4s var(--bounce); }
 `;
+
+const PFP_LIST = [
+  "https://i.ibb.co/MDD7WHhT/IMG-9516.jpg",
+  "https://i.ibb.co/kVzjLRSL/IMG-9512.jpg",
+  "https://i.ibb.co/Xfr1tC5d/IMG-9515.jpg",
+  "https://i.ibb.co/35WD1M57/IMG-9505.jpg",
+  "https://i.ibb.co/9HN04Srz/IMG-9504.jpg",
+  "https://i.ibb.co/4nL8fd5h/IMG-9507.jpg",
+  "https://i.ibb.co/0jhtCPp8/IMG-9517.jpg",
+  "https://i.ibb.co/0NR0XcZ/IMG-9518.jpg",
+];
 
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [termsAccepted, setTermsAccepted] = useState(() => {
-    try { return localStorage.getItem("gt_terms") === "1"; } catch { return false; }
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem("gt_theme") || "dark"; } catch { return "dark"; }
   });
   const [lang, setLang] = useState(() => {
     try { return localStorage.getItem("gt_lang") || "EN"; } catch { return "EN"; }
   });
   const [tab, setTab] = useState("scout");
-  const [showTrialBubble, setShowTrialBubble] = useState(true);
   const [toast, setToast] = useState(null);
-  const [detailScout, setDetailScout] = useState(null);
   const [showLangPicker, setShowLangPicker] = useState(false);
+  const [selectedPfp, setSelectedPfp] = useState(() => {
+    try { return localStorage.getItem("gt_pfp") || PFP_LIST[0]; } catch { return PFP_LIST[0]; }
+  });
+  const [showPfpPicker, setShowPfpPicker] = useState(false);
 
+  // Scout States
   const [giftSearch, setGiftSearch] = useState("");
-  const [giftDropdown, setGiftDropdown] = useState(false);
   const [selectedGift, setSelectedGift] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
   const [selectedBackdrop, setSelectedBackdrop] = useState(null);
@@ -670,10 +461,18 @@ export default function App() {
   const t = T[lang];
   const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : null;
 
+  // Apply Theme
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2500);
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem("gt_theme", theme); } catch {}
+  }, [theme]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500); // Sped up loading
     return () => clearTimeout(timer);
   }, []);
+
+  const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
 
   const cost = (selectedGift ? 5 : 0)
     + (selectedModel ? FILTER_COSTS.model : 0)
@@ -688,27 +487,11 @@ export default function App() {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
-  function acceptTerms() {
-    try { localStorage.setItem("gt_terms", "1"); } catch {}
-    setTermsAccepted(true);
-  }
-  function changeLang(l) {
-    setLang(l);
-    try { localStorage.setItem("gt_lang", l); } catch {}
-    setShowLangPicker(false);
-  }
+
   function handleLaunch() {
     if (!selectedGift) { showToast(t.gift_required); return; }
     if (!selectedDuration) { showToast(t.duration_required); return; }
     showToast(`Scout launched for ${selectedGift}! (${cost} Stars)`);
-    setSelectedGift(null); setGiftSearch(""); setSelectedModel(null);
-    setSelectedBackdrop(null); setSelectedSymbol(null);
-    setMinVal(""); setMaxVal(""); setSelectedDuration(null);
-    setTab("radar");
-  }
-  function handleFreeTrial() {
-    showToast("Free 10-min trial started!");
-    setShowTrialBubble(false);
     setTab("radar");
   }
 
@@ -719,94 +502,45 @@ export default function App() {
     { id: "profile", icon: <IconUser />, label: t.profile_tab },
   ];
 
-  // Telegram sticker file IDs for display
-  const joinChannelStickerId = "CAACAgQAAxkBAAFLh-JqIdGYK3WHTFUedW4O9FIp8JoZNwACjA8AAriDAVJMjX152QSAkTsE";
-  const communityChatStickerId = "CAACAgQAAxkBAAFLh-NqIdGYFjdwXKAGdKpUEUVEh9xrBQACDhQAAhAnyFLQQ28PUzefBjsE";
-
-  // We'll use the Telegram CDN thumbnail URLs for the stickers
-  const joinChannelThumbId = "AAMCBAADGQEAAUuH4moh0ZgrdYdMVR51bg70Uinwmhk3AAKMDwACuIMBUkyNfXnZBICRAQAHbQADOwQ";
-  const communityThumbId = "AAMCBAADGQEAAUuH42oh0ZgWN3BcoAZ0qlQRRUSH3GsFAAIOFAACECfIUtBDbw9TN58GAQAHbQADOwQ";
-
   return (
     <>
       <style>{styles}</style>
       <div className="bg-canvas" />
       <div className="bg-noise" />
 
-      {/* LOADING SCREEN */}
       {loading && (
-        <div className="loading-screen">
-          <img
-            src="https://i.ibb.co/KptJ4843/Untitled-design-2.png"
-            alt="Loading"
-            className="loading-img"
-          />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+          <img src="https://i.ibb.co/KptJ4843/Untitled-design-2.png" alt="Loading" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       )}
 
-      {/* TERMS */}
-      {!loading && !termsAccepted && (
-        <div className="terms-overlay">
-          <div className="terms-sheet">
-            <div className="terms-drag" />
-            <div className="lang-row">
-              {Object.keys(LANGS).map(l => (
-                <button key={l} className={`lang-btn ${lang === l ? "active" : ""}`} onClick={() => setLang(l)}>{l}</button>
-              ))}
-            </div>
-            <div className="terms-header">
-              <img src="https://i.ibb.co/tP162vk7/Untitled-design-4.png" alt="GiftTrove" className="terms-logo-img" />
-              <div className="terms-title">{t.terms_title}</div>
-            </div>
-            <div className="terms-scroll">{t.terms_body}</div>
-            <button className="launch-btn" onClick={acceptTerms}>{t.accept}</button>
-          </div>
-        </div>
-      )}
-
-      {/* TOAST */}
-      {toast && <div className="toast">{toast}</div>}
-
-      {/* DETAIL MODAL */}
-      {detailScout && (
-        <div className="modal-overlay" onClick={() => setDetailScout(null)}>
+      {/* PFP PICKER MODAL */}
+      {showPfpPicker && (
+        <div className="modal-overlay" onClick={() => setShowPfpPicker(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-handle" />
-            <div className="modal-title">
-              <IconGift /> {detailScout.gift}
+            <div style={{ fontSize: 18, fontWeight: 800, textAlign: 'center', marginBottom: 20 }}>Choose Avatar</div>
+            <div className="pfp-picker-grid">
+              {PFP_LIST.map((url, i) => (
+                <div key={i} className={`pfp-picker-item ${selectedPfp === url ? "selected" : ""}`} onClick={() => { setSelectedPfp(url); try{localStorage.setItem("gt_pfp", url)}catch{}; setShowPfpPicker(false); }}>
+                  <img src={url} alt={`Avatar ${i}`} className="pfp-picker-img" />
+                </div>
+              ))}
             </div>
-            {detailScout.model && <div className="modal-row"><span className="modal-label">{t.select_model}</span><span className="modal-value">{detailScout.model}</span></div>}
-            {detailScout.backdrop && <div className="modal-row"><span className="modal-label">{t.select_backdrop}</span><span className="modal-value">{detailScout.backdrop}</span></div>}
-            {detailScout.symbol && <div className="modal-row"><span className="modal-label">{t.select_symbol}</span><span className="modal-value">{detailScout.symbol}</span></div>}
-            {detailScout.valueRange && <div className="modal-row"><span className="modal-label">{t.value_range}</span><span className="modal-value">{detailScout.valueRange[0]}–{detailScout.valueRange[1]}</span></div>}
-            <div className="modal-row"><span className="modal-label">{t.duration}</span><span className="modal-value">{detailScout.duration}</span></div>
-            <div className="modal-row"><span className="modal-label">Stars Spent</span><span className="modal-value">{detailScout.starsSpent} Stars</span></div>
-            <div className="modal-row"><span className="modal-label">Results Found</span><span className="modal-value">{detailScout.results} listings</span></div>
-            {detailScout.endsAt && <div className="modal-row"><span className="modal-label">Time Left</span><span className="modal-value">{timeLeft(detailScout.endsAt)}</span></div>}
-            {detailScout.completedAt && <div className="modal-row"><span className="modal-label">Completed</span><span className="modal-value">{formatDate(detailScout.completedAt)}</span></div>}
-            <button className="close-btn" onClick={() => setDetailScout(null)}>Close</button>
           </div>
         </div>
       )}
 
-      {/* LANG PICKER */}
+      {/* LANG PICKER MODAL */}
       {showLangPicker && (
         <div className="modal-overlay" onClick={() => setShowLangPicker(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-handle" />
-            <div className="modal-title"><IconGlobe /> Language</div>
+            <div style={{ fontSize: 18, fontWeight: 800, textAlign: 'center', marginBottom: 20 }}>Select Language</div>
             {Object.entries(LANGS).map(([k, v]) => (
-              <div key={k}
-                onClick={() => changeLang(k)}
-                style={{
-                  padding: "14px 16px", borderRadius: 12, marginBottom: 6,
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  background: lang === k ? "var(--tg-blue-dim)" : "var(--bg-card)",
-                  border: `1px solid ${lang === k ? "var(--tg-blue-border)" : "var(--border)"}`,
-                  cursor: "pointer", transition: "all 0.2s"
-                }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{v}</span>
-                {lang === k && <span style={{ color: "var(--tg-blue)", display: "flex" }}><IconCheck /></span>}
+              <div key={k} onClick={() => { setLang(k); try{localStorage.setItem("gt_lang", k)}catch{}; setShowLangPicker(false); }}
+                style={{ padding: "16px 20px", borderRadius: 16, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between", background: lang === k ? "var(--tg-blue)" : "var(--bg-card)", color: lang === k ? "#fff" : "var(--text-primary)", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                {v} {lang === k && <IconCheck />}
               </div>
             ))}
           </div>
@@ -817,349 +551,212 @@ export default function App() {
         <div className="app">
           {/* HEADER */}
           <div className="header">
-            <div className="logo">
-              <img src="https://i.ibb.co/tP162vk7/Untitled-design-4.png" alt="GiftTrove" className="logo-img" />
-            </div>
-            <div className="header-right">
-              <button className="lang-pill" onClick={() => setShowLangPicker(true)}>
-                <IconGlobe /> {lang}
-              </button>
-            </div>
+            <img src="https://i.ibb.co/tP162vk7/Untitled-design-4.png" alt="GiftTrove" className="logo-img" />
           </div>
-
-          {/* FREE TRIAL BUBBLE */}
-          {showTrialBubble && tab === "scout" && (
-            <div className="trial-bubble" onClick={handleFreeTrial}>
-              <div className="trial-bubble-inner">
-                <IconZap />
-                {t.free_trial}
-              </div>
-            </div>
-          )}
 
           {/* CONTENT */}
           <div className="content-area">
-
-            {/* ── SCOUT TAB ── */}
             {tab === "scout" && (
               <div className="tab-content">
                 <div className="section-title">{t.scout_tab}</div>
-                <div className="glass scout-card">
-                  {/* Cost bar */}
-                  <div className="cost-bar">
-                    <span className="cost-label">Total Cost</span>
-                    <span className="cost-value">
-                      <span className="cost-star-icon"><IconStar /></span>
-                      {cost}
+                <div className="glass" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  
+                  {/* Total Cost Display */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--tg-blue-dim)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-blue)' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Scout Payload Cost</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 800, color: 'var(--tg-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ color: 'var(--gold)' }}><IconStar /></span> {cost}
                     </span>
                   </div>
 
-                  {/* Gift selector */}
+                  {/* Gift Search */}
                   <div>
-                    <div className="filter-label">
-                      {t.select_gift}
-                      <span className="cost-tag"><IconStar /> 5</span>
-                    </div>
+                    <div className="filter-label">{t.select_gift} <span className="cost-tag"><IconStar /> 5</span></div>
                     <div className="gift-search-wrap">
                       <span className="gift-search-icon"><IconSearch /></span>
-                      <input
-                        className="gift-search-input"
-                        placeholder={t.search_placeholder}
-                        value={selectedGift || giftSearch}
-                        onChange={e => { setGiftSearch(e.target.value); setSelectedGift(null); setGiftDropdown(true); }}
-                        onFocus={() => setGiftDropdown(true)}
-                      />
-                      {giftDropdown && filteredGifts.length > 0 && (
-                        <div className="gift-dropdown">
-                          {filteredGifts.map(g => (
-                            <div key={g} className={`gift-option ${selectedGift === g ? "selected" : ""}`}
-                              onClick={() => { setSelectedGift(g); setGiftSearch(g); setGiftDropdown(false); }}>
-                              <span className="gift-option-dot" />
-                              {g}
-                              {selectedGift === g && <span className="gift-check"><IconCheck /></span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <input className="gift-search-input" placeholder={t.search_placeholder} value={selectedGift || giftSearch} onChange={e => { setGiftSearch(e.target.value); setSelectedGift(null); }} />
                     </div>
+                    {giftSearch && !selectedGift && (
+                      <div style={{ marginTop: 8, background: 'var(--bg-sheet)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                        {filteredGifts.map(g => (
+                          <div key={g} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontWeight: 500 }} onClick={() => { setSelectedGift(g); setGiftSearch(g); }}>{g}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Model */}
-                  <div>
-                    <div className="filter-label">
-                      {t.select_model}
-                      <div className="filter-label-tags">
-                        <span className="optional-tag">{t.optional}</span>
-                        <span className="cost-tag"><IconStar /> 5</span>
+                  {/* Filters (Models, Backdrop, Symbol) */}
+                  {[
+                    { label: t.select_model, opts: MODELS, state: selectedModel, set: setSelectedModel },
+                    { label: t.select_backdrop, opts: BACKDROPS, state: selectedBackdrop, set: setSelectedBackdrop },
+                    { label: t.select_symbol, opts: SYMBOLS, state: selectedSymbol, set: setSelectedSymbol }
+                  ].map((filter, i) => (
+                    <div key={i}>
+                      <div className="filter-label">{filter.label} <div style={{display:'flex', gap:6}}><span className="optional-tag">{t.optional}</span><span className="cost-tag"><IconStar /> 5</span></div></div>
+                      <div className="chips">
+                        {filter.opts.map(opt => (
+                          <div key={opt} className={`chip ${filter.state === opt ? "selected" : ""}`} onClick={() => filter.set(filter.state === opt ? null : opt)}>{opt}</div>
+                        ))}
                       </div>
                     </div>
-                    <div className="chips">
-                      {MODELS.map(m => (
-                        <div key={m} className={`chip ${selectedModel === m ? "selected" : ""}`}
-                          onClick={() => setSelectedModel(selectedModel === m ? null : m)}>{m}</div>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
 
-                  {/* Backdrop */}
-                  <div>
-                    <div className="filter-label">
-                      {t.select_backdrop}
-                      <div className="filter-label-tags">
-                        <span className="optional-tag">{t.optional}</span>
-                        <span className="cost-tag"><IconStar /> 5</span>
-                      </div>
-                    </div>
-                    <div className="chips">
-                      {BACKDROPS.map(b => (
-                        <div key={b} className={`chip ${selectedBackdrop === b ? "selected" : ""}`}
-                          onClick={() => setSelectedBackdrop(selectedBackdrop === b ? null : b)}>{b}</div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Symbol */}
-                  <div>
-                    <div className="filter-label">
-                      {t.select_symbol}
-                      <div className="filter-label-tags">
-                        <span className="optional-tag">{t.optional}</span>
-                        <span className="cost-tag"><IconStar /> 5</span>
-                      </div>
-                    </div>
-                    <div className="chips">
-                      {SYMBOLS.map(s => (
-                        <div key={s} className={`chip ${selectedSymbol === s ? "selected" : ""}`}
-                          onClick={() => setSelectedSymbol(selectedSymbol === s ? null : s)}>{s}</div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Value range */}
-                  <div>
-                    <div className="filter-label">
-                      {t.value_range}
-                      <div className="filter-label-tags">
-                        <span className="optional-tag">{t.optional}</span>
-                        <span className="cost-tag"><IconStar /> 10</span>
-                      </div>
-                    </div>
-                    <div className="range-row">
-                      <input className="range-input" placeholder={t.min} type="number" value={minVal} onChange={e => setMinVal(e.target.value)} />
-                      <input className="range-input" placeholder={t.max} type="number" value={maxVal} onChange={e => setMaxVal(e.target.value)} />
-                    </div>
-                  </div>
-
-                  {/* Duration */}
+                  {/* Durations Grid */}
                   <div>
                     <div className="filter-label">{t.duration}</div>
-                    <div className="duration-grid">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       {DURATIONS.map(d => (
-                        <div key={d.value} className={`duration-card ${selectedDuration?.value === d.value ? "selected" : ""}`}
-                          onClick={() => setSelectedDuration(selectedDuration?.value === d.value ? null : d)}>
-                          <div className="duration-name">{d.label}</div>
-                          <div className="duration-stars"><IconStar /> {d.stars.toLocaleString()}</div>
+                        <div key={d.value} onClick={() => setSelectedDuration(d)} style={{ padding: 16, borderRadius: 'var(--radius-md)', cursor: 'pointer', border: `2px solid ${selectedDuration?.value === d.value ? 'var(--tg-blue)' : 'var(--border)'}`, background: selectedDuration?.value === d.value ? 'var(--tg-blue-dim)' : 'var(--bg-sheet)', transition: 'all 0.2s' }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{d.label}</div>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 4 }}><IconStar /> {d.stars}</div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Launch */}
                   <button className="launch-btn" onClick={handleLaunch} disabled={cost === 0}>
-                    {t.launch} {cost > 0 ? `· ${cost} Stars` : ""}
+                    <IconZap /> {t.launch}
                   </button>
-                  <div className="launch-note">Stars are non-refundable after launch</div>
                 </div>
               </div>
             )}
 
-            {/* ── RADAR TAB ── */}
             {tab === "radar" && (
               <div className="tab-content">
-                <div className="section-title">{t.active}</div>
-                {mockActiveScouts.length === 0 ? (
-                  <div className="glass empty-state">
-                    <div className="empty-icon-wrap"><IconRadar /></div>
-                    <div className="empty-text">{t.no_scouts}</div>
-                  </div>
-                ) : mockActiveScouts.map(s => (
-                  <div key={s.id} className="glass scout-item">
-                    <div className="scout-item-header">
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <div className="pulse-dot" />
-                        <span className="scout-item-name">{s.gift}</span>
-                      </div>
-                      <span className="badge badge-active">{t.active}</span>
+                <div className="section-title">{t.radar_tab}</div>
+                {mockActiveScouts.map(s => (
+                  <div key={s.id} className="glass" style={{ padding: 20, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800 }}>{s.gift}</div>
+                      <div style={{ background: 'var(--tg-blue-dim)', color: 'var(--tg-blue)', padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, border: '1px solid var(--border-blue)' }}>{t.active}</div>
                     </div>
-                    <div className="scout-item-meta">
-                      {s.model && <span className="meta-chip">Model: {s.model}</span>}
-                      {s.backdrop && <span className="meta-chip">Backdrop: {s.backdrop}</span>}
-                      {s.symbol && <span className="meta-chip">Symbol: {s.symbol}</span>}
-                      {s.valueRange && <span className="meta-chip">{s.valueRange[0]}–{s.valueRange[1]} Stars</span>}
-                      <span className="meta-chip">{s.duration}</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                      {s.model && <div className="chip" style={{ padding: '6px 12px', fontSize: 11 }}>{s.model}</div>}
+                      {s.backdrop && <div className="chip" style={{ padding: '6px 12px', fontSize: 11 }}>{s.backdrop}</div>}
+                      <div className="chip" style={{ padding: '6px 12px', fontSize: 11 }}>{s.duration}</div>
                     </div>
-                    <div className="scout-item-footer">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                       <div>
-                        <div className="time-left">{timeLeft(s.endsAt)} left</div>
-                        <div className="results-count">{s.results} results found</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--tg-blue)', fontWeight: 600 }}>{timeLeft(s.endsAt)}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.results} hits found</div>
                       </div>
-                      <button className="detail-btn" onClick={() => setDetailScout(s)}>{t.view_details}</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* ── HISTORY TAB ── */}
             {tab === "history" && (
               <div className="tab-content">
                 <div className="section-title">{t.history_tab}</div>
-                {mockHistory.length === 0 ? (
-                  <div className="glass empty-state">
-                    <div className="empty-icon-wrap"><IconClock /></div>
-                    <div className="empty-text">{t.no_history}</div>
-                  </div>
-                ) : mockHistory.map(s => (
-                  <div key={s.id} className="glass history-item">
-                    <div className="history-header">
-                      <div className="history-name">{s.gift}</div>
-                      <div className="history-date">{formatDate(s.completedAt)}</div>
+                {mockHistory.map(s => (
+                  <div key={s.id} className="glass" style={{ padding: 20, marginBottom: 16, opacity: 0.8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700 }}>{s.gift}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatDate(s.completedAt)}</div>
                     </div>
-                    <div className="history-filters">
-                      {s.model && <span className="meta-chip">Model: {s.model}</span>}
-                      {s.backdrop && <span className="meta-chip">Backdrop: {s.backdrop}</span>}
-                      {s.symbol && <span className="meta-chip">Symbol: {s.symbol}</span>}
-                      {s.valueRange && <span className="meta-chip">{s.valueRange[0]}–{s.valueRange[1]} Stars</span>}
-                      <span className="meta-chip">{s.duration}</span>
-                    </div>
-                    <div className="history-footer">
-                      <span className="stars-cost"><IconStar /> {s.starsSpent} Stars</span>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span className="results-num">{s.results} results</span>
-                        <button className="detail-btn" onClick={() => setDetailScout(s)}>{t.view_details}</button>
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 4 }}><IconStar /> {s.starsSpent}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{s.results} hits</span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* ── PROFILE TAB ── */}
+            {/* ── REDESIGNED PROFILE TAB ── */}
             {tab === "profile" && (
               <div className="tab-content">
-                {/* Avatar with glow */}
+                
+                {/* Hero Section */}
                 <div className="profile-hero">
                   <div className="avatar-ring">
-                    <div className="avatar-inner">
-                      <IconUser />
+                    <img src={selectedPfp} alt="Profile" className="avatar-pfp-img" />
+                    <div className="change-pfp-badge" onClick={() => setShowPfpPicker(true)}>
+                      <IconSettings size={14} /> 
                     </div>
                   </div>
-                  <div className="profile-name">{tgUser?.first_name || "GiftTrove User"}</div>
-                  <div className="profile-id">{t.user_id}: {tgUser?.id || "TG_USER_ID"}</div>
+                  <div className="profile-name">{tgUser?.first_name || "GiftTrove Builder"}</div>
+                  <div className="profile-id">ID: {tgUser?.id || "TG_USER_101"}</div>
                 </div>
 
-                {/* Stars promo - Billy Westor */}
-                <a
-                  className="stars-promo-wrap"
-                  href="https://t.me/hotontgbot/app?startapp=UQDOUQ2TOpZBQ9d9Df-2uOlhzzC82M21MdELmt3Jjcg5aiWx"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <img
-                    src="https://i.ibb.co/3mzZhtLj/Billy-Westor.png"
-                    alt="Get Stars with Hoton"
-                    className="stars-promo-img"
-                  />
-                </a>
-
-                {/* Sticker cards for Join Channel & Community */}
-                <div className="sticker-links">
-                  <a
-                    className="sticker-card"
-                    href="https://t.me/insidemajek"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <img
-                      src={`https://t.me/i/userpic/160/${joinChannelThumbId}.jpg`}
-                      alt={t.join_channel}
-                      className="sticker-img"
-                      onError={e => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div style={{display:'none', width:60, height:60, alignItems:'center', justifyContent:'center', background:'var(--tg-blue-dim)', borderRadius:14, border:'1px solid var(--tg-blue-border)'}}>
-                      <img src="https://i.ibb.co/YFrCrHBs/Untitled-design-3.png" alt="Telegram" style={{width:34, height:34, objectFit:'contain'}} />
-                    </div>
-                    <div className="sticker-label">{t.join_channel}</div>
-                  </a>
-                  <a
-                    className="sticker-card"
-                    href="https://t.me/+Op7gLVniX9Y1OTRk"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <img
-                      src={`https://t.me/i/userpic/160/${communityThumbId}.jpg`}
-                      alt={t.community}
-                      className="sticker-img"
-                      onError={e => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div style={{display:'none', width:60, height:60, alignItems:'center', justifyContent:'center', background:'var(--tg-blue-dim)', borderRadius:14, border:'1px solid var(--tg-blue-border)'}}>
-                      <img src="https://i.ibb.co/YFrCrHBs/Untitled-design-3.png" alt="Telegram" style={{width:34, height:34, objectFit:'contain'}} />
-                    </div>
-                    <div className="sticker-label">{t.community}</div>
-                  </a>
+                {/* Stats Section */}
+                <div className="section-title">{t.stats_title}</div>
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-value"><IconTrending /> 24</div>
+                    <div className="stat-label">{t.total_scouts}</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: 'var(--gold)' }}><IconStar /> 845</div>
+                    <div className="stat-label">{t.stars_spent}</div>
+                  </div>
                 </div>
 
-                {/* Support + links */}
-                <div className="profile-links">
-                  <a className="profile-link" href="https://t.me/insidemajek" target="_blank" rel="noreferrer">
-                    <div className="link-icon-wrap">
-                      <img src="https://i.ibb.co/YFrCrHBs/Untitled-design-3.png" alt="Telegram" style={{width:24, height:24, objectFit:'contain'}} />
+                {/* General Settings (iOS List Style) */}
+                <div className="section-title">General</div>
+                <div className="ios-group">
+                  <div className="ios-row" onClick={toggleTheme}>
+                    <div className="ios-row-left">
+                      <div className="ios-icon-wrap" style={{ background: theme === 'dark' ? '#000' : '#ff9500' }}>
+                        {theme === 'dark' ? <IconMoon /> : <IconSun />}
+                      </div>
+                      {t.appearance}
                     </div>
-                    <span className="link-text">{t.join_channel}</span>
-                    <span className="link-arrow"><IconChevronRight /></span>
+                    <div className="ios-row-right">
+                      {theme === 'dark' ? 'Dark' : 'Light'} <IconChevronRight />
+                    </div>
+                  </div>
+                  
+                  <div className="ios-row" onClick={() => setShowLangPicker(true)}>
+                    <div className="ios-row-left">
+                      <div className="ios-icon-wrap" style={{ background: '#34c759' }}>
+                        <IconGlobe />
+                      </div>
+                      {t.language}
+                    </div>
+                    <div className="ios-row-right">
+                      {LANGS[lang]} <IconChevronRight />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Community & Support */}
+                <div className="section-title">Community</div>
+                <div className="ios-group">
+                  <a href="https://t.me/insidemajek?direct" target="_blank" rel="noreferrer" className="ios-row" style={{ textDecoration: 'none' }}>
+                    <div className="ios-row-left">
+                      <div className="ios-icon-wrap" style={{ background: '#ff3b30' }}>
+                        <IconUser />
+                      </div>
+                      {t.support}
+                    </div>
+                    <div className="ios-row-right"><IconChevronRight /></div>
                   </a>
-                  <div className="divider" />
-                  <a className="profile-link" href="https://t.me/+Op7gLVniX9Y1OTRk" target="_blank" rel="noreferrer">
-                    <div className="link-icon-wrap">
-                      <img src="https://i.ibb.co/YFrCrHBs/Untitled-design-3.png" alt="Telegram" style={{width:24, height:24, objectFit:'contain'}} />
+                  
+                  <a href="https://t.me/+Op7gLVniX9Y1OTRk" target="_blank" rel="noreferrer" className="ios-row" style={{ textDecoration: 'none' }}>
+                    <div className="ios-row-left">
+                      <div className="ios-icon-wrap" style={{ background: '#007aff' }}>
+                        <IconSearch />
+                      </div>
+                      {t.community}
                     </div>
-                    <span className="link-text">{t.community}</span>
-                    <span className="link-arrow"><IconChevronRight /></span>
-                  </a>
-                  <div className="divider" />
-                  <a className="profile-link" href="https://t.me/insidemajek?direct" target="_blank" rel="noreferrer">
-                    <div className="link-icon-wrap" style={{background:'rgba(255,80,80,0.1)', border:'1px solid rgba(255,80,80,0.2)'}}>
-                      <img src="https://i.ibb.co/67GNHd55/Rate-Bot.png" alt="Support" style={{width:28, height:28, objectFit:'contain', borderRadius:8}} />
-                    </div>
-                    <span className="link-text">{t.support}</span>
-                    <span className="link-arrow"><IconChevronRight /></span>
+                    <div className="ios-row-right"><IconChevronRight /></div>
                   </a>
                 </div>
 
-                <div style={{textAlign:"center", marginTop:20, fontSize:11, color:"var(--text-muted)"}}>
-                  Built by{" "}
-                  <a href="https://t.me/insidemajek" style={{color:"var(--tg-blue)", textDecoration:"none"}}>@insidemajek</a>
+                <div style={{ textAlign: "center", marginTop: 32, fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>
+                  Built by <a href="https://t.me/insidemajek" style={{ color: "var(--tg-blue)", textDecoration: "none" }}>@insidemajek</a>
                 </div>
               </div>
             )}
           </div>
 
-          {/* TAB BAR */}
+          {/* FLOATING TAB BAR */}
           <div className="tab-bar-wrap">
             <div className="tab-bar">
               {tabs.map(tabItem => (
-                <button
-                  key={tabItem.id}
-                  className={`tab-item ${tab === tabItem.id ? "active" : ""}`}
-                  onClick={() => setTab(tabItem.id)}
-                >
+                <button key={tabItem.id} className={`tab-item ${tab === tabItem.id ? "active" : ""}`} onClick={() => setTab(tabItem.id)}>
                   <div className="tab-icon-pill">{tabItem.icon}</div>
                   <span className="tab-label">{tabItem.label}</span>
                 </button>
@@ -1169,5 +766,14 @@ export default function App() {
         </div>
       )}
     </>
+  );
+}
+
+// Quick helper icon for the settings cog on PFP
+function IconSettings({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+    </svg>
   );
 }
