@@ -91,6 +91,7 @@ const styles = `
 
   :root {
     --bg-base: #000000;
+    --bg-desktop: #000000;
     --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
     --bg-sheet: rgba(28, 28, 30, 0.75);
     --bg-card: rgba(28, 28, 30, 0.5);
@@ -113,8 +114,9 @@ const styles = `
 
   [data-theme="light"] {
     --bg-base: #f2f2f7;
+    --bg-desktop: #e5e5ea;
     --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(0, 122, 255, 0.08) 0%, #f2f2f7 100%);
-    --bg-sheet: rgba(255, 255, 255, 0.75);
+    --bg-sheet: rgba(255, 255, 255, 0.85);
     --bg-card: rgba(255, 255, 255, 0.6);
     --bg-input: rgba(118, 118, 128, 0.12);
     --bg-hover: rgba(0, 0, 0, 0.05);
@@ -126,17 +128,23 @@ const styles = `
 
   body {
     font-family: var(--font);
-    background: var(--bg-base);
-    background-image: var(--bg-gradient);
-    background-attachment: fixed;
+    background: var(--bg-desktop);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
     transition: background 0.4s ease, color 0.4s ease;
-    height: 100vh; overflow: hidden;
   }
 
-  .app-container { height: 100vh; display: flex; flex-direction: column; position: relative; }
+  /* Desktop View Wrap */
+  .app-wrapper {
+    display: flex; justify-content: center; min-height: 100vh; width: 100vw; overflow: hidden;
+  }
+
+  .app-container { 
+    width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column; position: relative; 
+    background: var(--bg-base); background-image: var(--bg-gradient); background-attachment: fixed;
+    box-shadow: 0 0 40px rgba(0,0,0,0.2);
+  }
 
   /* TOP NAVBAR */
   .top-nav {
@@ -170,7 +178,7 @@ const styles = `
   }
   
   /* INPUTS & CONTROLS */
-  .input-group { margin-bottom: 24px; }
+  .input-group { margin-bottom: 24px; position: relative; }
   .ios-input {
     width: 100%; padding: 18px 20px; border-radius: var(--radius-lg);
     background: var(--bg-input); border: 1px solid transparent;
@@ -180,6 +188,22 @@ const styles = `
   }
   .ios-input:focus { border-color: var(--tg-blue); background: var(--bg-card); }
   
+  /* AUTOCOMPLETE DROPDOWN */
+  .suggestions-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+    background: var(--bg-sheet); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    max-height: 200px; overflow-y: auto; margin-top: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .suggestions-dropdown::-webkit-scrollbar { display: none; }
+  .suggestion-item {
+    padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer;
+    font-size: 16px; font-weight: 600; color: var(--text-primary);
+  }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:active { background: var(--bg-hover); }
+
   /* SELECT BUTTON (For Modals) */
   .select-btn {
     display: flex; justify-content: space-between; align-items: center;
@@ -214,7 +238,7 @@ const styles = `
   .action-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
   /* BOTTOM TAB BAR */
-  .tab-bar-container { position: fixed; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
+  .tab-bar-container { position: absolute; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
   .ios-tab-bar {
     display: flex; justify-content: space-around; align-items: center;
     height: 72px; border-radius: 36px; padding: 0 8px;
@@ -234,7 +258,7 @@ const styles = `
 
   /* IOS BOTTOM SHEET */
   .sheet-overlay {
-    position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
+    position: absolute; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
     backdrop-filter: blur(5px); display: flex; align-items: flex-end;
     opacity: 0; animation: fadeIn 0.3s forwards;
   }
@@ -244,12 +268,14 @@ const styles = `
     backdrop-filter: blur(50px) saturate(200%); -webkit-backdrop-filter: blur(50px) saturate(200%);
     transform: translateY(100%); animation: slideUp 0.4s var(--bounce) forwards; overflow-y: auto;
   }
+  .sheet-content::-webkit-scrollbar { display: none; }
   .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
   .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; }
   
   .sheet-list-item {
     padding: 18px 20px; font-size: 17px; font-weight: 600; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+    color: var(--text-primary);
   }
   .sheet-list-item:active { background: var(--bg-hover); }
   .sheet-list-item:last-child { border-bottom: none; }
@@ -275,12 +301,13 @@ const styles = `
 
   /* TOAST */
   .toast {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
     padding: 12px 24px; border-radius: 100px; font-size: 15px; font-weight: 600;
     background: var(--bg-sheet); border: 1px solid var(--border); color: var(--text-primary);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     box-shadow: 0 4px 24px rgba(0,0,0,0.3);
     animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    white-space: nowrap;
   }
 
   /* ANIMATIONS */
@@ -300,22 +327,31 @@ const styles = `
     border-radius: var(--radius-lg); padding: 16px; position: relative;
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     display: flex; flex-direction: column; transition: transform 0.2s var(--bounce);
+    cursor: pointer;
   }
   .result-card:active { transform: scale(0.96); }
 `;
 
 export default function App() {
-  const [theme, setTheme] = useState("dark");
-  const [lang, setLang] = useState("EN");
+  // Persistence via LocalStorage
+  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "dark");
+  const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
+  const [savedGifts, setSavedGifts] = useState(() => {
+    const saved = localStorage.getItem("gt_saved");
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const [activeTab, setActiveTab] = useState("scout");
   const [toast, setToast] = useState(null);
   
   // App Flow State
   const [isSearching, setIsSearching] = useState(false);
-  const [savedGifts, setSavedGifts] = useState([]);
+  const [activeSheet, setActiveSheet] = useState(null); 
+  const [selectedGift, setSelectedGift] = useState(null); // For details modal
   
   // Search Form State
   const [giftQuery, setGiftQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [giftId, setGiftId] = useState("");
   const [selectedMarkets, setSelectedMarkets] = useState(["All"]);
   const [selectedModel, setSelectedModel] = useState("Any");
@@ -327,16 +363,23 @@ export default function App() {
   const [donateAmount, setDonateAmount] = useState("");
   const [donateWallet, setDonateWallet] = useState("TonKeeper");
   const [donateTx, setDonateTx] = useState("");
-  
-  // UI State
-  const [activeSheet, setActiveSheet] = useState(null); // 'model', 'backdrop', 'symbol', 'lang', 'donate'
 
   const t = T[lang] || T["EN"];
   const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : { id: 12345678, first_name: "Scout" };
 
+  // Effect Bindings for Persistence
   useEffect(() => {
+    localStorage.setItem("gt_theme", theme);
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("gt_lang", lang);
+  }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem("gt_saved", JSON.stringify(savedGifts));
+  }, [savedGifts]);
 
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
   
@@ -359,14 +402,20 @@ export default function App() {
 
   const handleScout = () => setIsSearching(true);
 
-  const toggleSave = (id) => {
-    if (savedGifts.includes(id)) {
-      setSavedGifts(savedGifts.filter(x => x !== id));
+  const toggleSave = (gift) => {
+    const isSaved = savedGifts.some(g => g.id === gift.id);
+    if (isSaved) {
+      setSavedGifts(savedGifts.filter(g => g.id !== gift.id));
       showToast("Removed from Saved");
     } else {
-      setSavedGifts([...savedGifts, id]);
+      setSavedGifts([...savedGifts, gift]);
       showToast("Gift Saved!");
     }
+  };
+
+  const handleBuy = (e) => {
+    e.stopPropagation();
+    window.open("https://getgems.io/gifts", "_blank");
   };
 
   const copyReferral = () => {
@@ -378,7 +427,6 @@ export default function App() {
   };
 
   const executeDonate = () => {
-    // Generates generic deep link for mockup purposes
     const address = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
     const amountNano = (parseFloat(donateAmount) || 0) * 1e9;
     let url = `ton://transfer/${address}?amount=${amountNano}&text=Donation`;
@@ -388,16 +436,94 @@ export default function App() {
     setDonateStep(2);
   };
 
+  // Autocomplete filtering
+  const filteredGifts = GIFTS.filter(g => g.toLowerCase().includes(giftQuery.toLowerCase()));
+
+  // Mock Results Data Generation
+  const generateMockResults = () => {
+    return [1, 2, 3, 4].map(i => ({
+      id: i,
+      name: giftQuery || "Durov's Cap",
+      model: i === 1 ? "Rare" : i === 2 ? "Legendary" : "Common",
+      symbol: i === 1 ? "Star" : i === 2 ? "Crown" : "Heart",
+      backdrop: i === 1 ? "Space" : i === 2 ? "Gold" : "Nature",
+      price: i === 1 ? "450 GRAM" : i === 2 ? "1,200 GRAM" : "80 GRAM",
+      market: "GetGems",
+      itemNumber: 1000 + i
+    }));
+  };
+
+  const mockResults = generateMockResults();
+
+  // Reusable Card Renderer
+  const renderGiftCard = (item) => {
+    const isSaved = savedGifts.some(g => g.id === item.id);
+    return (
+      <div key={item.id} className="result-card" onClick={() => { setSelectedGift(item); setActiveSheet('gift_details'); }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
+            {item.name}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+            <div onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: isSaved ? 'var(--tg-blue)' : 'var(--text-secondary)', cursor: 'pointer' }}>
+              {isSaved ? <IconBookmarkFilled /> : <IconBookmark />}
+            </div>
+            <div onClick={handleBuy} style={{ background: 'var(--tg-blue)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', letterSpacing: '0.5px' }}>
+              BUY
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
+          #{item.itemNumber} • {item.market}
+        </div>
+        <div style={{ marginTop: 'auto' }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--tg-blue)' }}>{item.price}</div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSheet = () => {
     if (!activeSheet) return null;
     
+    // GIFT DETAILS MODAL
+    if (activeSheet === 'gift_details' && selectedGift) {
+      const isSaved = savedGifts.some(g => g.id === selectedGift.id);
+      return (
+        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
+          <div className="sheet-content" onClick={e => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <div className="sheet-title" style={{ marginBottom: 4 }}>{selectedGift.name}</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, marginBottom: 24 }}>
+              #{selectedGift.itemNumber} • {selectedGift.market}
+            </div>
+            
+            <div className="ios-group" style={{ margin: 0, marginBottom: 24 }}>
+              <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Model</span><span>{selectedGift.model}</span></div>
+              <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Backdrop</span><span>{selectedGift.backdrop}</span></div>
+              <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Symbol</span><span>{selectedGift.symbol}</span></div>
+              <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Listed Value</span><span style={{ color: 'var(--tg-blue)', fontWeight: 800 }}>{selectedGift.price}</span></div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="action-btn" style={{ flex: 1, background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
+                {isSaved ? "Remove Saved" : "Save Gift"}
+              </button>
+              <button className="action-btn" style={{ flex: 1 }} onClick={handleBuy}>
+                Buy Now
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // DONATE MODAL FLOW
     if (activeSheet === 'donate') {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
             <div className="sheet-handle" />
-            
             {donateStep === 1 && (
               <div className="fade-in-up">
                 <div className="sheet-title">{t.donate}</div>
@@ -417,7 +543,6 @@ export default function App() {
                 <button className="action-btn" onClick={executeDonate} disabled={!donateAmount}>Donate Now</button>
               </div>
             )}
-            
             {donateStep === 2 && (
               <div className="fade-in-up">
                 <div className="sheet-title">{t.verify_tx}</div>
@@ -430,7 +555,6 @@ export default function App() {
                 <button className="action-btn" onClick={() => setDonateStep(3)} disabled={!donateTx}>Verify Transaction</button>
               </div>
             )}
-            
             {donateStep === 3 && (
               <div className="fade-in-up" style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ color: 'var(--tg-blue)', marginBottom: 16 }}><IconHeart /></div>
@@ -487,225 +611,229 @@ export default function App() {
   return (
     <>
       <style>{styles}</style>
-      <div className="app-container">
-        
-        {toast && <div className="toast">{toast}</div>}
-
-        {/* TOP ICONS (Fixed) */}
-        <div className="top-nav">
-          {activeTab === "scout" && isSearching ? (
-             <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
-          ) : (
-             <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-0.5px' }}>GiftTrove</div>
-          )}
+      <div className="app-wrapper">
+        <div className="app-container">
           
-          <div className="top-icons">
-            <div className="icon-btn" onClick={() => setActiveSheet('lang')}><IconGlobe /></div>
-            <div className="icon-btn" onClick={toggleTheme}>
-              {theme === 'dark' ? <IconMoon /> : <IconSun />}
+          {toast && <div className="toast">{toast}</div>}
+
+          {/* TOP ICONS (Fixed) */}
+          <div className="top-nav">
+            {activeTab === "scout" && isSearching ? (
+               <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
+            ) : (
+               <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-0.5px' }}>GiftTrove</div>
+            )}
+            
+            <div className="top-icons">
+              <div className="icon-btn" onClick={() => setActiveSheet('lang')}><IconGlobe /></div>
+              <div className="icon-btn" onClick={toggleTheme}>
+                {theme === 'dark' ? <IconMoon /> : <IconSun />}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* MAIN CONTENT */}
-        <div className="content">
-          
-          {/* SCOUT TAB */}
-          {activeTab === "scout" && (
-            <div className="fade-in-up">
-              {!isSearching && (
-                <div className="hero-title">
-                  {t.fastest_way} <img src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png" alt="Icon" style={{ display: 'inline-block', height: '0.85em', verticalAlign: 'middle', marginLeft: '6px', borderRadius: '8px' }} />
-                </div>
-              )}
-
-              {!isSearching ? (
-                /* ── SCOUT FORM ── */
-                <div>
-                  <div className="input-group">
-                    <div className="section-label">{t.gift_name}</div>
-                    <input className="ios-input" placeholder="e.g. Durov's Cap" value={giftQuery} onChange={e => setGiftQuery(e.target.value)} />
+          {/* MAIN CONTENT */}
+          <div className="content">
+            
+            {/* SCOUT TAB */}
+            {activeTab === "scout" && (
+              <div className="fade-in-up">
+                {!isSearching && (
+                  <div className="hero-title">
+                    {t.fastest_way} <img src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png" alt="Icon" style={{ display: 'inline-block', height: '1.15em', verticalAlign: 'text-bottom', marginLeft: '6px', borderRadius: '8px' }} />
                   </div>
+                )}
 
-                  <div className="input-group">
-                    <div className="section-label">{t.specific_id} <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{t.optional}</span></div>
-                    <input type="number" className="ios-input" placeholder="#12345" value={giftId} onChange={e => setGiftId(e.target.value)} />
-                  </div>
-
-                  <div className="input-group">
-                    <div className="section-label">{t.marketplaces}</div>
-                    <div className="chips-grid">
-                      {MARKETPLACES.map(m => (
-                        <div key={m} className={`chip ${selectedMarkets.includes(m) ? 'active' : ''}`} onClick={() => handleMarketToggle(m)}>
-                          {m}
+                {!isSearching ? (
+                  /* ── SCOUT FORM ── */
+                  <div>
+                    <div className="input-group">
+                      <div className="section-label">{t.gift_name}</div>
+                      <input 
+                        className="ios-input" 
+                        placeholder="e.g. Durov's Cap" 
+                        value={giftQuery} 
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        onChange={e => setGiftQuery(e.target.value)} 
+                      />
+                      {showSuggestions && giftQuery && filteredGifts.length > 0 && (
+                        <div className="suggestions-dropdown">
+                          {filteredGifts.map(g => (
+                            <div key={g} className="suggestion-item" onClick={() => { setGiftQuery(g); setShowSuggestions(false); }}>
+                              {g}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                    </div>
+
+                    <div className="input-group">
+                      <div className="section-label">{t.specific_id} <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{t.optional}</span></div>
+                      <input type="number" className="ios-input" placeholder="#12345" value={giftId} onChange={e => setGiftId(e.target.value)} />
+                    </div>
+
+                    <div className="input-group">
+                      <div className="section-label">{t.marketplaces}</div>
+                      <div className="chips-grid">
+                        {MARKETPLACES.map(m => (
+                          <div key={m} className={`chip ${selectedMarkets.includes(m) ? 'active' : ''}`} onClick={() => handleMarketToggle(m)}>
+                            {m}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <div className="section-label">{t.attributes}</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div className="select-btn" onClick={() => setActiveSheet('model')}>
+                          <span>{t.model}</span> <span className="select-val">{selectedModel} <IconChevronRight /></span>
+                        </div>
+                        <div className="select-btn" onClick={() => setActiveSheet('backdrop')}>
+                          <span>{t.backdrop}</span> <span className="select-val">{selectedBackdrop} <IconChevronRight /></span>
+                        </div>
+                        <div className="select-btn" onClick={() => setActiveSheet('symbol')}>
+                          <span>{t.symbol}</span> <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
+                  </div>
+                ) : (
+                  /* ── 2-COLUMN RESULTS VIEW (MOBILE OPTIMIZED) ── */
+                  <div className="fade-in-up" style={{ marginTop: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800 }}>{t.results}</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>{mockResults.length} {t.found}</div>
+                    </div>
+                    
+                    <div className="results-grid">
+                      {mockResults.map(item => renderGiftCard(item))}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
 
-                  <div className="input-group">
-                    <div className="section-label">{t.attributes}</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div className="select-btn" onClick={() => setActiveSheet('model')}>
-                        <span>{t.model}</span> <span className="select-val">{selectedModel} <IconChevronRight /></span>
-                      </div>
-                      <div className="select-btn" onClick={() => setActiveSheet('backdrop')}>
-                        <span>{t.backdrop}</span> <span className="select-val">{selectedBackdrop} <IconChevronRight /></span>
-                      </div>
-                      <div className="select-btn" onClick={() => setActiveSheet('symbol')}>
-                        <span>{t.symbol}</span> <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
-                      </div>
-                    </div>
-                  </div>
+            {/* EVENTS TAB */}
+            {activeTab === "events" && (
+              <div className="fade-in-up" style={{ textAlign: 'center', marginTop: '40%' }}>
+                <div style={{ color: 'var(--text-secondary)', marginBottom: 16 }}><IconCalendar /></div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{t.no_events}</div>
+                <div style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{t.check_back}</div>
+              </div>
+            )}
 
-                  <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
-                </div>
-              ) : (
-                /* ── 2-COLUMN RESULTS VIEW (MOBILE OPTIMIZED) ── */
-                <div className="fade-in-up" style={{ marginTop: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800 }}>{t.results}</div>
-                    <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>12 {t.found}</div>
+            {/* SAVED TAB */}
+            {activeTab === "saved" && (
+              <div className="fade-in-up">
+                <div className="hero-title">{t.saved_tab}</div>
+                {savedGifts.length === 0 ? (
+                  <div className="ios-group" style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    {t.no_saved}
                   </div>
-                  
+                ) : (
                   <div className="results-grid">
-                    {[1, 2, 3, 4].map(i => {
-                      const isSaved = savedGifts.includes(i);
-                      return (
-                        <div key={i} className="result-card">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
-                              {giftQuery || "Durov's Cap"}
-                            </div>
-                            <div onClick={() => toggleSave(i)} style={{ color: isSaved ? 'var(--tg-blue)' : 'var(--text-secondary)', cursor: 'pointer', paddingLeft: 8 }}>
-                              {isSaved ? <IconBookmarkFilled /> : <IconBookmark />}
-                            </div>
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
-                            #{1000 + i} • GetGems
-                          </div>
-                          <div style={{ marginTop: 'auto' }}>
-                            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--tg-blue)' }}>450 GRAM</div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {savedGifts.map(item => renderGiftCard(item))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* EVENTS TAB */}
-          {activeTab === "events" && (
-            <div className="fade-in-up" style={{ textAlign: 'center', marginTop: '40%' }}>
-              <div style={{ color: 'var(--text-secondary)', marginBottom: 16 }}><IconCalendar /></div>
-              <div style={{ fontSize: 20, fontWeight: 700 }}>{t.no_events}</div>
-              <div style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{t.check_back}</div>
-            </div>
-          )}
-
-          {/* SAVED TAB */}
-          {activeTab === "saved" && (
-            <div className="fade-in-up">
-              <div className="hero-title">{t.saved_tab}</div>
-              <div className="ios-group" style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                {t.no_saved}
+                )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* PROFILE TAB */}
-          {activeTab === "profile" && (
-            <div className="fade-in-up">
-              <div className="hero-title">{t.profile_tab}</div>
-              
-              {/* Referrals Section */}
-              <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
-              <div className="ios-group">
-                <div className="ios-row" onClick={copyReferral}>
-                  <div className="row-left">
-                    <div className="row-icon-box" style={{ background: '#ff9500' }}><IconCopy /></div>
-                    {t.copy_ref}
-                  </div>
-                </div>
-                <div className="ios-row" style={{ cursor: 'default' }}>
-                  <div className="row-left">{t.ref_count}</div>
-                  <div style={{ color: 'var(--tg-blue)', fontWeight: 700, fontSize: 16 }}>0</div>
-                </div>
-              </div>
-
-              {/* Community Section */}
-              <div className="section-label">{t.community}</div>
-              <div className="ios-group">
-                <a href="https://t.me/insidemajek?direct" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="ios-row">
+            {/* PROFILE TAB */}
+            {activeTab === "profile" && (
+              <div className="fade-in-up">
+                <div className="hero-title">{t.profile_tab}</div>
+                
+                {/* Referrals Section */}
+                <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
+                <div className="ios-group">
+                  <div className="ios-row" onClick={copyReferral}>
                     <div className="row-left">
-                      <div className="row-icon-box" style={{ background: '#34c759' }}><IconUser /></div>
-                      {t.support}
+                      <div className="row-icon-box" style={{ background: '#ff9500' }}><IconCopy /></div>
+                      {t.copy_ref}
+                    </div>
+                  </div>
+                  <div className="ios-row" style={{ cursor: 'default' }}>
+                    <div className="row-left">{t.ref_count}</div>
+                    <div style={{ color: 'var(--tg-blue)', fontWeight: 700, fontSize: 16 }}>0</div>
+                  </div>
+                </div>
+
+                {/* Community Section (Reordered) */}
+                <div className="section-label">{t.community}</div>
+                <div className="ios-group">
+                  <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="ios-row">
+                      <div className="row-left">
+                        <div className="row-icon-box" style={{ background: '#ff9500' }}><IconGlobe /></div>
+                        {t.comm_channel}
+                      </div>
+                      <IconChevronRight />
+                    </div>
+                  </a>
+                  <a href="https://t.me/+Op7gLVniX9Y1OTRk" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="ios-row">
+                      <div className="row-left">
+                        <div className="row-icon-box" style={{ background: '#0a84ff' }}><IconSearch /></div>
+                        {t.comm_chat}
+                      </div>
+                      <IconChevronRight />
+                    </div>
+                  </a>
+                  <a href="https://t.me/insidemajek?direct" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="ios-row">
+                      <div className="row-left">
+                        <div className="row-icon-box" style={{ background: '#34c759' }}><IconUser /></div>
+                        {t.support}
+                      </div>
+                      <IconChevronRight />
+                    </div>
+                  </a>
+                </div>
+
+                {/* Support Builder Section */}
+                <div className="section-label">{t.support_builder}</div>
+                <div className="ios-group">
+                  <div className="ios-row" onClick={() => setActiveSheet('donate')}>
+                    <div className="row-left">
+                      <div className="row-icon-box" style={{ background: '#ff2d55' }}><IconHeart /></div>
+                      {t.donate}
                     </div>
                     <IconChevronRight />
                   </div>
-                </a>
-                <a href="https://t.me/+Op7gLVniX9Y1OTRk" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="ios-row">
-                    <div className="row-left">
-                      <div className="row-icon-box" style={{ background: '#0a84ff' }}><IconSearch /></div>
-                      {t.comm_chat}
-                    </div>
-                    <IconChevronRight />
-                  </div>
-                </a>
-                <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="ios-row">
-                    <div className="row-left">
-                      <div className="row-icon-box" style={{ background: '#ff9500' }}><IconGlobe /></div>
-                      {t.comm_channel}
-                    </div>
-                    <IconChevronRight />
-                  </div>
-                </a>
-              </div>
+                </div>
 
-              {/* Support Builder Section */}
-              <div className="section-label">{t.support_builder}</div>
-              <div className="ios-group">
-                <div className="ios-row" onClick={() => setActiveSheet('donate')}>
-                  <div className="row-left">
-                    <div className="row-icon-box" style={{ background: '#ff2d55' }}><IconHeart /></div>
-                    {t.donate}
-                  </div>
-                  <IconChevronRight />
+                <div style={{ textAlign: 'center', marginTop: 40, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>
+                  Built by @insidemajek
                 </div>
               </div>
-
-              <div style={{ textAlign: 'center', marginTop: 40, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>
-                Built by @insidemajek
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* BOTTOM NAV */}
-        <div className="tab-bar-container">
-          <div className="ios-tab-bar">
-            {[
-              { id: 'scout', icon: <IconSearch />, label: t.scout_tab },
-              { id: 'events', icon: <IconCalendar />, label: t.events_tab },
-              { id: 'saved', icon: <IconBookmark />, label: t.saved_tab },
-              { id: 'profile', icon: <IconUser />, label: t.profile_tab }
-            ].map(tab => (
-              <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
-                <div className="tab-icon">{tab.icon}</div>
-                <span className="tab-label">{tab.label}</span>
-              </button>
-            ))}
+            )}
           </div>
-        </div>
 
-        {/* BOTTOM SHEETS */}
-        {renderSheet()}
-        
+          {/* BOTTOM NAV */}
+          <div className="tab-bar-container">
+            <div className="ios-tab-bar">
+              {[
+                { id: 'scout', icon: <IconSearch />, label: t.scout_tab },
+                { id: 'events', icon: <IconCalendar />, label: t.events_tab },
+                { id: 'saved', icon: <IconBookmark />, label: t.saved_tab },
+                { id: 'profile', icon: <IconUser />, label: t.profile_tab }
+              ].map(tab => (
+                <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                  <div className="tab-icon">{tab.icon}</div>
+                  <span className="tab-label">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* BOTTOM SHEETS */}
+          {renderSheet()}
+          
+        </div>
       </div>
     </>
   );
