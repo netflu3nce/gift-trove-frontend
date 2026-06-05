@@ -2,25 +2,91 @@ import React, { useState, useEffect } from "react";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
 const GIFTS = [
+  // Original gifts
   "Plush Pepe", "Durov's Cap", "Jelly Bunny", "Magic Potion", "Loot Bag",
   "Vintage Cigar", "Eternal Candle", "Homemade Cake", "Sharp Tongue",
   "Spy Agaric", "Sakura Flower", "Spiced Wine", "Diamond Ring", "Evil Eye",
   "Frightful Egg", "Astral Shard", "Trapped Heart", "Skeleton Watch",
   "Voodoo Doll", "Hypno Lollipop", "Tama Gotchi", "Bunny Muffin",
-  "Cookie Heart", "Witch Hat"
+  "Cookie Heart", "Witch Hat",
+  // Extended gifts from research
+  "Santa Hat", "Berry Box", "Candy Cane", "Crystal Ball", "Desk Calendar",
+  "Electric Skull", "Eternal Rose", "Flying Broom", "Gem Signet",
+  "Genie Lamp", "Ginger Cookie", "Hanging Star", "Hex Pot", "Holiday Drink",
+  "Ion Gem", "Jester Hat", "Jingle Bells", "Kissed Frog", "Lol Pop",
+  "Love Candle", "Lunar Snake", "Mad Pumpkin", "Mini Oscar", "Party Sparkler",
+  "Perfume Bottle", "Pet Snake", "Precious Peach", "Record Player",
+  "Scared Cat", "Signet Ring", "Skull Flower", "Sleigh Bell", "Snake Box",
+  "Snow Globe", "Snow Mittens", "Star Notepad", "Swiss Watch", "Tama Gadget",
+  "Winter Wreath", "Xmas Stocking", "Heart Locket", "Astral Egg",
+  "Boo Basket", "Cursed Skull", "Desk Trophy", "Dragon Token",
+  "Flame Flower", "Gem Ring", "Golden Egg", "Lunar Charm", "Mystic Orb",
+  "Night Owl", "Pirate Chest", "Rainbow Gem", "Royal Jelly", "Solar Flare",
+  "Space Helmet", "Tiger Eye", "Time Crystal", "Trophy Cup", "Wolf Fang"
 ];
 
-const MODELS = ["Common", "Rare", "Epic", "Legendary", "Mythical"];
-const BACKDROPS = ["Space", "Nature", "Urban", "Abstract", "Fire", "Ice", "Gold", "Neon"];
-const SYMBOLS = ["Moon", "Star", "Sun", "Heart", "Diamond", "Skull", "Crown", "Lightning"];
-const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Telegram"];
+// Models are per-gift (each gift has its own set), but for filter UI we use common known ones
+const MODELS = [
+  "Common", "Rare", "Epic", "Legendary", "Mythical",
+  // Real model names from marketplace data
+  "Hothead", "Krueger", "Pickle Rick", "Toading", "Pumpkin", "Lucipop",
+  "Golden", "Diamond", "Platinum", "Silver", "Bronze",
+  "Cyber", "Neon", "Shadow", "Flame", "Frost", "Void",
+  "Crystal", "Emerald", "Ruby", "Sapphire", "Onyx"
+];
+
+// Full backdrop list sourced from utils.tg gift constructor
+const BACKDROPS = [
+  // Dark / Black tones
+  "Black", "Onyx Black", "Midnight Blue", "Battleship Grey",
+  // Purple family
+  "Electric Purple", "Lavender", "Cyberpunk", "Electric Indigo",
+  "Purple", "Grape", "Dark Lilac", "English Violet", "Fandango", "Burgundy",
+  // Blue family
+  "Neon Blue", "Navy Blue", "Sapphire", "Sky Blue", "Azure Blue",
+  "Pacific Cyan", "Cobalt Blue", "French Blue", "Indigo Dye", "Marine Blue",
+  // Teal / Green family
+  "Aquamarine", "Pacific Green", "Emerald", "Mint Green", "Malachite",
+  "Shamrock Green", "Turquoise", "Jade Green", "Tactical Pine", "Gunship Green",
+  "Pine Green", "Hunter Green", "Pistachio",
+  // Yellow / Gold family
+  "Lemongrass", "Light Olive", "Satin Gold", "Pure Gold", "Amber",
+  "Caramel", "Orange", "Khaki Green", "Desert Sand",
+  // Red / Orange family
+  "Carrot Juice", "Coral Red", "Persimmon", "Strawberry", "Raspberry",
+  "Rosewood",
+  // Pink / Rose family
+  "Mystic Pearl",
+  // Neutral / Grey
+  "Steel Grey", "Silver Blue", "Roman Silver", "Platinum", "Ivory White",
+  "Cappuccino", "Moonstone"
+];
+
+// Symbols sourced from real Telegram NFT marketplace listings
+const SYMBOLS = [
+  // Animals
+  "Arabian Horse", "Calm Wolf", "Hedgehog", "Sumerian Bird",
+  "Boat", "Snake", "Owl", "Eagle", "Raven", "Phoenix",
+  "Dragon", "Butterfly", "Bee", "Turtle", "Frog",
+  "Cat", "Dog", "Bear", "Fox", "Rabbit",
+  // Objects / Mystical
+  "Coin", "Crown", "Star", "Moon", "Sun",
+  "Heart", "Diamond", "Skull", "Lightning", "Shield",
+  "Sword", "Flame", "Crystal", "Key", "Anchor",
+  "Hourglass", "Eye", "Feather", "Leaf", "Rose",
+  // Celestial / Abstract
+  "Comet", "Nebula", "Galaxy", "Aurora", "Prism",
+  "Rune", "Sigil", "Glyph", "Totem", "Amulet"
+];
+
+const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Telegram", "Fragment", "Tonnel"];
 
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
 const T = {
   EN: {
     scout_tab: "Scout", events_tab: "Events", saved_tab: "Saved", profile_tab: "Profile",
-    fastest_way: "The fastest way to find any Telegram Gift.",
+    fastest_way: "The fastest way to find any Telegram Gift",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
     scout_gift: "Scout Gift", results: "Results", found: "found",
@@ -36,7 +102,7 @@ const T = {
   },
   RU: {
     scout_tab: "Поиск", events_tab: "События", saved_tab: "Сохраненное", profile_tab: "Профиль",
-    fastest_way: "Самый быстрый способ найти любой Telegram Подарок.",
+    fastest_way: "Самый быстрый способ найти любой Telegram Подарок",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
     scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
@@ -52,7 +118,7 @@ const T = {
   },
   ZH: {
     scout_tab: "侦测", events_tab: "活动", saved_tab: "已保存", profile_tab: "个人资料",
-    fastest_way: "查找任何 Telegram 礼物的最快方法。",
+    fastest_way: "查找任何 Telegram 礼物的最快方法",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "(可选)",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
     scout_gift: "侦测礼物", results: "结果", found: "已找到",
@@ -83,13 +149,23 @@ const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="non
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
 
-// ─── APPLE MORPHISM STYLES ─────────────────────────────────────────────────────
+// ─── TELEGRAM LOGO SVG ────────────────────────────────────────────────────────
+const TelegramLogo = ({ size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="12" fill="#229ED9"/>
+    <path d="M5.5 11.5L17.5 6.5L14.5 17.5L11 14L8.5 16.5V13L15.5 8.5L9.5 12.5L5.5 11.5Z" fill="white"/>
+    <path d="M11 14L10.5 17.5L12.5 15.5" fill="white"/>
+  </svg>
+);
+
+// ─── STYLES ───────────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    /* ── Dark mode (default) ── */
     --bg-base: #000000;
     --bg-desktop: #000000;
     --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
@@ -102,7 +178,12 @@ const styles = `
     --border: rgba(255, 255, 255, 0.1);
     --tg-blue: #0a84ff;
     --blur: blur(40px) saturate(200%);
-    
+
+    /* ── Header colours (dark mode) ── */
+    /* In dark mode the header IS the dark background, so text is white */
+    --nav-bg: transparent;
+    --nav-text: #ffffff;
+
     --radius-xl: 32px;
     --radius-lg: 20px;
     --radius-md: 14px;
@@ -112,6 +193,7 @@ const styles = `
     --bounce: cubic-bezier(0.32, 0.72, 0, 1);
   }
 
+  /* ── Light mode ── */
   [data-theme="light"] {
     --bg-base: #f2f2f7;
     --bg-desktop: #e5e5ea;
@@ -124,6 +206,14 @@ const styles = `
     --text-secondary: rgba(60, 60, 67, 0.6);
     --border: rgba(0, 0, 0, 0.05);
     --tg-blue: #007aff;
+
+    /*
+      In light mode the top-nav area has a DARK header
+      (the slate-blue/grey strip visible in the reference image)
+      with WHITE text — matching the old UI screenshot.
+    */
+    --nav-bg: #4a5568;
+    --nav-text: #ffffff;
   }
 
   body {
@@ -140,24 +230,41 @@ const styles = `
     display: flex; justify-content: center; min-height: 100vh; width: 100vw; overflow: hidden;
   }
 
-  .app-container { 
-    width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column; position: relative; 
+  .app-container {
+    width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column;
+    position: relative;
     background: var(--bg-base); background-image: var(--bg-gradient); background-attachment: fixed;
     box-shadow: 0 0 40px rgba(0,0,0,0.2);
     color: var(--text-primary);
   }
 
-  /* TOP NAVBAR */
+  /* ── TOP NAVBAR ─────────────────────────────────────────────────────────────
+     Dark coloured strip across the very top matching the reference screenshot.
+     In dark mode it stays transparent (dark bg already covers it).
+     In light mode it uses --nav-bg (a dark slate) with --nav-text (white).
+  ── */
   .top-nav {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 24px; z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    z-index: 50;
+    background: var(--nav-bg);
+    transition: background 0.4s ease;
+    /* Rounded bottom corners to follow the iOS Telegram mini-app header style */
+    border-radius: 0 0 0 0;
   }
+
   .top-icons { display: flex; gap: 16px; }
+
   .icon-btn {
-    background: var(--bg-card); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%; width: 40px; height: 40px;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
-    color: var(--text-primary);
+    /* Always white icons on header */
+    color: var(--nav-text);
     transition: transform 0.2s var(--bounce);
   }
   .icon-btn:active { transform: scale(0.9); }
@@ -180,7 +287,7 @@ const styles = `
     font-size: 15px; font-weight: 600; color: var(--text-primary);
     margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
   }
-  
+
   /* INPUTS & CONTROLS */
   .input-group { margin-bottom: 24px; position: relative; }
   .ios-input {
@@ -191,7 +298,7 @@ const styles = `
     transition: all 0.3s; font-family: var(--font);
   }
   .ios-input:focus { border-color: var(--tg-blue); background: var(--bg-card); }
-  
+
   /* AUTOCOMPLETE DROPDOWN */
   .suggestions-dropdown {
     position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
@@ -276,7 +383,7 @@ const styles = `
   .sheet-content::-webkit-scrollbar { display: none; }
   .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
   .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
-  
+
   .sheet-list-item {
     padding: 18px 20px; font-size: 17px; font-weight: 600; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center; cursor: pointer;
@@ -337,10 +444,18 @@ const styles = `
   }
   .result-card:active { transform: scale(0.96); }
 
-  /* TOP NAV LOGO TEXT */
+  /* ── NAV LOGO ──────────────────────────────────────────────────────────────
+     Always white because header is always dark (either transparent-on-dark or
+     dark-solid-on-light).
+  ── */
   .nav-logo {
-    font-weight: 800; font-size: 20px; letter-spacing: -0.5px;
-    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    color: var(--nav-text);          /* always white */
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   /* EVENTS EMPTY STATE TEXT */
@@ -359,7 +474,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // FIX 3: Referral count — load from localStorage, increment on each unique referral click
   const [referralCount, setReferralCount] = useState(() => {
     const stored = localStorage.getItem("gt_ref_count");
     return stored ? parseInt(stored, 10) : 0;
@@ -367,12 +481,12 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState("scout");
   const [toast, setToast] = useState(null);
-  
+
   // App Flow State
   const [isSearching, setIsSearching] = useState(false);
-  const [activeSheet, setActiveSheet] = useState(null); 
-  const [selectedGift, setSelectedGift] = useState(null); // For details modal
-  
+  const [activeSheet, setActiveSheet] = useState(null);
+  const [selectedGift, setSelectedGift] = useState(null);
+
   // Search Form State
   const [giftQuery, setGiftQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -381,7 +495,7 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState("Any");
   const [selectedBackdrop, setSelectedBackdrop] = useState("Any");
   const [selectedSymbol, setSelectedSymbol] = useState("Any");
-  
+
   // Donate Flow State
   const [donateStep, setDonateStep] = useState(1);
   const [donateAmount, setDonateAmount] = useState("");
@@ -391,27 +505,18 @@ export default function App() {
   const t = T[lang] || T["EN"];
   const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : { id: 12345678, first_name: "Scout" };
 
-  // Effect Bindings for Persistence
+  // Effect Bindings
   useEffect(() => {
     localStorage.setItem("gt_theme", theme);
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  useEffect(() => {
-    localStorage.setItem("gt_lang", lang);
-  }, [lang]);
-
-  useEffect(() => {
-    localStorage.setItem("gt_saved", JSON.stringify(savedGifts));
-  }, [savedGifts]);
-
-  // FIX 3: Persist referral count changes
-  useEffect(() => {
-    localStorage.setItem("gt_ref_count", referralCount.toString());
-  }, [referralCount]);
+  useEffect(() => { localStorage.setItem("gt_lang", lang); }, [lang]);
+  useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
+  useEffect(() => { localStorage.setItem("gt_ref_count", referralCount.toString()); }, [referralCount]);
 
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
-  
+
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -447,7 +552,6 @@ export default function App() {
     window.open("https://getgems.io/gifts", "_blank");
   };
 
-  // FIX 3: Copy referral link and increment count
   const copyReferral = () => {
     const link = `https://t.me/gifttrovebot?startapp=${tgUser?.id || "demo"}`;
     if (navigator.clipboard && window.isSecureContext) {
@@ -461,7 +565,6 @@ export default function App() {
     const address = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
     const amountNano = (parseFloat(donateAmount) || 0) * 1e9;
     let url = `ton://transfer/${address}?amount=${amountNano}&text=Donation`;
-    
     if (donateWallet === "Tg wallet") url = `https://t.me/wallet?startattach=ton_transfer-${address}`;
     window.open(url, '_blank');
     setDonateStep(2);
@@ -470,14 +573,14 @@ export default function App() {
   // Autocomplete filtering
   const filteredGifts = GIFTS.filter(g => g.toLowerCase().includes(giftQuery.toLowerCase()));
 
-  // Mock Results Data Generation
+  // Mock Results
   const generateMockResults = () => {
     return [1, 2, 3, 4].map(i => ({
       id: i,
       name: giftQuery || "Durov's Cap",
       model: i === 1 ? "Rare" : i === 2 ? "Legendary" : "Common",
-      symbol: i === 1 ? "Star" : i === 2 ? "Crown" : "Heart",
-      backdrop: i === 1 ? "Space" : i === 2 ? "Gold" : "Nature",
+      symbol: i === 1 ? "Arabian Horse" : i === 2 ? "Crown" : "Coin",
+      backdrop: i === 1 ? "Pacific Cyan" : i === 2 ? "Pure Gold" : "Midnight Blue",
       price: i === 1 ? "450 GRAM" : i === 2 ? "1,200 GRAM" : "80 GRAM",
       market: "GetGems",
       itemNumber: 1000 + i
@@ -516,7 +619,7 @@ export default function App() {
 
   const renderSheet = () => {
     if (!activeSheet) return null;
-    
+
     // GIFT DETAILS MODAL
     if (activeSheet === 'gift_details' && selectedGift) {
       const isSaved = savedGifts.some(g => g.id === selectedGift.id);
@@ -528,14 +631,12 @@ export default function App() {
             <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500, marginBottom: 24 }}>
               #{selectedGift.itemNumber} • {selectedGift.market}
             </div>
-            
             <div className="ios-group" style={{ margin: 0, marginBottom: 24 }}>
               <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Model</span><span>{selectedGift.model}</span></div>
               <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Backdrop</span><span>{selectedGift.backdrop}</span></div>
               <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Symbol</span><span>{selectedGift.symbol}</span></div>
               <div className="ios-row"><span style={{ color: 'var(--text-secondary)' }}>Listed Value</span><span style={{ color: 'var(--tg-blue)', fontWeight: 800 }}>{selectedGift.price}</span></div>
             </div>
-
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="action-btn" style={{ flex: 1, background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
                 {isSaved ? "Remove Saved" : "Save Gift"}
@@ -558,17 +659,13 @@ export default function App() {
             {donateStep === 1 && (
               <div className="fade-in-up">
                 <div className="sheet-title">{t.donate}</div>
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 24, fontSize: 15, lineHeight: 1.4 }}>
-                  {t.donate_desc}
-                </p>
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 24, fontSize: 15, lineHeight: 1.4 }}>{t.donate_desc}</p>
                 <div className="input-group">
                   <input type="number" className="ios-input" placeholder={t.amount_gram} value={donateAmount} onChange={e => setDonateAmount(e.target.value)} />
                 </div>
                 <div className="chips-grid" style={{ justifyContent: 'center' }}>
                   {["MyTonWallet", "Tg wallet", "TonKeeper"].map(w => (
-                    <div key={w} className={`chip ${donateWallet === w ? 'active' : ''}`} onClick={() => setDonateWallet(w)}>
-                      {w}
-                    </div>
+                    <div key={w} className={`chip ${donateWallet === w ? 'active' : ''}`} onClick={() => setDonateWallet(w)}>{w}</div>
                   ))}
                 </div>
                 <button className="action-btn" onClick={executeDonate} disabled={!donateAmount}>Donate Now</button>
@@ -598,11 +695,12 @@ export default function App() {
       );
     }
 
+    // ATTRIBUTE / LANG SHEETS
     let title, options, currentVal, setVal;
     if (activeSheet === 'model') { title = t.model; options = [t.any, ...MODELS]; currentVal = selectedModel; setVal = setSelectedModel; }
     else if (activeSheet === 'backdrop') { title = t.backdrop; options = [t.any, ...BACKDROPS]; currentVal = selectedBackdrop; setVal = setSelectedBackdrop; }
     else if (activeSheet === 'symbol') { title = t.symbol; options = [t.any, ...SYMBOLS]; currentVal = selectedSymbol; setVal = setSelectedSymbol; }
-    else if (activeSheet === 'lang') { 
+    else if (activeSheet === 'lang') {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
@@ -644,18 +742,18 @@ export default function App() {
       <style>{styles}</style>
       <div className="app-wrapper">
         <div className="app-container">
-          
+
           {toast && <div className="toast">{toast}</div>}
 
-          {/* TOP ICONS (Fixed) */}
+          {/* ── TOP NAVBAR ─────────────────────────────────────────────────── */}
           <div className="top-nav">
             {activeTab === "scout" && isSearching ? (
-               <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
+              <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
             ) : (
-               /* FIX 1: Use nav-logo class so it picks up var(--text-primary) in both modes */
-               <div className="nav-logo">GiftTrove</div>
+              /* Logo: always white text on dark header */
+              <div className="nav-logo">GiftTrove</div>
             )}
-            
+
             <div className="top-icons">
               <div className="icon-btn" onClick={() => setActiveSheet('lang')}><IconGlobe /></div>
               <div className="icon-btn" onClick={toggleTheme}>
@@ -664,30 +762,26 @@ export default function App() {
             </div>
           </div>
 
-          {/* MAIN CONTENT */}
+          {/* ── MAIN CONTENT ────────────────────────────────────────────────── */}
           <div className="content">
-            
+
             {/* SCOUT TAB */}
             {activeTab === "scout" && (
               <div className="fade-in-up">
                 {!isSearching && (
-                  /* FIX 1: hero-title now has color: var(--text-primary) via CSS */
-                  /* FIX 2: removed marginLeft on img, use gap via inline flex instead */
-                  <div className="hero-title" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '4px' }}>
-                    <span>{t.fastest_way.replace(/\.$/, '')}</span>
-                    <img
-                      src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png"
-                      alt="Icon"
-                      style={{
-                        display: 'inline-block',
-                        height: '1.1em',
-                        width: 'auto',
-                        verticalAlign: 'middle',
-                        borderRadius: '8px',
-                        flexShrink: 0
-                      }}
-                    />
-                    <span>.</span>
+                  /*
+                    Hero title:
+                    - Text first, then full stop, then Telegram logo AFTER the full stop.
+                    - Logo size matches the text height (1.1em).
+                  */
+                  <div
+                    className="hero-title"
+                    style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}
+                  >
+                    <span style={{ marginRight: 0 }}>{t.fastest_way}.</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                      <TelegramLogo size={32} />
+                    </span>
                   </div>
                 )}
 
@@ -696,13 +790,13 @@ export default function App() {
                   <div>
                     <div className="input-group">
                       <div className="section-label">{t.gift_name}</div>
-                      <input 
-                        className="ios-input" 
-                        placeholder="e.g. Durov's Cap" 
-                        value={giftQuery} 
+                      <input
+                        className="ios-input"
+                        placeholder="e.g. Durov's Cap"
+                        value={giftQuery}
                         onFocus={() => setShowSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                        onChange={e => setGiftQuery(e.target.value)} 
+                        onChange={e => setGiftQuery(e.target.value)}
                       />
                       {showSuggestions && giftQuery && filteredGifts.length > 0 && (
                         <div className="suggestions-dropdown">
@@ -716,7 +810,10 @@ export default function App() {
                     </div>
 
                     <div className="input-group">
-                      <div className="section-label">{t.specific_id} <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{t.optional}</span></div>
+                      <div className="section-label">
+                        {t.specific_id}
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{t.optional}</span>
+                      </div>
                       <input type="number" className="ios-input" placeholder="#12345" value={giftId} onChange={e => setGiftId(e.target.value)} />
                     </div>
 
@@ -735,13 +832,16 @@ export default function App() {
                       <div className="section-label">{t.attributes}</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div className="select-btn" onClick={() => setActiveSheet('model')}>
-                          <span>{t.model}</span> <span className="select-val">{selectedModel} <IconChevronRight /></span>
+                          <span>{t.model}</span>
+                          <span className="select-val">{selectedModel} <IconChevronRight /></span>
                         </div>
                         <div className="select-btn" onClick={() => setActiveSheet('backdrop')}>
-                          <span>{t.backdrop}</span> <span className="select-val">{selectedBackdrop} <IconChevronRight /></span>
+                          <span>{t.backdrop}</span>
+                          <span className="select-val">{selectedBackdrop} <IconChevronRight /></span>
                         </div>
                         <div className="select-btn" onClick={() => setActiveSheet('symbol')}>
-                          <span>{t.symbol}</span> <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
+                          <span>{t.symbol}</span>
+                          <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
                         </div>
                       </div>
                     </div>
@@ -749,14 +849,12 @@ export default function App() {
                     <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
                   </div>
                 ) : (
-                  /* ── 2-COLUMN RESULTS VIEW (MOBILE OPTIMIZED) ── */
+                  /* ── RESULTS VIEW ── */
                   <div className="fade-in-up" style={{ marginTop: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {/* FIX 1: explicit color on results heading */}
                       <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>{t.results}</div>
                       <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>{mockResults.length} {t.found}</div>
                     </div>
-                    
                     <div className="results-grid">
                       {mockResults.map(item => renderGiftCard(item))}
                     </div>
@@ -768,7 +866,6 @@ export default function App() {
             {/* EVENTS TAB */}
             {activeTab === "events" && (
               <div className="fade-in-up" style={{ textAlign: 'center', marginTop: '40%' }}>
-                {/* FIX 1: color on calendar icon container and title */}
                 <div style={{ color: 'var(--text-secondary)', marginBottom: 16 }}><IconCalendar /></div>
                 <div className="empty-state-title">{t.no_events}</div>
                 <div style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{t.check_back}</div>
@@ -778,7 +875,6 @@ export default function App() {
             {/* SAVED TAB */}
             {activeTab === "saved" && (
               <div className="fade-in-up">
-                {/* FIX 1: hero-title has color: var(--text-primary) via CSS class */}
                 <div className="hero-title">{t.saved_tab}</div>
                 {savedGifts.length === 0 ? (
                   <div className="ios-group" style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -795,10 +891,9 @@ export default function App() {
             {/* PROFILE TAB */}
             {activeTab === "profile" && (
               <div className="fade-in-up">
-                {/* FIX 1: hero-title has color: var(--text-primary) via CSS class */}
                 <div className="hero-title">{t.profile_tab}</div>
-                
-                {/* Referrals Section */}
+
+                {/* Referrals */}
                 <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
                 <div className="ios-group">
                   <div className="ios-row" onClick={copyReferral}>
@@ -809,12 +904,11 @@ export default function App() {
                   </div>
                   <div className="ios-row" style={{ cursor: 'default' }}>
                     <div className="row-left">{t.ref_count}</div>
-                    {/* FIX 3: display live referralCount state */}
                     <div style={{ color: 'var(--tg-blue)', fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
                   </div>
                 </div>
 
-                {/* Community Section (Reordered) */}
+                {/* Community */}
                 <div className="section-label">{t.community}</div>
                 <div className="ios-group">
                   <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -846,7 +940,7 @@ export default function App() {
                   </a>
                 </div>
 
-                {/* Support Builder Section */}
+                {/* Support Builder */}
                 <div className="section-label">{t.support_builder}</div>
                 <div className="ios-group">
                   <div className="ios-row" onClick={() => setActiveSheet('donate')}>
@@ -884,7 +978,7 @@ export default function App() {
 
           {/* BOTTOM SHEETS */}
           {renderSheet()}
-          
+
         </div>
       </div>
     </>
