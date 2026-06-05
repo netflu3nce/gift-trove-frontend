@@ -144,6 +144,7 @@ const styles = `
     width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column; position: relative; 
     background: var(--bg-base); background-image: var(--bg-gradient); background-attachment: fixed;
     box-shadow: 0 0 40px rgba(0,0,0,0.2);
+    color: var(--text-primary);
   }
 
   /* TOP NAVBAR */
@@ -155,7 +156,8 @@ const styles = `
   .icon-btn {
     background: var(--bg-card); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    color: var(--text-primary);
     transition: transform 0.2s var(--bounce);
   }
   .icon-btn:active { transform: scale(0.9); }
@@ -164,6 +166,7 @@ const styles = `
   .content {
     flex: 1; overflow-y: auto; overflow-x: hidden;
     padding: 0 24px calc(var(--tab-h) + var(--safe-bottom) + 20px);
+    color: var(--text-primary);
   }
   .content::-webkit-scrollbar { display: none; }
 
@@ -171,6 +174,7 @@ const styles = `
   .hero-title {
     font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15;
     margin-bottom: 24px; transition: opacity 0.3s, transform 0.3s;
+    color: var(--text-primary);
   }
   .section-label {
     font-size: 15px; font-weight: 600; color: var(--text-primary);
@@ -267,10 +271,11 @@ const styles = `
     background: var(--bg-sheet); border-top: 1px solid var(--border);
     backdrop-filter: blur(50px) saturate(200%); -webkit-backdrop-filter: blur(50px) saturate(200%);
     transform: translateY(100%); animation: slideUp 0.4s var(--bounce) forwards; overflow-y: auto;
+    color: var(--text-primary);
   }
   .sheet-content::-webkit-scrollbar { display: none; }
   .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
-  .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; }
+  .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
   
   .sheet-list-item {
     padding: 18px 20px; font-size: 17px; font-weight: 600; border-bottom: 1px solid var(--border);
@@ -290,6 +295,7 @@ const styles = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 20px; border-bottom: 1px solid var(--border); cursor: pointer;
     font-size: 17px; font-weight: 500; transition: background 0.2s;
+    color: var(--text-primary);
   }
   .ios-row:active { background: var(--bg-hover); }
   .ios-row:last-child { border-bottom: none; }
@@ -327,9 +333,21 @@ const styles = `
     border-radius: var(--radius-lg); padding: 16px; position: relative;
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     display: flex; flex-direction: column; transition: transform 0.2s var(--bounce);
-    cursor: pointer;
+    cursor: pointer; color: var(--text-primary);
   }
   .result-card:active { transform: scale(0.96); }
+
+  /* TOP NAV LOGO TEXT */
+  .nav-logo {
+    font-weight: 800; font-size: 20px; letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+
+  /* EVENTS EMPTY STATE TEXT */
+  .empty-state-title {
+    font-size: 20px; font-weight: 700;
+    color: var(--text-primary);
+  }
 `;
 
 export default function App() {
@@ -340,7 +358,13 @@ export default function App() {
     const saved = localStorage.getItem("gt_saved");
     return saved ? JSON.parse(saved) : [];
   });
-  
+
+  // FIX 3: Referral count — load from localStorage, increment on each unique referral click
+  const [referralCount, setReferralCount] = useState(() => {
+    const stored = localStorage.getItem("gt_ref_count");
+    return stored ? parseInt(stored, 10) : 0;
+  });
+
   const [activeTab, setActiveTab] = useState("scout");
   const [toast, setToast] = useState(null);
   
@@ -381,6 +405,11 @@ export default function App() {
     localStorage.setItem("gt_saved", JSON.stringify(savedGifts));
   }, [savedGifts]);
 
+  // FIX 3: Persist referral count changes
+  useEffect(() => {
+    localStorage.setItem("gt_ref_count", referralCount.toString());
+  }, [referralCount]);
+
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
   
   const showToast = (msg) => {
@@ -418,11 +447,13 @@ export default function App() {
     window.open("https://getgems.io/gifts", "_blank");
   };
 
+  // FIX 3: Copy referral link and increment count
   const copyReferral = () => {
     const link = `https://t.me/gifttrovebot?startapp=${tgUser?.id || "demo"}`;
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(link);
     }
+    setReferralCount(prev => prev + 1);
     showToast("Copied to clipboard!");
   };
 
@@ -461,7 +492,7 @@ export default function App() {
     return (
       <div key={item.id} className="result-card" onClick={() => { setSelectedGift(item); setActiveSheet('gift_details'); }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2, color: 'var(--text-primary)' }}>
             {item.name}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
@@ -621,7 +652,8 @@ export default function App() {
             {activeTab === "scout" && isSearching ? (
                <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
             ) : (
-               <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-0.5px' }}>GiftTrove</div>
+               /* FIX 1: Use nav-logo class so it picks up var(--text-primary) in both modes */
+               <div className="nav-logo">GiftTrove</div>
             )}
             
             <div className="top-icons">
@@ -639,8 +671,23 @@ export default function App() {
             {activeTab === "scout" && (
               <div className="fade-in-up">
                 {!isSearching && (
-                  <div className="hero-title">
-                    {t.fastest_way} <img src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png" alt="Icon" style={{ display: 'inline-block', height: '1.15em', verticalAlign: 'text-bottom', marginLeft: '6px', borderRadius: '8px' }} />
+                  /* FIX 1: hero-title now has color: var(--text-primary) via CSS */
+                  /* FIX 2: removed marginLeft on img, use gap via inline flex instead */
+                  <div className="hero-title" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '4px' }}>
+                    <span>{t.fastest_way.replace(/\.$/, '')}</span>
+                    <img
+                      src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png"
+                      alt="Icon"
+                      style={{
+                        display: 'inline-block',
+                        height: '1.1em',
+                        width: 'auto',
+                        verticalAlign: 'middle',
+                        borderRadius: '8px',
+                        flexShrink: 0
+                      }}
+                    />
+                    <span>.</span>
                   </div>
                 )}
 
@@ -705,7 +752,8 @@ export default function App() {
                   /* ── 2-COLUMN RESULTS VIEW (MOBILE OPTIMIZED) ── */
                   <div className="fade-in-up" style={{ marginTop: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: 22, fontWeight: 800 }}>{t.results}</div>
+                      {/* FIX 1: explicit color on results heading */}
+                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>{t.results}</div>
                       <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>{mockResults.length} {t.found}</div>
                     </div>
                     
@@ -720,8 +768,9 @@ export default function App() {
             {/* EVENTS TAB */}
             {activeTab === "events" && (
               <div className="fade-in-up" style={{ textAlign: 'center', marginTop: '40%' }}>
+                {/* FIX 1: color on calendar icon container and title */}
                 <div style={{ color: 'var(--text-secondary)', marginBottom: 16 }}><IconCalendar /></div>
-                <div style={{ fontSize: 20, fontWeight: 700 }}>{t.no_events}</div>
+                <div className="empty-state-title">{t.no_events}</div>
                 <div style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{t.check_back}</div>
               </div>
             )}
@@ -729,6 +778,7 @@ export default function App() {
             {/* SAVED TAB */}
             {activeTab === "saved" && (
               <div className="fade-in-up">
+                {/* FIX 1: hero-title has color: var(--text-primary) via CSS class */}
                 <div className="hero-title">{t.saved_tab}</div>
                 {savedGifts.length === 0 ? (
                   <div className="ios-group" style={{ padding: 20, textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -745,6 +795,7 @@ export default function App() {
             {/* PROFILE TAB */}
             {activeTab === "profile" && (
               <div className="fade-in-up">
+                {/* FIX 1: hero-title has color: var(--text-primary) via CSS class */}
                 <div className="hero-title">{t.profile_tab}</div>
                 
                 {/* Referrals Section */}
@@ -758,7 +809,8 @@ export default function App() {
                   </div>
                   <div className="ios-row" style={{ cursor: 'default' }}>
                     <div className="row-left">{t.ref_count}</div>
-                    <div style={{ color: 'var(--tg-blue)', fontWeight: 700, fontSize: 16 }}>0</div>
+                    {/* FIX 3: display live referralCount state */}
+                    <div style={{ color: 'var(--tg-blue)', fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
                   </div>
                 </div>
 
