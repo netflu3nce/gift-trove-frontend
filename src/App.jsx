@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
-// ─── TELEGRAM LOGO SVG ───────────────────────────────────────────────────────
-const TelegramLogo = ({ size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="24" cy="24" r="24" fill="#29B6F6"/>
-    <path d="M10.5 23.5L19.8 27.1L23.4 37.5L28.9 31.4L37.5 10.5L10.5 23.5Z" fill="white"/>
-    <path d="M19.8 27.1L23.4 37.5L28.9 31.4" fill="#B0BEC5"/>
-    <path d="M10.5 23.5L37.5 10.5L19.8 27.1" fill="white"/>
-  </svg>
+// ─── CUSTOM LOGO IMAGE ───────────────────────────────────────────────────────
+const GiftTroveLogo = ({ size = 28 }) => (
+  <img
+    src="https://i.ibb.co/ZRQJd5tT/MGGA.png"
+    alt="GiftTrove"
+    style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
+  />
 );
 
 // ─── 109 REAL TELEGRAM GIFT COLLECTIONS (from Giftix/Fragment, June 2026) ────
@@ -1511,6 +1510,71 @@ const styles = `
   }
   @keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+  /* PROMO BANNER CAROUSEL */
+  .promo-banner {
+    width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 24px;
+    position: relative; cursor: pointer;
+    aspect-ratio: 1500 / 450;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .promo-banner-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: 20px;
+    transition: opacity 0.7s ease;
+  }
+  .promo-banner-img.active { opacity: 1; z-index: 2; }
+  .promo-banner-img.inactive { opacity: 0; z-index: 1; }
+  /* Spiral glassmorphism overlay */
+  .promo-banner-overlay {
+    position: absolute; inset: 0; border-radius: 20px; z-index: 3; pointer-events: none;
+    overflow: hidden;
+  }
+  .promo-spiral {
+    position: absolute; border-radius: 50%; filter: blur(28px); opacity: 0.45;
+    animation: spiralRotate 6s linear infinite;
+  }
+  .promo-spiral-1 {
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(255,45,85,0.7) 0%, transparent 70%);
+    top: -30px; left: -30px;
+    animation-duration: 7s;
+  }
+  .promo-spiral-2 {
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(52,199,89,0.7) 0%, transparent 70%);
+    bottom: -20px; right: 10%;
+    animation-duration: 9s; animation-direction: reverse;
+  }
+  .promo-spiral-3 {
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, rgba(0,122,255,0.7) 0%, transparent 70%);
+    top: 10%; right: -20px;
+    animation-duration: 5s;
+  }
+  @keyframes spiralRotate {
+    0% { transform: rotate(0deg) translate(18px, 18px) rotate(0deg); }
+    100% { transform: rotate(360deg) translate(18px, 18px) rotate(-360deg); }
+  }
+  /* Dot indicators */
+  .promo-dots {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; z-index: 4;
+  }
+  .promo-dot {
+    width: 6px; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.5);
+    transition: all 0.3s ease;
+  }
+  .promo-dot.active {
+    width: 18px; background: rgba(255,255,255,0.95);
+  }
+  /* Gloss edge on banner */
+  .promo-banner::after {
+    content: ""; position: absolute; inset: 0; border-radius: 20px; z-index: 5; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%, rgba(0,0,0,0.08) 100%);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
   /* HERO TITLE — white in both modes */
   .hero-title {
     font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15;
@@ -1596,15 +1660,38 @@ const styles = `
     background: var(--bg-sheet); border: 1px solid var(--border);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    position: relative; overflow: hidden;
+  }
+  .tab-active-pill {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 22px;
+    background: rgba(0,122,255,0.15);
+    border: 1px solid rgba(0,122,255,0.25);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    transition: left 0.38s cubic-bezier(0.32,0.72,0,1);
+    pointer-events: none; z-index: 0;
+  }
+  [data-theme="dark"] .tab-active-pill {
+    background: rgba(10,132,255,0.2);
+    border: 1px solid rgba(10,132,255,0.3);
   }
   .tab-btn {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
     border: none; background: transparent; color: var(--text-secondary);
-    font-family: var(--font); cursor: pointer; transition: color 0.3s, transform 0.3s var(--bounce);
+    font-family: var(--font); cursor: pointer;
+    transition: color 0.3s; position: relative; z-index: 1;
   }
   .tab-btn.active { color: var(--tg-blue); }
-  .tab-icon { margin-bottom: 4px; transition: transform 0.3s var(--bounce); }
-  .tab-btn.active .tab-icon { transform: translateY(-3px) scale(1.1); }
+  .tab-icon { margin-bottom: 4px; transition: transform 0.38s cubic-bezier(0.32,0.72,0,1); }
+  .tab-icon-active { transform: translateY(-3px) scale(1.15) !important; animation: tabIconBounce 0.4s cubic-bezier(0.32,0.72,0,1); }
+  @keyframes tabIconBounce {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-6px) scale(1.2); }
+    60% { transform: translateY(-2px) scale(1.08); }
+    100% { transform: translateY(-3px) scale(1.15); }
+  }
   .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
 
   .sheet-overlay {
@@ -1751,14 +1838,69 @@ function buildWalletUrl(wallet, amountTON) {
     return `tonkeeper://transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&text=${desc}`;
   }
   if (wallet === "MyTonWallet") {
-    // MyTonWallet transfer deep link with pre-filled address, amount, comment
-    return `https://mytonwallet.io/transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&comment=${desc}`;
+    // MyTonWallet correct deep link
+    return `https://app.mytonwallet.io/transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&comment=${desc}`;
   }
   if (wallet === "Tg Wallet") {
     // Telegram Wallet bot with pre-filled transfer params via deeplink
     return `https://t.me/wallet?startapp=transfer_${WALLET_ADDRESS}_${amountNano}_${encodeURIComponent(DONATE_DESCRIPTION)}`;
   }
   return `ton://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${desc}`;
+}
+
+// ─── PROMO BANNER CAROUSEL ────────────────────────────────────────────────────
+const PROMO_SLIDES = [
+  { img: "https://i.ibb.co/5gXQZ5SQ/MGGA-1.png", url: "https://t.me/gifttrove" },
+  { img: "https://i.ibb.co/r2zGgWHH/MGGA-2.png", url: "https://t.me/troveotc" },
+  { img: "https://i.ibb.co/Kp2tJtQT/MGGA-4.png", url: "https://t.me/spinmibot?startapp=7608551523" },
+  { img: "https://i.ibb.co/v5NvzS6/MGGA-3.png", url: "https://t.me/hotontgbot/app?startapp=UQC61-XV5zwCn-7eHbciHh8qR_3k6-6Bq458qrUkGhFoYxPo" },
+  { img: "https://i.ibb.co/RkkHPgSV/MGGA-5.png", url: "https://t.me/insidemajek" },
+];
+
+function PromoBanner() {
+  const [current, setCurrent] = useState(0);
+  const intervalRef = useRef(null);
+
+  const startTimer = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCurrent(prev => (prev + 1) % PROMO_SLIDES.length);
+    }, 5000);
+  };
+
+  useEffect(() => {
+    startTimer();
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  const handleClick = () => {
+    window.open(PROMO_SLIDES[current].url, "_blank");
+  };
+
+  return (
+    <div className="promo-banner" onClick={handleClick}>
+      {PROMO_SLIDES.map((slide, i) => (
+        <img
+          key={i}
+          src={slide.img}
+          alt={`promo-${i}`}
+          className={`promo-banner-img ${i === current ? "active" : "inactive"}`}
+        />
+      ))}
+      {/* Glassmorphism spiral overlay */}
+      <div className="promo-banner-overlay">
+        <div className="promo-spiral promo-spiral-1" />
+        <div className="promo-spiral promo-spiral-2" />
+        <div className="promo-spiral promo-spiral-3" />
+      </div>
+      {/* Dot indicators */}
+      <div className="promo-dots">
+        {PROMO_SLIDES.map((_, i) => (
+          <div key={i} className={`promo-dot ${i === current ? "active" : ""}`} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
@@ -1773,10 +1915,12 @@ export default function App() {
     ? (window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" })
     : { id: 12345678, first_name: "Scout" };
 
-  const refKey = `gt_ref_count_${tgUser?.id || "guest"}`;
+  // useRef so refKey never changes mid-session and always reads the right localStorage slot
+  const refKeyRef = useRef(`gt_ref_count_${tgUser?.id || "guest"}`);
+  const refKey = refKeyRef.current;
 
   const [referralCount, setReferralCount] = useState(() =>
-    parseInt(localStorage.getItem(refKey) || "0", 10)
+    parseInt(localStorage.getItem(refKeyRef.current) || "0", 10)
   );
 
   const [activeTab, setActiveTab] = useState("scout");
@@ -1803,6 +1947,25 @@ export default function App() {
   const [pullY, setPullY] = useState(0);
   const touchStartY = useRef(0);
   const contentRef = useRef(null);
+
+  // Hide tab bar when keyboard is open on mobile
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        // If viewport height shrinks by more than 150px, keyboard is likely open
+        const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        setKeyboardOpen(visualHeight < window.screen.height * 0.75);
+      }
+    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleResize);
+      return () => window.visualViewport.removeEventListener("resize", handleResize);
+    } else {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
 
   // Detect desktop
   const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
@@ -2171,12 +2334,15 @@ export default function App() {
   const renderScout = (desktop = false) => (
     <div className="fade-in-up">
       {!isSearching && (
-        <div className={desktop ? "hero-title desktop" : "hero-title"}>
-          <div className="hero-title-row">
-            <span>{t.fastest_way}</span>
-            <TelegramLogo size={desktop ? 44 : 32} />
+        <>
+          <PromoBanner />
+          <div className={desktop ? "hero-title desktop" : "hero-title"}>
+            <div className="hero-title-row">
+              <span>{t.fastest_way}</span>
+              <GiftTroveLogo size={desktop ? 44 : 32} />
+            </div>
           </div>
-        </div>
+        </>
       )}
       {!isSearching ? (
         <div>
@@ -2384,8 +2550,9 @@ export default function App() {
           {/* Sidebar */}
           <div className="desktop-sidebar">
             <div className="desktop-logo">
-              <TelegramLogo size={28} />
-              GiftTrove
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                GIFT<GiftTroveLogo size={26} />Trove
+              </span>
             </div>
             {tabs.map(tab => (
               <button
@@ -2423,7 +2590,7 @@ export default function App() {
   return (
     <>
       <style>{styles}</style>
-      <div className="app-container">
+      <div className="app-container" data-theme={theme}>
         {toast && <div className="toast">{toast}</div>}
 
         {/* TOP NAV */}
@@ -2431,9 +2598,8 @@ export default function App() {
           {activeTab === "scout" && isSearching ? (
             <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
           ) : (
-            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8, lineHeight: 1 }}>
-              <span style={{ display: "flex", alignItems: "center", flexShrink: 0 }}><TelegramLogo size={24} /></span>
-              GiftTrove
+            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
+              GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>Trove
             </div>
           )}
           <div className="top-icons">
@@ -2471,16 +2637,27 @@ export default function App() {
         </div>
 
         {/* BOTTOM NAV */}
+        {!keyboardOpen && (
         <div className="tab-bar-container">
-          <div className="ios-tab-bar">
-            {tabs.map(tab => (
-              <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setIsSearching(false); }}>
-                <div className="tab-icon">{tab.icon}</div>
+          <div className="ios-tab-bar" style={{ position: "relative" }}>
+            {/* Glassmorphism pill that slides to active tab */}
+            <div
+              className="tab-active-pill"
+              style={{ left: `calc(${tabs.findIndex(t => t.id === activeTab)} * 25% + 12.5% - 22px)` }}
+            />
+            {tabs.map((tab, idx) => (
+              <button
+                key={tab.id}
+                className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => { setActiveTab(tab.id); setIsSearching(false); }}
+              >
+                <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
                 <span className="tab-label">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
+        )}
 
         {renderSheet()}
       </div>
