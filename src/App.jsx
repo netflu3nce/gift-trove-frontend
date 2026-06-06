@@ -1482,7 +1482,6 @@ const styles = `
   /* PULL-TO-REFRESH */
   .ptr-container {
     position: relative;
-    overflow: hidden;
   }
   .ptr-indicator {
     position: absolute;
@@ -1770,8 +1769,14 @@ export default function App() {
   const [savedGifts, setSavedGifts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
   });
+  const tgUser = typeof window !== "undefined"
+    ? (window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" })
+    : { id: 12345678, first_name: "Scout" };
+
+  const refKey = `gt_ref_count_${tgUser?.id || "guest"}`;
+
   const [referralCount, setReferralCount] = useState(() =>
-    parseInt(localStorage.getItem("gt_ref_count") || "0", 10)
+    parseInt(localStorage.getItem(refKey) || "0", 10)
   );
 
   const [activeTab, setActiveTab] = useState("scout");
@@ -1803,9 +1808,6 @@ export default function App() {
   const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
 
   const t = T[lang] || T["EN"];
-  const tgUser = typeof window !== "undefined"
-    ? (window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" })
-    : { id: 12345678, first_name: "Scout" };
 
   const currentGiftData = GIFT_COLLECTIONS[giftQuery] || null;
   const availableModels = currentGiftData ? currentGiftData.models : [];
@@ -1817,7 +1819,7 @@ export default function App() {
   }, [theme]);
   useEffect(() => { localStorage.setItem("gt_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
-  useEffect(() => { localStorage.setItem("gt_ref_count", referralCount.toString()); }, [referralCount]);
+  useEffect(() => { localStorage.setItem(refKey, referralCount.toString()); }, [referralCount, refKey]);
 
   useEffect(() => {
     setSelectedModel("Any");
@@ -2193,7 +2195,12 @@ export default function App() {
                 {filteredGifts.slice(0, 12).map(g => {
                   const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
                   return (
-                    <div key={g} className="suggestion-item" onClick={() => { setGiftQuery(g); setShowSuggestions(false); }}>
+                    <div
+                      key={g}
+                      className="suggestion-item"
+                      onMouseDown={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
+                      onTouchEnd={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
+                    >
                       <img src={giftImg(gSlug)} alt={g} className="suggestion-gift-img" onError={e => { e.target.style.display = "none"; }} />
                       {g}
                     </div>
@@ -2424,8 +2431,8 @@ export default function App() {
           {activeTab === "scout" && isSearching ? (
             <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
           ) : (
-            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
-              <TelegramLogo size={24} />
+            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8, lineHeight: 1 }}>
+              <span style={{ display: "flex", alignItems: "center", flexShrink: 0 }}><TelegramLogo size={24} /></span>
               GiftTrove
             </div>
           )}
