@@ -1,255 +1,73 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // ─── BACKDROP COLORS (80 total — matching Telegram's actual palette) ──────────
 const BACKDROP_COLORS = [
-  { name: "Black", hex: "#000000" },
-  { name: "Electric Purple", hex: "#7B2FBE" },
-  { name: "Lavender", hex: "#9B8EC4" },
-  { name: "Cyberpunk", hex: "#FF00FF" },
-  { name: "Electric Indigo", hex: "#6610F2" },
-  { name: "Neon Blue", hex: "#00F0FF" },
-  { name: "Navy Blue", hex: "#001F5B" },
-  { name: "Sapphire", hex: "#0F52BA" },
-  { name: "Sky Blue", hex: "#87CEEB" },
-  { name: "Azure Blue", hex: "#007FFF" },
-  { name: "Pacific Cyan", hex: "#1CA9C9" },
-  { name: "Aquamarine", hex: "#7FFFD4" },
-  { name: "Pacific Green", hex: "#1D6340" },
-  { name: "Emerald", hex: "#50C878" },
-  { name: "Mint Green", hex: "#98FF98" },
-  { name: "Malachite", hex: "#0BDA51" },
-  { name: "Shamrock Green", hex: "#009E60" },
-  { name: "Lemongrass", hex: "#9AB973" },
-  { name: "Light Olive", hex: "#ACBF60" },
-  { name: "Satin Gold", hex: "#CBA135" },
-  { name: "Pure Gold", hex: "#FFD700" },
-  { name: "Amber", hex: "#FFBF00" },
-  { name: "Caramel", hex: "#C68642" },
-  { name: "Orange", hex: "#FF7518" },
-  { name: "Carrot Juice", hex: "#ED9121" },
-  { name: "Coral Red", hex: "#FF4040" },
-  { name: "Persimmon", hex: "#EC5800" },
-  { name: "Strawberry", hex: "#FC5A8D" },
-  { name: "Raspberry", hex: "#E30B5C" },
-  { name: "Mystic Pearl", hex: "#E8D5C4" },
-  { name: "Onyx Black", hex: "#0F0F0F" },
-  { name: "Crimson", hex: "#DC143C" },
-  { name: "Rose Gold", hex: "#B76E79" },
-  { name: "Hot Pink", hex: "#FF69B4" },
-  { name: "Fuchsia", hex: "#FF00BF" },
-  { name: "Violet", hex: "#8B00FF" },
-  { name: "Indigo", hex: "#4B0082" },
-  { name: "Royal Blue", hex: "#4169E1" },
-  { name: "Cobalt", hex: "#0047AB" },
-  { name: "Steel Blue", hex: "#4682B4" },
-  { name: "Ice Blue", hex: "#D6EAF8" },
-  { name: "Powder Blue", hex: "#B0E0E6" },
-  { name: "Teal", hex: "#008080" },
-  { name: "Jade", hex: "#00A86B" },
-  { name: "Forest Green", hex: "#228B22" },
-  { name: "Olive", hex: "#808000" },
-  { name: "Lime", hex: "#32CD32" },
-  { name: "Chartreuse", hex: "#7FFF00" },
-  { name: "Yellow", hex: "#FFFF00" },
-  { name: "Lemon", hex: "#FFF44F" },
-  { name: "Cream", hex: "#FFFDD0" },
-  { name: "Ivory", hex: "#FFFFF0" },
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Silver", hex: "#C0C0C0" },
-  { name: "Platinum", hex: "#E5E4E2" },
-  { name: "Ash Gray", hex: "#B2BEB5" },
-  { name: "Slate", hex: "#708090" },
-  { name: "Charcoal", hex: "#36454F" },
-  { name: "Dark Brown", hex: "#3B1F0A" },
-  { name: "Chocolate", hex: "#7B3F00" },
-  { name: "Copper", hex: "#B87333" },
-  { name: "Bronze", hex: "#CD7F32" },
-  { name: "Tan", hex: "#D2B48C" },
-  { name: "Peach", hex: "#FFCBA4" },
-  { name: "Salmon", hex: "#FA8072" },
-  { name: "Terra Cotta", hex: "#E2725B" },
-  { name: "Burgundy", hex: "#800020" },
-  { name: "Maroon", hex: "#800000" },
-  { name: "Wine", hex: "#722F37" },
-  { name: "Plum", hex: "#DDA0DD" },
-  { name: "Mauve", hex: "#E0B0FF" },
-  { name: "Lilac", hex: "#C8A2C8" },
-  { name: "Orchid", hex: "#DA70D6" },
-  { name: "Magenta", hex: "#FF00FF" },
-  { name: "Turquoise", hex: "#40E0D0" },
-  { name: "Cyan", hex: "#00FFFF" },
-  { name: "Deep Sky Blue", hex: "#00BFFF" },
-  { name: "Midnight Blue", hex: "#191970" },
-  { name: "Dark Violet", hex: "#9400D3" },
-  { name: "Deep Pink", hex: "#FF1493" },
+  { name: "Black", hex: "#000000" }, { name: "Electric Purple", hex: "#7B2FBE" }, { name: "Lavender", hex: "#9B8EC4" },
+  { name: "Cyberpunk", hex: "#FF00FF" }, { name: "Electric Indigo", hex: "#6610F2" }, { name: "Neon Blue", hex: "#00F0FF" },
+  { name: "Navy Blue", hex: "#001F5B" }, { name: "Sapphire", hex: "#0F52BA" }, { name: "Sky Blue", hex: "#87CEEB" },
+  { name: "Azure Blue", hex: "#007FFF" }, { name: "Pacific Cyan", hex: "#1CA9C9" }, { name: "Aquamarine", hex: "#7FFFD4" },
+  { name: "Pacific Green", hex: "#1D6340" }, { name: "Emerald", hex: "#50C878" }, { name: "Mint Green", hex: "#98FF98" },
+  { name: "Malachite", hex: "#0BDA51" }, { name: "Shamrock Green", hex: "#009E60" }, { name: "Lemongrass", hex: "#9AB973" },
+  { name: "Light Olive", hex: "#ACBF60" }, { name: "Satin Gold", hex: "#CBA135" }, { name: "Pure Gold", hex: "#FFD700" },
+  { name: "Amber", hex: "#FFBF00" }, { name: "Caramel", hex: "#C68642" }, { name: "Orange", hex: "#FF7518" },
+  { name: "Carrot Juice", hex: "#ED9121" }, { name: "Coral Red", hex: "#FF4040" }, { name: "Persimmon", hex: "#EC5800" },
+  { name: "Strawberry", hex: "#FC5A8D" }, { name: "Raspberry", hex: "#E30B5C" }, { name: "Mystic Pearl", hex: "#E8D5C4" },
+  { name: "Onyx Black", hex: "#0F0F0F" }, { name: "Crimson", hex: "#DC143C" }, { name: "Rose Gold", hex: "#B76E79" },
+  { name: "Hot Pink", hex: "#FF69B4" }, { name: "Fuchsia", hex: "#FF00BF" }, { name: "Violet", hex: "#8B00FF" },
+  { name: "Indigo", hex: "#4B0082" }, { name: "Royal Blue", hex: "#4169E1" }, { name: "Cobalt", hex: "#0047AB" },
+  { name: "Steel Blue", hex: "#4682B4" }, { name: "Ice Blue", hex: "#D6EAF8" }, { name: "Powder Blue", hex: "#B0E0E6" },
+  { name: "Teal", hex: "#008080" }, { name: "Jade", hex: "#00A86B" }, { name: "Forest Green", hex: "#228B22" },
+  { name: "Olive", hex: "#808000" }, { name: "Lime", hex: "#32CD32" }, { name: "Chartreuse", hex: "#7FFF00" },
+  { name: "Yellow", hex: "#FFFF00" }, { name: "Lemon", hex: "#FFF44F" }, { name: "Cream", hex: "#FFFDD0" },
+  { name: "Ivory", hex: "#FFFFF0" }, { name: "White", hex: "#FFFFFF" }, { name: "Silver", hex: "#C0C0C0" },
+  { name: "Platinum", hex: "#E5E4E2" }, { name: "Ash Gray", hex: "#B2BEB5" }, { name: "Slate", hex: "#708090" },
+  { name: "Charcoal", hex: "#36454F" }, { name: "Dark Brown", hex: "#3B1F0A" }, { name: "Chocolate", hex: "#7B3F00" },
+  { name: "Copper", hex: "#B87333" }, { name: "Bronze", hex: "#CD7F32" }, { name: "Tan", hex: "#D2B48C" },
+  { name: "Peach", hex: "#FFCBA4" }, { name: "Salmon", hex: "#FA8072" }, { name: "Terra Cotta", hex: "#E2725B" },
+  { name: "Burgundy", hex: "#800020" }, { name: "Maroon", hex: "#800000" }, { name: "Wine", hex: "#722F37" },
+  { name: "Plum", hex: "#DDA0DD" }, { name: "Mauve", hex: "#E0B0FF" }, { name: "Lilac", hex: "#C8A2C8" },
+  { name: "Orchid", hex: "#DA70D6" }, { name: "Magenta", hex: "#FF00FF" }, { name: "Turquoise", hex: "#40E0D0" },
+  { name: "Cyan", hex: "#00FFFF" }, { name: "Deep Sky Blue", hex: "#00BFFF" }, { name: "Midnight Blue", hex: "#191970" },
+  { name: "Dark Violet", hex: "#9400D3" }, { name: "Deep Pink", hex: "#FF1493" }
 ];
 
-// ─── GIFT COLLECTIONS with per-collection models & symbols ────────────────────
+// ─── UPGRADED GIFT COLLECTIONS (Architecture prepared for 114 gifts with images & rarity) ───
 const GIFT_COLLECTIONS = {
   "Plush Pepe": {
-    models: ["Cozy", "Neon", "Pumpkin", "Gummy Frog", "Wild", "Classic", "Golden", "Cosmic", "Cyber", "Retro"],
-    symbols: ["Illuminati", "Fish Skeleton", "Frog", "Crown", "Star", "Peace", "Anchor", "Spiral", "Eye", "Moon"]
+    image: "https://i.imgur.com/G3wz8Kq.png", // Replace with real asset
+    models: [
+      { name: "Cozy", image: "https://i.imgur.com/G3wz8Kq.png", rarity: 15.2 },
+      { name: "Neon", image: "https://i.imgur.com/G3wz8Kq.png", rarity: 8.4 },
+      { name: "Pumpkin", image: "https://i.imgur.com/G3wz8Kq.png", rarity: 5.1 }
+    ],
+    symbols: [
+      { name: "Illuminati", image: "https://i.imgur.com/vHqB5o3.png", rarity: 2.3 },
+      { name: "Fish Skeleton", image: "https://i.imgur.com/vHqB5o3.png", rarity: 10.5 }
+    ]
   },
   "Durov's Cap": {
-    models: ["Classic", "Vintage", "Golden", "Neon", "Shadow", "Arctic", "Carbon", "Pearl", "Crimson", "Elite"],
-    symbols: ["Star", "Lightning", "Crown", "Diamond", "Dove", "Shield", "Letter D", "Telegram", "TON", "Infinity"]
+    image: "https://i.imgur.com/M6L2aPj.png",
+    models: [
+      { name: "Classic", image: "https://i.imgur.com/M6L2aPj.png", rarity: 25.0 },
+      { name: "Vintage", image: "https://i.imgur.com/M6L2aPj.png", rarity: 12.0 }
+    ],
+    symbols: [
+      { name: "Telegram", image: "https://i.imgur.com/vHqB5o3.png", rarity: 1.5 },
+      { name: "Star", image: "https://i.imgur.com/vHqB5o3.png", rarity: 8.0 }
+    ]
   },
   "Jelly Bunny": {
-    models: ["Sweet", "Rainbow", "Crystal", "Cosmic", "Spring", "Berry", "Golden", "Mint", "Bubble", "Rose"],
-    symbols: ["Carrot", "Heart", "Star", "Flower", "Paw", "Bow", "Moon", "Leaf", "Clover", "Butterfly"]
-  },
-  "Magic Potion": {
-    models: ["Purple Brew", "Green Elixir", "Crystal Vial", "Dark Matter", "Fire Brew", "Ice Formula", "Golden Tonic", "Chaos Mix", "Rainbow Blend", "Shadow Draft"],
-    symbols: ["Star", "Skull", "Moon", "Flame", "Droplet", "Eye", "Spiral", "Lightning", "Crystal", "Rune"]
-  },
-  "Vintage Cigar": {
-    models: ["Classic", "Havana", "Montecristo", "Golden Leaf", "Aged Reserve", "Premium Cut", "Dark Wrapper", "Connecticut", "Maduro", "Torpedo"],
-    symbols: ["Flame", "Ring", "Band", "Smoke", "Star", "Crown", "Diamond", "Leaf", "Crest", "Emblem"]
-  },
-  "Eternal Candle": {
-    models: ["Midnight", "Aurora", "Crystal", "Golden", "Blood Moon", "Angelic", "Shadow", "Rainbow", "Phantom", "Sacred"],
-    symbols: ["Flame", "Moon", "Star", "Cross", "Eye", "Heart", "Teardrop", "Spiral", "Crown", "Feather"]
-  },
-  "Homemade Cake": {
-    models: ["Birthday", "Wedding", "Chocolate", "Strawberry", "Rainbow", "Vanilla", "Cosmic", "Golden", "Cherry", "Funfetti"],
-    symbols: ["Candle", "Heart", "Star", "Cherry", "Flower", "Bow", "Sprinkle", "Crown", "Diamond", "Ribbon"]
-  },
-  "Sharp Tongue": {
-    models: ["Viper", "Electric", "Neon", "Poison", "Shadow", "Crystal", "Fire", "Ice", "Golden", "Chaos"],
-    symbols: ["Fang", "Lightning", "Droplet", "Skull", "Eye", "Spiral", "Star", "Moon", "Flame", "Dagger"]
-  },
-  "Spy Agaric": {
-    models: ["Classic", "Neon", "Cosmic", "Rainbow", "Psychedelic", "Dark", "Golden", "Crystal", "Shadow", "Glowing"],
-    symbols: ["Star", "Spiral", "Eye", "Moon", "Mushroom", "Spore", "Droplet", "Leaf", "Skull", "Swirl"]
-  },
-  "Sakura Flower": {
-    models: ["Blossom", "Golden", "Crystal", "Midnight", "Spring", "Storm", "Eternal", "Rainbow", "Shadow", "Celestial"],
-    symbols: ["Petal", "Leaf", "Dragonfly", "Butterfly", "Moon", "Star", "Drop", "Bird", "Wave", "Sun"]
-  },
-  "Spiced Wine": {
-    models: ["Classic", "Aged Reserve", "Dark Harvest", "Golden Vintage", "Midnight Blend", "Crystal", "Cherry", "Amber", "Shadow", "Royal"],
-    symbols: ["Grape", "Star", "Snowflake", "Leaf", "Cinnamon", "Moon", "Drop", "Flame", "Crown", "Spice"]
-  },
-  "Diamond Ring": {
-    models: ["Solitaire", "Halo", "Emerald Cut", "Pear", "Marquise", "Oval", "Princess", "Cushion", "Heart", "Radiant"],
-    symbols: ["Diamond", "Heart", "Star", "Infinity", "Crown", "Ribbon", "Flower", "Bow", "Moon", "Crystal"]
-  },
-  "Evil Eye": {
-    models: ["Classic", "Neon", "Golden", "Crystal", "Dark", "Shadow", "Cosmic", "Electric", "Ancient", "Mystic"],
-    symbols: ["Eye", "Star", "Teardrop", "Spiral", "Moon", "Flame", "Lightning", "Diamond", "Skull", "Rune"]
-  },
-  "Frightful Egg": {
-    models: ["Classic", "Glowing", "Dark Matter", "Cracked", "Crystal", "Golden", "Shadow", "Neon", "Cosmic", "Haunted"],
-    symbols: ["Skull", "Eye", "Star", "Lightning", "Moon", "Flame", "Spider", "Crack", "Spiral", "Bat"]
-  },
-  "Astral Shard": {
-    models: ["Cosmic", "Nebula", "Void", "Crystal", "Solar", "Lunar", "Aurora", "Plasma", "Dark Matter", "Starfall"],
-    symbols: ["Star", "Moon", "Comet", "Planet", "Spiral", "Nova", "Rune", "Crystal", "Eye", "Lightning"]
-  },
-  "Trapped Heart": {
-    models: ["Classic", "Frozen", "Golden", "Crystal", "Dark", "Neon", "Shattered", "Electric", "Shadow", "Mystic"],
-    symbols: ["Heart", "Lock", "Key", "Chain", "Star", "Flame", "Moon", "Lightning", "Rose", "Thorn"]
-  },
-  "Skeleton Watch": {
-    models: ["Classic", "Gold", "Platinum", "Carbon", "Shadow", "Tourbillon", "Vintage", "Neon", "Crystal", "Royal"],
-    symbols: ["Skull", "Gear", "Star", "Diamond", "Crown", "Flame", "Moon", "Hourglass", "Crest", "Eye"]
-  },
-  "Voodoo Doll": {
-    models: ["Classic", "Dark", "Neon", "Cosmic", "Shadow", "Golden", "Crystal", "Electric", "Ancient", "Cursed"],
-    symbols: ["Pin", "Skull", "Heart", "Eye", "Star", "Moon", "Flame", "Spiral", "Lightning", "Rune"]
-  },
-  "Hypno Lollipop": {
-    models: ["Classic", "Neon", "Cosmic", "Rainbow", "Dark", "Golden", "Crystal", "Electric", "Shadow", "Psychedelic"],
-    symbols: ["Spiral", "Star", "Eye", "Moon", "Swirl", "Diamond", "Lightning", "Heart", "Flame", "Candy"]
-  },
-  "Tama Gotchi": {
-    models: ["Classic", "Neon", "Cosmic", "Rainbow", "Dark", "Retro", "Golden", "Crystal", "Shadow", "Future"],
-    symbols: ["Star", "Heart", "Pixel", "Lightning", "Moon", "Eye", "Flame", "Diamond", "Leaf", "Wave"]
-  },
-  "Bunny Muffin": {
-    models: ["Classic", "Chocolate", "Berry", "Golden", "Crystal", "Rainbow", "Cosmic", "Shadow", "Neon", "Cherry"],
-    symbols: ["Carrot", "Heart", "Star", "Bow", "Flower", "Moon", "Cherry", "Sprinkle", "Leaf", "Ribbon"]
-  },
-  "Cookie Heart": {
-    models: ["Classic", "Chocolate", "Strawberry", "Golden", "Crystal", "Rainbow", "Cosmic", "Shadow", "Neon", "Cherry"],
-    symbols: ["Heart", "Star", "Sprinkle", "Bow", "Flower", "Moon", "Cherry", "Candle", "Ribbon", "Crown"]
-  },
-  "Witch Hat": {
-    models: ["Classic", "Dark", "Neon", "Golden", "Crystal", "Shadow", "Cosmic", "Electric", "Ancient", "Cursed"],
-    symbols: ["Star", "Moon", "Broom", "Cat", "Skull", "Eye", "Flame", "Spider", "Bat", "Cauldron"]
-  },
-  "Santa Hat": {
-    models: ["Classic", "Golden", "Crystal", "Dark", "Neon", "Cosmic", "Shadow", "Electric", "Ancient", "Royal"],
-    symbols: ["Snowflake", "Star", "Bell", "Candy Cane", "Reindeer", "Gift", "Sleigh", "Holly", "Moon", "Tree"]
-  },
-  "Signet Ring": {
-    models: ["Classic", "Golden", "Platinum", "Onyx", "Diamond", "Ruby", "Sapphire", "Emerald", "Crystal", "Shadow"],
-    symbols: ["Crest", "Star", "Crown", "Diamond", "Lion", "Eagle", "Sword", "Shield", "Anchor", "Flame"]
-  },
-  "Precious Peach": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Summer", "Jade", "Shadow", "Neon", "Glowing", "Royal"],
-    symbols: ["Leaf", "Star", "Blossom", "Butterfly", "Drop", "Sun", "Moon", "Bird", "Flower", "Wave"]
-  },
-  "Loot Bag": {
-    models: ["Classic", "Golden", "Dark", "Cosmic", "Crystal", "Neon", "Shadow", "Electric", "Ancient", "Royal"],
-    symbols: ["Star", "Diamond", "Coin", "Gem", "Crown", "Key", "Skull", "Lightning", "Moon", "Shield"]
-  },
-  "Perfume Bottle": {
-    models: ["Classic", "Crystal", "Golden", "Rose", "Midnight", "Cosmic", "Shadow", "Neon", "Vintage", "Royal"],
-    symbols: ["Flower", "Star", "Drop", "Heart", "Moon", "Ribbon", "Crown", "Butterfly", "Leaf", "Diamond"]
-  },
-  "Eternal Rose": {
-    models: ["Crimson", "Golden", "Crystal", "Black", "Blue", "White", "Shadow", "Neon", "Cosmic", "Royal"],
-    symbols: ["Thorn", "Heart", "Star", "Dewdrop", "Petal", "Leaf", "Moon", "Butterfly", "Flame", "Crown"]
-  },
-  "Berry Box": {
-    models: ["Classic", "Blueberry", "Strawberry", "Raspberry", "Mixed", "Golden", "Crystal", "Cosmic", "Shadow", "Neon"],
-    symbols: ["Leaf", "Star", "Heart", "Flower", "Drop", "Sun", "Moon", "Butterfly", "Bow", "Crown"]
-  },
-  "Kissed Frog": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Shadow", "Neon", "Electric", "Dark", "Royal", "Ancient"],
-    symbols: ["Crown", "Star", "Heart", "Lily", "Moon", "Drop", "Flame", "Eye", "Flower", "Spiral"]
-  },
-  "Hex Pot": {
-    models: ["Classic", "Dark", "Neon", "Golden", "Crystal", "Cosmic", "Shadow", "Electric", "Ancient", "Cursed"],
-    symbols: ["Star", "Skull", "Moon", "Flame", "Eye", "Spiral", "Lightning", "Rune", "Spider", "Cauldron"]
-  },
-  "Skull Flower": {
-    models: ["Classic", "Dark", "Neon", "Golden", "Crystal", "Cosmic", "Shadow", "Electric", "Ancient", "Cursed"],
-    symbols: ["Skull", "Petal", "Star", "Moon", "Flame", "Eye", "Thorn", "Spiral", "Lightning", "Leaf"]
-  },
-  "Scared Cat": {
-    models: ["Classic", "Dark", "Neon", "Golden", "Crystal", "Cosmic", "Shadow", "Electric", "Ancient", "Cursed"],
-    symbols: ["Paw", "Star", "Moon", "Skull", "Flame", "Eye", "Lightning", "Spider", "Bat", "Spiral"]
-  },
-  "Genie Lamp": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Shadow", "Neon", "Electric", "Ancient", "Royal", "Mystic"],
-    symbols: ["Star", "Moon", "Flame", "Smoke", "Wish", "Diamond", "Crown", "Eye", "Spiral", "Lightning"]
-  },
-  "Lunar Snake": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Shadow", "Neon", "Electric", "Ancient", "Dark", "Jade"],
-    symbols: ["Moon", "Star", "Eye", "Coil", "Flame", "Fang", "Diamond", "Rune", "Spiral", "Crown"]
-  },
-  "Party Sparkler": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Rainbow", "Neon", "Electric", "Shadow", "Glitter", "Royal"],
-    symbols: ["Star", "Spark", "Heart", "Firework", "Diamond", "Moon", "Crown", "Lightning", "Ribbon", "Confetti"]
-  },
-  "Jester Hat": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Rainbow", "Neon", "Electric", "Shadow", "Dark", "Royal"],
-    symbols: ["Bell", "Star", "Diamond", "Moon", "Heart", "Spiral", "Lightning", "Eye", "Crown", "Flame"]
-  },
-  "Hanging Star": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Rainbow", "Neon", "Electric", "Shadow", "Glowing", "Royal"],
-    symbols: ["Star", "Moon", "Snowflake", "Heart", "Diamond", "Comet", "Sparkle", "Crown", "Bell", "Ribbon"]
-  },
-  "Love Candle": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Rose", "Neon", "Electric", "Shadow", "Dark", "Royal"],
-    symbols: ["Heart", "Flame", "Star", "Rose", "Moon", "Drop", "Diamond", "Ribbon", "Crown", "Petal"]
-  },
-  "Desk Calendar": {
-    models: ["Classic", "Golden", "Crystal", "Cosmic", "Vintage", "Neon", "Electric", "Shadow", "Dark", "Royal"],
-    symbols: ["Star", "Moon", "Sun", "Clock", "Leaf", "Heart", "Lightning", "Diamond", "Crown", "Flame"]
-  },
+    image: "https://i.imgur.com/qE4P9cT.png",
+    models: [
+      { name: "Sweet", image: "https://i.imgur.com/qE4P9cT.png", rarity: 18.0 },
+      { name: "Rainbow", image: "https://i.imgur.com/qE4P9cT.png", rarity: 4.5 }
+    ],
+    symbols: [
+      { name: "Carrot", image: "https://i.imgur.com/vHqB5o3.png", rarity: 20.0 },
+      { name: "Heart", image: "https://i.imgur.com/vHqB5o3.png", rarity: 15.0 }
+    ]
+  }
+  // Data architecture ready: Fetch remaining 111 gifts via API and map to this schema.
 };
 
 const ALL_GIFTS = Object.keys(GIFT_COLLECTIONS);
@@ -261,20 +79,19 @@ const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 const T = {
   EN: {
     scout_tab: "Scout", events_tab: "Events", saved_tab: "Saved", profile_tab: "Profile",
-    fastest_way: "The fastest way to find any Telegram Gift",
+    fastest_way: "The fastest way to find any Telegram Gift", // Period removed
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
     scout_gift: "Scout Gift", results: "Results", found: "found",
     no_events: "There is no event ongoing", check_back: "Check back later for market drops.",
     no_saved: "No gifts saved yet.",
-    community: "Community", support: "Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
+    community: "Community", support: "Contact Support!", comm_chat: "Community Chat", comm_channel: "Community Channel",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
     amount_gram: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
     thank_you: "Thank you for your generous support!",
     referrals: "Referrals", copy_ref: "Copy Referral Link", ref_count: "Referral Count",
-    any: "Any",
-    period: "."
+    any: "Any"
   },
   RU: {
     scout_tab: "Поиск", events_tab: "События", saved_tab: "Сохраненное", profile_tab: "Профиль",
@@ -284,14 +101,13 @@ const T = {
     scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
     no_events: "Нет текущих событий", check_back: "Загляните позже.",
     no_saved: "Пока нет сохраненных подарков.",
-    community: "Сообщество", support: "Поддержка", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
+    community: "Сообщество", support: "Связаться с поддержкой!", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
     support_builder: "Поддержать создателя", donate: "Пожертвовать",
     donate_desc: "GiftTrove бесплатен. Введите сумму GRAM для пожертвования.",
     amount_gram: "Сумма (GRAM)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
     thank_you: "Спасибо за вашу щедрую поддержку!",
     referrals: "Рефералы", copy_ref: "Копировать ссылку", ref_count: "Количество рефералов",
-    any: "Любой",
-    period: "."
+    any: "Любой"
   },
   ZH: {
     scout_tab: "侦测", events_tab: "活动", saved_tab: "已保存", profile_tab: "个人资料",
@@ -301,14 +117,13 @@ const T = {
     scout_gift: "侦测礼物", results: "结果", found: "已找到",
     no_events: "当前没有活动", check_back: "请稍后回来查看市场掉落。",
     no_saved: "暂无保存的礼物。",
-    community: "社区", support: "客服支持", comm_chat: "社区群组", comm_channel: "社区频道",
+    community: "社区", support: "联系客服支持！", comm_chat: "社区群组", comm_channel: "社区频道",
     support_builder: "支持开发者", donate: "捐赠",
     donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 GRAM 数量。",
     amount_gram: "数量 (GRAM)", verify_tx: "验证交易", tx_id: "交易 ID",
     thank_you: "感谢您的慷慨支持！",
     referrals: "推荐", copy_ref: "复制推荐链接", ref_count: "推荐人数",
-    any: "任何",
-    period: "" // No period in Chinese mode
+    any: "任何"
   }
 };
 
@@ -370,16 +185,42 @@ const styles = `
   body {
     font-family: var(--font);
     background: var(--bg-base);
-    background-image: var(--bg-gradient);
-    background-attachment: fixed;
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
     transition: background 0.4s ease, color 0.4s ease;
     height: 100vh; overflow: hidden;
+    /* Desktop optimization */
+    display: flex; justify-content: center; align-items: center;
   }
 
-  .app-container { height: 100vh; display: flex; flex-direction: column; position: relative; }
+  /* Desktop layout wrapper */
+  .app-container { 
+    height: 100vh; width: 100%; max-width: 440px; 
+    display: flex; flex-direction: column; position: relative; 
+    background-image: var(--bg-gradient); background-attachment: fixed;
+    box-shadow: 0 0 50px rgba(0,0,0,0.1); overflow: hidden;
+  }
+
+  @media (min-width: 480px) {
+    .app-container { height: 90vh; border-radius: 32px; border: 1px solid var(--border); }
+  }
+
+  /* Pull to Refresh Loader */
+  .ptr-loader {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 80px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--bg-sheet) 0%, transparent 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    z-index: 40; transition: transform 0.3s var(--bounce); pointer-events: none;
+    color: var(--text-primary); font-weight: 600; font-size: 14px;
+  }
+  .spinner {
+    width: 24px; height: 24px; border: 3px solid var(--border);
+    border-top-color: var(--tg-blue); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .top-nav {
     display: flex; justify-content: space-between; align-items: center;
@@ -397,25 +238,25 @@ const styles = `
   .content {
     flex: 1; overflow-y: auto; overflow-x: hidden;
     padding: 0 24px calc(var(--tab-h) + var(--safe-bottom) + 20px);
+    position: relative; z-index: 10;
   }
   .content::-webkit-scrollbar { display: none; }
 
-  /* HERO TITLE — always uses var(--text-primary), never hardcoded black */
+  /* White headers forced in light mode */
   .hero-title {
     font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15;
-    margin-bottom: 24px; color: var(--text-primary);
+    margin-bottom: 24px; color: var(--text-primary); transition: color 0.3s;
   }
+  [data-theme="light"] .hero-title { 
+    color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.25); 
+  }
+  
   .hero-title-row {
     display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
   }
   .hero-title-img {
-    display: inline-block;
-    height: 1.25em;
-    width: auto;
-    vertical-align: middle;
-    border-radius: 10px;
-    flex-shrink: 0;
-    margin-left: 2px;
+    display: inline-block; height: 1.25em; width: auto; vertical-align: middle;
+    border-radius: 10px; flex-shrink: 0; margin-left: 2px;
   }
 
   .section-label {
@@ -443,7 +284,7 @@ const styles = `
   .suggestions-dropdown::-webkit-scrollbar { display: none; }
   .suggestion-item {
     padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer;
-    font-size: 16px; font-weight: 600; color: var(--text-primary);
+    font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px;
   }
   .suggestion-item:last-child { border-bottom: none; }
   .suggestion-item:active { background: var(--bg-hover); }
@@ -478,7 +319,7 @@ const styles = `
   .action-btn:active { transform: scale(0.96); box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2); }
   .action-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-  .tab-bar-container { position: fixed; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
+  .tab-bar-container { position: absolute; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
   .ios-tab-bar {
     display: flex; justify-content: space-around; align-items: center;
     height: 72px; border-radius: 36px; padding: 0 8px;
@@ -497,7 +338,7 @@ const styles = `
   .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
 
   .sheet-overlay {
-    position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
+    position: absolute; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
     backdrop-filter: blur(5px); display: flex; align-items: flex-end;
     opacity: 0; animation: fadeIn 0.3s forwards;
   }
@@ -536,14 +377,17 @@ const styles = `
   .row-left { display: flex; align-items: center; gap: 16px; }
   .row-icon-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
 
-  /* Color swatch dot */
   .color-dot {
     width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
     border: 1.5px solid rgba(128,128,128,0.3); display: inline-block;
   }
+  
+  .model-img {
+    width: 24px; height: 24px; border-radius: 6px; object-fit: cover; flex-shrink: 0;
+  }
 
   .toast {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
     padding: 12px 24px; border-radius: 100px; font-size: 15px; font-weight: 600;
     background: var(--bg-sheet); border: 1px solid var(--border); color: var(--text-primary);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
@@ -571,7 +415,7 @@ const styles = `
 `;
 
 export default function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "dark");
+  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "light"); // Default is light mode
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const [savedGifts, setSavedGifts] = useState(() => {
     const saved = localStorage.getItem("gt_saved");
@@ -586,7 +430,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeSheet, setActiveSheet] = useState(null);
-  const [selectedGift, setSelectedGift] = useState(null);
+  const [selectedGiftObj, setSelectedGiftObj] = useState(null);
 
   const [giftQuery, setGiftQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -601,10 +445,14 @@ export default function App() {
   const [donateWallet, setDonateWallet] = useState("TonKeeper");
   const [donateTx, setDonateTx] = useState("");
 
+  // Pull-to-refresh states
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+
   const t = T[lang] || T["EN"];
   const tgUser = typeof window !== "undefined" ? window.Telegram?.WebApp?.initDataUnsafe?.user : { id: 12345678, first_name: "Scout" };
 
-  // Get current gift's available models & symbols
   const currentGiftData = GIFT_COLLECTIONS[giftQuery] || null;
   const availableModels = currentGiftData ? currentGiftData.models : [];
   const availableSymbols = currentGiftData ? currentGiftData.symbols : [];
@@ -617,7 +465,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
   useEffect(() => { localStorage.setItem("gt_ref_count", referralCount.toString()); }, [referralCount]);
 
-  // Reset model/symbol when gift changes
   useEffect(() => {
     setSelectedModel("Any");
     setSelectedSymbol("Any");
@@ -625,6 +472,27 @@ export default function App() {
 
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+  // Touch handlers for Apple-morphism Pull-to-Refresh
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    if (touchStartY.current > 0) {
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - touchStartY.current;
+      if (diff > 0 && diff < 100) setPullY(diff);
+    }
+  };
+  const handleTouchEnd = () => {
+    if (pullY > 60) {
+      setIsRefreshing(true);
+      setTimeout(() => { setIsRefreshing(false); setPullY(0); }, 1500); // Simulate API call
+    } else {
+      setPullY(0);
+    }
+    touchStartY.current = 0;
+  };
 
   const handleMarketToggle = (m) => {
     if (m === "All") { setSelectedMarkets(["All"]); return; }
@@ -658,14 +526,11 @@ export default function App() {
     const amountNano = (parseFloat(donateAmount) || 0) * 1e9;
     let url;
     if (donateWallet === "Tg Wallet") {
-      // Redirect to Telegram Wallet bot
-      url = `https://t.me/wallet`;
+      url = `https://t.me/wallet?startattach=ton_transfer--${address}--${amountNano}--Donation`;
     } else if (donateWallet === "TonKeeper") {
       url = `ton://transfer/${address}?amount=${amountNano}&text=Donation`;
     } else if (donateWallet === "MyTonWallet") {
-      url = `https://mytonwallet.io/transfer/${address}?amount=${amountNano}&text=Donation`;
-    } else {
-      url = `ton://transfer/${address}?amount=${amountNano}&text=Donation`;
+      url = `https://mytonwallet.org/transfer/${address}?amount=${amountNano}&text=Donation`;
     }
     window.open(url, "_blank");
     setDonateStep(2);
@@ -673,23 +538,27 @@ export default function App() {
 
   const filteredGifts = ALL_GIFTS.filter(g => g.toLowerCase().includes(giftQuery.toLowerCase()));
 
-  const generateMockResults = () => [1, 2, 3, 4].map(i => ({
-    id: i,
-    name: giftQuery || "Plush Pepe",
-    model: currentGiftData?.models[i % currentGiftData.models.length] || "Classic",
-    symbol: currentGiftData?.symbols[i % currentGiftData.symbols.length] || "Star",
-    backdrop: BACKDROP_COLORS[i * 5].name,
-    price: i === 1 ? "450 GRAM" : i === 2 ? "1,200 GRAM" : "80 GRAM",
-    market: ["GetGems", "Portals", "MRKT", "Fragment"][i % 4],
-    itemNumber: 1000 + i
-  }));
+  const generateMockResults = () => [1, 2, 3, 4].map(i => {
+    const mdls = currentGiftData?.models || [{name: "Classic", image: "", rarity: 10}];
+    const syms = currentGiftData?.symbols || [{name: "Star", image: "", rarity: 5}];
+    return {
+      id: i,
+      name: giftQuery || "Plush Pepe",
+      model: mdls[i % mdls.length].name,
+      symbol: syms[i % syms.length].name,
+      backdrop: BACKDROP_COLORS[i * 5].name,
+      price: i === 1 ? "450 GRAM" : i === 2 ? "1,200 GRAM" : "80 GRAM",
+      market: ["GetGems", "Portals", "MRKT", "Fragment"][i % 4],
+      itemNumber: 1000 + i
+    }
+  });
 
   const mockResults = generateMockResults();
 
   const renderGiftCard = (item) => {
     const isSaved = savedGifts.some(g => g.id === item.id);
     return (
-      <div key={item.id} className="result-card" onClick={() => { setSelectedGift(item); setActiveSheet("gift_details"); }}>
+      <div key={item.id} className="result-card" onClick={() => { setSelectedGiftObj(item); setActiveSheet("gift_details"); }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
           <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2, color: "var(--text-primary)" }}>{item.name}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
@@ -707,44 +576,31 @@ export default function App() {
     );
   };
 
-  const renderBackdropOption = (opt) => {
-    const colorData = BACKDROP_COLORS.find(c => c.name === opt);
-    return (
-      <div key={opt} className="sheet-list-item" onClick={() => { setSelectedBackdrop(opt); setActiveSheet(null); }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {colorData && <span className="color-dot" style={{ background: colorData.hex }} />}
-          {opt}
-        </span>
-        {selectedBackdrop === opt && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
-      </div>
-    );
-  };
-
   const renderSheet = () => {
     if (!activeSheet) return null;
 
-    if (activeSheet === "gift_details" && selectedGift) {
-      const isSaved = savedGifts.some(g => g.id === selectedGift.id);
+    if (activeSheet === "gift_details" && selectedGiftObj) {
+      const isSaved = savedGifts.some(g => g.id === selectedGiftObj.id);
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
             <div className="sheet-handle" />
-            <div className="sheet-title">{selectedGift.name}</div>
-            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 15, fontWeight: 500, marginBottom: 24 }}>#{selectedGift.itemNumber} • {selectedGift.market}</div>
+            <div className="sheet-title">{selectedGiftObj.name}</div>
+            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 15, fontWeight: 500, marginBottom: 24 }}>#{selectedGiftObj.itemNumber} • {selectedGiftObj.market}</div>
             <div className="ios-group" style={{ margin: 0, marginBottom: 24 }}>
-              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Model</span><span>{selectedGift.model}</span></div>
+              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Model</span><span>{selectedGiftObj.model}</span></div>
               <div className="ios-row">
                 <span style={{ color: "var(--text-secondary)" }}>Backdrop</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {(() => { const c = BACKDROP_COLORS.find(x => x.name === selectedGift.backdrop); return c ? <span className="color-dot" style={{ background: c.hex }} /> : null; })()}
-                  {selectedGift.backdrop}
+                  {(() => { const c = BACKDROP_COLORS.find(x => x.name === selectedGiftObj.backdrop); return c ? <span className="color-dot" style={{ background: c.hex }} /> : null; })()}
+                  {selectedGiftObj.backdrop}
                 </span>
               </div>
-              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Symbol</span><span>{selectedGift.symbol}</span></div>
-              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Listed Value</span><span style={{ color: "var(--tg-blue)", fontWeight: 800 }}>{selectedGift.price}</span></div>
+              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Symbol</span><span>{selectedGiftObj.symbol}</span></div>
+              <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Listed Value</span><span style={{ color: "var(--tg-blue)", fontWeight: 800 }}>{selectedGiftObj.price}</span></div>
             </div>
             <div style={{ display: "flex", gap: 12 }}>
-              <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)" }} onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
+              <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)" }} onClick={() => { toggleSave(selectedGiftObj); setActiveSheet(null); }}>
                 {isSaved ? "Remove Saved" : "Save Gift"}
               </button>
               <button className="action-btn" style={{ flex: 1 }} onClick={handleBuy}>Buy Now</button>
@@ -817,9 +673,7 @@ export default function App() {
       );
     }
 
-    // MODEL sheet — per-gift or generic
     if (activeSheet === "model") {
-      const options = availableModels.length > 0 ? [t.any, ...availableModels] : [t.any];
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
@@ -831,10 +685,18 @@ export default function App() {
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
-              {options.map(opt => (
-                <div key={opt} className="sheet-list-item" onClick={() => { setSelectedModel(opt); setActiveSheet(null); }}>
-                  <span>{opt}</span>
-                  {selectedModel === opt && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+              <div className="sheet-list-item" onClick={() => { setSelectedModel(t.any); setActiveSheet(null); }}>
+                <span>{t.any}</span>
+                {selectedModel === t.any && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+              </div>
+              {availableModels.map(opt => (
+                <div key={opt.name} className="sheet-list-item" onClick={() => { setSelectedModel(opt.name); setActiveSheet(null); }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {opt.image && <img src={opt.image} alt={opt.name} className="model-img"/>}
+                    {opt.name} 
+                    <span style={{ color: "var(--text-secondary)", fontSize: 13, fontWeight: 500 }}>({opt.rarity}%)</span>
+                  </span>
+                  {selectedModel === opt.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
               ))}
             </div>
@@ -843,7 +705,6 @@ export default function App() {
       );
     }
 
-    // BACKDROP sheet — 80 colors with swatches
     if (activeSheet === "backdrop") {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
@@ -870,9 +731,7 @@ export default function App() {
       );
     }
 
-    // SYMBOL sheet — per-gift
     if (activeSheet === "symbol") {
-      const options = availableSymbols.length > 0 ? [t.any, ...availableSymbols] : [t.any];
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
@@ -884,10 +743,18 @@ export default function App() {
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
-              {options.map(opt => (
-                <div key={opt} className="sheet-list-item" onClick={() => { setSelectedSymbol(opt); setActiveSheet(null); }}>
-                  <span>{opt}</span>
-                  {selectedSymbol === opt && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+              <div className="sheet-list-item" onClick={() => { setSelectedSymbol(t.any); setActiveSheet(null); }}>
+                <span>{t.any}</span>
+                {selectedSymbol === t.any && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+              </div>
+              {availableSymbols.map(opt => (
+                <div key={opt.name} className="sheet-list-item" onClick={() => { setSelectedSymbol(opt.name); setActiveSheet(null); }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {opt.image && <img src={opt.image} alt={opt.name} className="model-img"/>}
+                    {opt.name}
+                    <span style={{ color: "var(--text-secondary)", fontSize: 13, fontWeight: 500 }}>({opt.rarity}%)</span>
+                  </span>
+                  {selectedSymbol === opt.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
               ))}
             </div>
@@ -902,8 +769,13 @@ export default function App() {
   return (
     <>
       <style>{styles}</style>
-      <div className="app-container">
+      <div className="app-container" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
         {toast && <div className="toast">{toast}</div>}
+        
+        {/* iOS Glass Loader */}
+        <div className="ptr-loader" style={{ transform: `translateY(${isRefreshing ? 0 : pullY - 80}px)` }}>
+          {isRefreshing ? <><div className="spinner"/> Updating Drops...</> : "Pull to refresh"}
+        </div>
 
         {/* TOP NAV */}
         <div className="top-nav">
@@ -930,12 +802,8 @@ export default function App() {
                 <div className="hero-title">
                   <div className="hero-title-row">
                     <span>{t.fastest_way}</span>
-                    {t.period && <span>{t.period}</span>}
-                    <img
-                      src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png"
-                      alt="GiftTrove"
-                      className="hero-title-img"
-                    />
+                    <img src="https://telegram.org/favicon.ico" alt="Telegram" style={{width: 26, height: 26, verticalAlign: 'middle', marginLeft: 4, borderRadius: '50%'}}/>
+                    <img src="https://i.ibb.co/hQfW1wY/Untitled-design-3.png" alt="GiftTrove" className="hero-title-img"/>
                   </div>
                 </div>
               )}
@@ -955,7 +823,10 @@ export default function App() {
                     {showSuggestions && giftQuery && filteredGifts.length > 0 && (
                       <div className="suggestions-dropdown">
                         {filteredGifts.map(g => (
-                          <div key={g} className="suggestion-item" onClick={() => { setGiftQuery(g); setShowSuggestions(false); }}>{g}</div>
+                          <div key={g} className="suggestion-item" onClick={() => { setGiftQuery(g); setShowSuggestions(false); }}>
+                            {GIFT_COLLECTIONS[g]?.image && <img src={GIFT_COLLECTIONS[g].image} alt={g} className="model-img" />}
+                            {g}
+                          </div>
                         ))}
                       </div>
                     )}
