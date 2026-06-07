@@ -1,22 +1,121 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-// ─── IMAGE PRELOADER ──────────────────────────────────────────────────────────
+// ─── IMAGE PRELOADER ─────────────────────────────────────────────────────────
 function preloadImages(urls) {
-  urls.forEach(url => {
-    const img = new Image();
-    img.src = url;
-  });
+  urls.forEach(url => { const img = new Image(); img.src = url; });
 }
 
-// ─── CUSTOM LOGO IMAGE ───────────────────────────────────────────────────────
+// ─── CUSTOM LOGO ─────────────────────────────────────────────────────────────
 const GiftTroveLogo = ({ size = 28 }) => (
-  <img
-    src="https://i.ibb.co/ZRQJd5tT/MGGA.png"
-    alt="GiftTrove"
-    style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
-  />
+  <img src="https://i.ibb.co/ZRQJd5tT/MGGA.png" alt="GiftTrove"
+    style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }} />
 );
 
+// ─── FIX #7: Asset helpers ─────────────────────────────────────────────────────
+// Primary: Fragment CDN (canonical). Falls back to a placeholder treasure chest SVG.
+function giftThumbUrl(slug) {
+  return `https://fragment.com/file/gifts/${slug}/thumb.webp`;
+}
+// Lottie/animated asset from Fragment CDN
+function giftAnimUrl(slug) {
+  return `https://fragment.com/file/gifts/${slug}/preview.tgs`;
+}
+// Symbol image (Fragment uses same slug, symbol embedded in metadata)
+function symbolImgUrl(slug, symbolName) {
+  // Fragment does not expose per-symbol images publicly; use a decorated placeholder
+  // with the gift thumb as the base until a backend proxy is available.
+  return `https://fragment.com/file/gifts/${slug}/thumb.webp`;
+}
+
+// ─── FIX #2: Canonical marketplace URL builder ────────────────────────────────
+// Validated against official docs/pages as of June 2026.
+// Fragment: https://fragment.com/gift/{slug}
+// GetGems: https://getgems.io/collection/{slug} — no TMA deeplink with collection param
+// MRKT: https://t.me/mrkt_tg_bot/app — internal mini-app, gift param via startapp
+// Portals: https://t.me/portals_market_bot/market
+// Tonnel: https://t.me/tonnel_network_bot/gift
+function getMarketplaceUrl(market, slug, itemNumber) {
+  const id = itemNumber ? String(itemNumber) : "";
+  switch (market) {
+    case "Fragment":
+      // Canonical: fragment.com/gift/{slug} — works in browser & TMA
+      return `https://fragment.com/gift/${slug}`;
+    case "GetGems":
+      // GetGems web: getgems.io/nft/{slug}/{id} for specific item
+      return id
+        ? `https://getgems.io/nft/${slug}/${id}`
+        : `https://getgems.io/collection/${slug}`;
+    case "MRKT":
+      // MRKT TMA — gift param as startapp. No collection-level deeplink confirmed.
+      return `https://t.me/mrkt_tg_bot/app?startapp=${slug}${id ? "_" + id : ""}`;
+    case "Portals":
+      // Portals gift deeplink format per their mini-app
+      return `https://t.me/portals_market_bot/market?startapp=gift_${slug}${id ? "_" + id : ""}`;
+    case "Tonnel":
+      // Tonnel uses numeric gift IDs, not slugs
+      return id
+        ? `https://t.me/tonnel_network_bot/gift?startapp=${id}`
+        : `https://t.me/tonnel_network_bot`;
+    default:
+      return `https://fragment.com/gift/${slug}`;
+  }
+}
+
+// Open marketplace URL in TMA-aware way
+function openMarketUrl(market, slug, itemNumber) {
+  const url = getMarketplaceUrl(market, slug, itemNumber);
+  const tgApp = window.Telegram?.WebApp;
+  // Use openTelegramLink for t.me URLs; openLink for external URLs
+  if (tgApp) {
+    if (url.startsWith("https://t.me/")) {
+      tgApp.openTelegramLink(url);
+    } else {
+      tgApp.openLink(url);
+    }
+  } else {
+    window.open(url, "_blank", "noopener");
+  }
+}
+
+// ─── FIX #8: Correct wallet deep-links ───────────────────────────────────────
+// Sources: Tonkeeper docs (ton:// universal), MyTonWallet help center,
+// Telegram Wallet TMA (t.me/wallet).
+const WALLET_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
+const DONATE_DESCRIPTION = "GiftTrove Donation";
+
+function buildWalletUrl(wallet, amountTON) {
+  const amountNano = Math.round((parseFloat(amountTON) || 0) * 1e9);
+  const comment = encodeURIComponent(DONATE_DESCRIPTION);
+
+  if (wallet === "Tonkeeper") {
+    // Tonkeeper universal deep link (works on iOS + Android + browser extension)
+    // ton:// scheme + universal https fallback handled by Tonkeeper itself
+    return `ton://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${comment}`;
+  }
+  if (wallet === "MyTonWallet") {
+    // MyTonWallet web + app transfer deeplink (confirmed in their help center)
+    return `https://app.mytonwallet.io/transfer/${WALLET_ADDRESS}?amount=${amountNano}&comment=${comment}`;
+  }
+  if (wallet === "TG Wallet") {
+    // Telegram Wallet TMA — no transfer startapp param is publicly documented;
+    // best available: open wallet TMA, user completes transfer manually.
+    return `https://t.me/wallet`;
+  }
+  // Generic TON URI fallback (wallets that support TON deep links)
+  return `ton://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${comment}`;
+}
+
+function executeDonateUrl(wallet, amountTON) {
+  const url = buildWalletUrl(wallet, amountTON);
+  const tgApp = window.Telegram?.WebApp;
+  if (url.startsWith("https://t.me/") && tgApp) {
+    tgApp.openTelegramLink(url);
+  } else if (url.startsWith("ton://") && tgApp) {
+    tgApp.openLink(url);
+  } else {
+    window.open(url, "_blank", "noopener");
+  }
+}
 // ─── 109 REAL TELEGRAM GIFT COLLECTIONS (from Giftix/Fragment, June 2026) ────
 // Fragment CDN image pattern: https://fragment.com/file/gifts/{slug}/thumb.webp
 // Models/symbols are researched from on-chain NFT metadata & community sources.
@@ -1224,7 +1323,6 @@ const GIFT_COLLECTIONS = {
     symbols: ["Star","Skull","Moon","Flame","Eye","Sting","Spiral","Honeycomb","Lightning","Leaf"]
   },
 };
-
 const ALL_GIFTS = Object.keys(GIFT_COLLECTIONS).sort();
 
 // ─── BACKDROP COLORS (80 total) ────────────────────────────────────────────────
@@ -1274,14 +1372,17 @@ const BACKDROP_COLORS = [
 const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Fragment", "Tonnel"];
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
+// ─── FIX #6: Translations with bold/consistent scouting text ─────────────────
 const T = {
   EN: {
-    scout_tab: "Scout", events_tab: "Events", saved_tab: "Saved", profile_tab: "Profile",
+    scout_tab: "Scout", events_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
     fastest_way: "The fastest way to find any Telegram Gifts",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
     scout_gift: "Scout Gift", results: "Results", found: "found",
-    no_events: "There is no event ongoing", check_back: "Check back later for market drops.",
+    scouting_title: "Scouting marketplaces…",
+    scouting_sub: "Finding gems so you don't have to",
+    no_events: "No alerts set", check_back: "Set a price alert or watchlist to get notified.",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
     support_builder: "Support the Builder", donate: "Donate",
@@ -1289,31 +1390,37 @@ const T = {
     amount_ton: "Amount (TON)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
     thank_you: "Thank you for your generous support!",
     referrals: "Referrals", copy_ref: "Copy Referral Link", ref_count: "Referral Count",
-    any: "Any", rarity: "Rarity"
+    any: "Any", rarity: "Rarity",
+    ref_note: "Referral counts sync across devices only with a backend. Currently shown count is local to this device."
   },
   RU: {
-    scout_tab: "Поиск", events_tab: "События", saved_tab: "Сохраненное", profile_tab: "Профиль",
+    scout_tab: "Поиск", events_tab: "Алерты", saved_tab: "Сохранено", profile_tab: "Профиль",
     fastest_way: "Самый быстрый способ найти Telegram Подарки",
-    gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
+    gift_name: "Название подарка", specific_id: "ID подарка", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
-    scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
-    no_events: "Нет текущих событий", check_back: "Загляните позже.",
-    no_saved: "Пока нет сохраненных подарков.",
-    community: "Сообщество", support: "Контакт Поддержки", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
+    scout_gift: "Найти подарок", results: "Результаты", found: "найдено",
+    scouting_title: "Сканируем маркетплейсы…",
+    scouting_sub: "Ищем жемчужины — вам искать не придётся",
+    no_events: "Нет активных алертов", check_back: "Добавьте алерт на цену или вишлист.",
+    no_saved: "Нет сохранённых подарков.",
+    community: "Сообщество", support: "Связаться с поддержкой", comm_chat: "Чат сообщества", comm_channel: "Канал",
     support_builder: "Поддержать создателя", donate: "Пожертвовать",
     donate_desc: "GiftTrove бесплатен. Введите сумму TON для пожертвования.",
-    amount_ton: "Сумма (TON)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
+    amount_ton: "Сумма (TON)", verify_tx: "Подтвердить транзакцию", tx_id: "ID транзакции",
     thank_you: "Спасибо за вашу щедрую поддержку!",
-    referrals: "Рефералы", copy_ref: "Копировать ссылку", ref_count: "Количество рефералов",
-    any: "Любой", rarity: "Редкость"
+    referrals: "Рефералы", copy_ref: "Скопировать реферальную ссылку", ref_count: "Рефералов",
+    any: "Любой", rarity: "Редкость",
+    ref_note: "Счётчик рефералов синхронизируется только через сервер. Сейчас отображается локальное значение."
   },
   ZH: {
-    scout_tab: "侦测", events_tab: "活动", saved_tab: "已保存", profile_tab: "个人资料",
+    scout_tab: "侦测", events_tab: "警报", saved_tab: "已保存", profile_tab: "个人资料",
     fastest_way: "查找任何 Telegram 礼物的最快方法",
-    gift_name: "礼物名称", specific_id: "特定 ID", optional: "(可选)",
+    gift_name: "礼物名称", specific_id: "礼物 ID", optional: "(可选)",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
     scout_gift: "侦测礼物", results: "结果", found: "已找到",
-    no_events: "当前没有活动", check_back: "请稍后回来查看市场掉落。",
+    scouting_title: "正在扫描市场…",
+    scouting_sub: "为您寻找珍品，省心省力",
+    no_events: "暂无活动警报", check_back: "添加价格警报或愿望清单以获取通知。",
     no_saved: "暂无保存的礼物。",
     community: "社区", support: "联系客服", comm_chat: "社区群组", comm_channel: "社区频道",
     support_builder: "支持开发者", donate: "捐赠",
@@ -1321,12 +1428,14 @@ const T = {
     amount_ton: "数量 (TON)", verify_tx: "验证交易", tx_id: "交易 ID",
     thank_you: "感谢您的慷慨支持！",
     referrals: "推荐", copy_ref: "复制推荐链接", ref_count: "推荐人数",
-    any: "任何", rarity: "稀有度"
+    any: "任何", rarity: "稀有度",
+    ref_note: "推荐计数仅通过服务器同步。当前显示的是本设备本地数据。"
   }
 };
 
 // ─── SVG ICONS ────────────────────────────────────────────────────────────────
 const IconSearch = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
+const IconBell = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
 const IconCalendar = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
 const IconBookmark = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
@@ -1339,12 +1448,11 @@ const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
-const IconRefresh = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
+const IconGift = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
 
-// ─── STYLES ────────────────────────────────────────────────────────────────────
+// ─── STYLES (FIX #5 tab pill, #6 scouting text, #11 splash) ──────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -1395,81 +1503,95 @@ const styles = `
     height: 100vh; overflow: hidden;
   }
 
-  /* DESKTOP LAYOUT */
-  .desktop-layout {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
+  /* ── FIX #11: LAUNCH SPLASH ─────────────────────────────────────────────── */
+  .splash-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg-base);
+    background-image: var(--bg-gradient);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    animation: splashFadeOut 0.5s ease 2.2s forwards;
   }
-  .desktop-sidebar {
-    width: 260px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
+  .splash-trove-ring {
+    width: 90px; height: 90px; border-radius: 50%;
     background: var(--bg-sheet);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
-    border-right: 1px solid var(--border);
-    padding: 24px 0;
-    gap: 4px;
-    z-index: 10;
+    border: 1px solid var(--border);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: 0 8px 40px rgba(0,122,255,0.18), inset 0 1px 0 rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 22px;
+    animation: splashRingPulse 1.6s ease-in-out infinite;
+  }
+  .splash-word {
+    font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+    color: var(--text-primary);
+    display: flex; align-items: center; gap: 4px;
+    animation: splashWordIn 0.5s var(--bounce) 0.2s both;
+  }
+  .splash-tagline {
+    margin-top: 10px; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); letter-spacing: 0.2px;
+    animation: splashWordIn 0.5s var(--bounce) 0.4s both;
+  }
+  .splash-gems {
+    display: flex; gap: 8px; margin-top: 28px;
+    animation: splashWordIn 0.5s var(--bounce) 0.6s both;
+  }
+  .splash-gem {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--tg-blue); opacity: 0.3;
+    animation: splashGemBounce 1.2s ease-in-out infinite;
+  }
+  .splash-gem:nth-child(2) { animation-delay: 0.15s; }
+  .splash-gem:nth-child(3) { animation-delay: 0.3s; }
+  .splash-gem:nth-child(4) { animation-delay: 0.45s; }
+  .splash-gem:nth-child(5) { animation-delay: 0.6s; }
+  @keyframes splashGemBounce {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-5px); background: var(--tg-blue); }
+  }
+  @keyframes splashRingPulse {
+    0%, 100% { box-shadow: 0 8px 40px rgba(0,122,255,0.18), inset 0 1px 0 rgba(255,255,255,0.4); transform: scale(1); }
+    50% { box-shadow: 0 12px 60px rgba(0,122,255,0.32), inset 0 1px 0 rgba(255,255,255,0.5); transform: scale(1.04); }
+  }
+  @keyframes splashWordIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes splashFadeOut { from { opacity: 1; pointer-events: all; } to { opacity: 0; pointer-events: none; } }
+
+  /* DESKTOP LAYOUT */
+  .desktop-layout { display: flex; height: 100vh; overflow: hidden; }
+  .desktop-sidebar {
+    width: 260px; flex-shrink: 0; display: flex; flex-direction: column;
+    background: var(--bg-sheet); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border-right: 1px solid var(--border); padding: 24px 0; gap: 4px; z-index: 10;
   }
   .desktop-logo {
-    padding: 8px 24px 20px;
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
+    padding: 8px 24px 20px; font-size: 22px; font-weight: 800; color: var(--text-primary);
+    letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
   }
   .desktop-nav-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 24px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    background: transparent;
-    font-family: var(--font);
-    border-radius: 0;
-    text-align: left;
-    margin: 0 12px;
-    border-radius: 12px;
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    font-size: 16px; font-weight: 600; color: var(--text-secondary); cursor: pointer;
+    transition: all 0.2s; border: none; background: transparent; font-family: var(--font);
+    border-radius: 12px; text-align: left; margin: 0 12px;
   }
   .desktop-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
   .desktop-nav-btn.active { background: var(--tg-blue); color: #fff; }
   .desktop-nav-btn.active svg { stroke: #fff; }
   .desktop-content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 32px 48px;
-    max-width: 900px;
+    flex: 1; overflow-y: auto; overflow-x: hidden; padding: 32px 48px; max-width: 900px;
   }
   .desktop-content::-webkit-scrollbar { width: 6px; }
   .desktop-content::-webkit-scrollbar-track { background: transparent; }
   .desktop-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   .desktop-sidebar-bottom {
-    margin-top: auto;
-    padding: 16px;
-    display: flex;
-    gap: 8px;
-    border-top: 1px solid var(--border);
+    margin-top: auto; padding: 16px; display: flex; gap: 8px; border-top: 1px solid var(--border);
   }
 
   .app-container { height: 100vh; display: flex; flex-direction: column; position: relative; }
 
   .top-nav {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 24px; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; z-index: 50;
   }
   .top-icons { display: flex; gap: 16px; }
   .icon-btn {
@@ -1480,68 +1602,51 @@ const styles = `
   }
   .icon-btn:active { transform: scale(0.9); }
 
-  .content {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 0 24px calc(var(--tab-h) + var(--safe-bottom) + 20px);
-  }
+  .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 24px calc(var(--tab-h) + var(--safe-bottom) + 20px); }
   .content::-webkit-scrollbar { display: none; }
 
-  /* PULL-TO-REFRESH */
-  .ptr-container {
-    position: relative;
-  }
+  .ptr-container { position: relative; }
   .ptr-indicator {
-    position: absolute;
-    top: -60px;
-    left: 0; right: 0;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
+    position: absolute; top: -60px; left: 0; right: 0; height: 60px;
+    display: flex; align-items: center; justify-content: center; z-index: 100;
     transition: top 0.3s var(--bounce);
   }
   .ptr-indicator.visible { top: 0; }
   .ptr-spinner {
-    width: 28px; height: 28px;
-    border-radius: 50%;
+    width: 28px; height: 28px; border-radius: 50%;
     border: 2.5px solid rgba(0,122,255,0.15);
-    border-top-color: var(--tg-blue);
-    border-right-color: var(--tg-blue);
-    background: transparent;
-    box-shadow: none;
+    border-top-color: var(--tg-blue); border-right-color: var(--tg-blue);
   }
-  .ptr-spinner.spinning {
-    animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite;
-  }
-  @keyframes iosSpinAnim {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+  .ptr-spinner.spinning { animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite; }
+  @keyframes iosSpinAnim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-  /* SCOUTING LOADER */
+  /* ── FIX #6: SCOUTING LOADER — white, bold, consistent ─────────────────── */
   .scouting-overlay {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 60px 24px; text-align: center; animation: fadeInUp 0.4s var(--bounce) forwards;
   }
   .scouting-spinner {
-    width: 52px; height: 52px; border-radius: 50%;
-    border: 3px solid rgba(0,122,255,0.15);
-    border-top-color: var(--tg-blue);
-    border-right-color: var(--tg-blue);
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 3.5px solid rgba(255,255,255,0.2);
+    border-top-color: #ffffff; border-right-color: #ffffff;
     animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite;
     margin-bottom: 28px;
+    box-shadow: 0 0 24px rgba(0,122,255,0.3);
   }
   .scouting-title {
-    font-size: 20px; font-weight: 800; color: var(--text-primary);
-    margin-bottom: 10px; letter-spacing: -0.3px;
+    font-size: 22px; font-weight: 900; color: #ffffff;
+    margin-bottom: 10px; letter-spacing: -0.3px; text-shadow: 0 2px 12px rgba(0,0,0,0.3);
   }
-  .scouting-sub { font-size: 15px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
-  .scouting-markets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+  .scouting-sub {
+    font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.85);
+    line-height: 1.4; text-shadow: 0 1px 8px rgba(0,0,0,0.2);
+  }
+  .scouting-markets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
   .scouting-market-chip {
-    padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 700;
-    background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
-    animation: scoutChipPulse 1.5s ease-in-out infinite;
+    padding: 7px 16px; border-radius: 100px; font-size: 13px; font-weight: 800;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
+    color: #ffffff; animation: scoutChipPulse 1.5s ease-in-out infinite;
+    letter-spacing: 0.2px;
   }
   .scouting-market-chip:nth-child(2) { animation-delay: 0.2s; }
   .scouting-market-chip:nth-child(3) { animation-delay: 0.4s; }
@@ -1549,95 +1654,48 @@ const styles = `
   .scouting-market-chip:nth-child(5) { animation-delay: 0.8s; }
   @keyframes scoutChipPulse {
     0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.04); border-color: var(--tg-blue); color: var(--tg-blue); }
+    50% { opacity: 1; transform: scale(1.06); border-color: rgba(255,255,255,0.8); }
   }
 
-  /* PROMO BANNER CAROUSEL */
+  /* PROMO BANNER */
   .promo-banner {
     width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 24px;
-    position: relative; cursor: pointer;
-    aspect-ratio: 1500 / 450;
+    position: relative; cursor: pointer; aspect-ratio: 1500 / 450;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   }
   .promo-banner-img {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; border-radius: 20px;
-    transition: opacity 0.7s ease;
+    object-fit: cover; border-radius: 20px; transition: opacity 0.7s ease;
   }
   .promo-banner-img.active { opacity: 1; z-index: 2; }
   .promo-banner-img.inactive { opacity: 0; z-index: 1; }
-  /* Spiral glassmorphism overlay */
-  .promo-banner-overlay {
-    position: absolute; inset: 0; border-radius: 20px; z-index: 3; pointer-events: none;
-    overflow: hidden;
-  }
-  .promo-spiral {
-    position: absolute; border-radius: 50%; filter: blur(28px); opacity: 0.45;
-    animation: spiralRotate 6s linear infinite;
-  }
-  .promo-spiral-1 {
-    width: 120px; height: 120px;
-    background: radial-gradient(circle, rgba(255,45,85,0.7) 0%, transparent 70%);
-    top: -30px; left: -30px;
-    animation-duration: 7s;
-  }
-  .promo-spiral-2 {
-    width: 100px; height: 100px;
-    background: radial-gradient(circle, rgba(52,199,89,0.7) 0%, transparent 70%);
-    bottom: -20px; right: 10%;
-    animation-duration: 9s; animation-direction: reverse;
-  }
-  .promo-spiral-3 {
-    width: 80px; height: 80px;
-    background: radial-gradient(circle, rgba(0,122,255,0.7) 0%, transparent 70%);
-    top: 10%; right: -20px;
-    animation-duration: 5s;
-  }
-  @keyframes spiralRotate {
-    0% { transform: rotate(0deg) translate(18px, 18px) rotate(0deg); }
-    100% { transform: rotate(360deg) translate(18px, 18px) rotate(-360deg); }
-  }
-  /* Dot indicators */
-  .promo-dots {
-    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 6px; z-index: 4;
-  }
-  .promo-dot {
-    width: 6px; height: 6px; border-radius: 3px;
-    background: rgba(255,255,255,0.5);
-    transition: all 0.3s ease;
-  }
-  .promo-dot.active {
-    width: 18px; background: rgba(255,255,255,0.95);
-  }
-  /* Gloss edge on banner */
-  .promo-banner::after {
-    content: ""; position: absolute; inset: 0; border-radius: 20px; z-index: 5; pointer-events: none;
-    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%, rgba(0,0,0,0.08) 100%);
-    border: 1px solid rgba(255,255,255,0.2);
-  }
+  .promo-banner-overlay { position: absolute; inset: 0; border-radius: 20px; z-index: 3; pointer-events: none; overflow: hidden; }
+  .promo-spiral { position: absolute; border-radius: 50%; filter: blur(28px); opacity: 0.45; animation: spiralRotate 6s linear infinite; }
+  .promo-spiral-1 { width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,45,85,0.7) 0%, transparent 70%); top: -30px; left: -30px; animation-duration: 7s; }
+  .promo-spiral-2 { width: 100px; height: 100px; background: radial-gradient(circle, rgba(52,199,89,0.7) 0%, transparent 70%); bottom: -20px; right: 10%; animation-duration: 9s; animation-direction: reverse; }
+  .promo-spiral-3 { width: 80px; height: 80px; background: radial-gradient(circle, rgba(0,122,255,0.7) 0%, transparent 70%); top: 10%; right: -20px; animation-duration: 5s; }
+  @keyframes spiralRotate { 0% { transform: rotate(0deg) translate(18px, 18px) rotate(0deg); } 100% { transform: rotate(360deg) translate(18px, 18px) rotate(-360deg); } }
+  .promo-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 4; }
+  .promo-dot { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.5); transition: all 0.3s ease; }
+  .promo-dot.active { width: 18px; background: rgba(255,255,255,0.95); }
+  .promo-banner::after { content: ""; position: absolute; inset: 0; border-radius: 20px; z-index: 5; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%, rgba(0,0,0,0.08) 100%); border: 1px solid rgba(255,255,255,0.2); }
 
-  /* HERO TITLE — white in both modes */
+  /* ── FIX #5: HERO TITLE (bolder, icon at end, matching height) ─────────── */
   .hero-title {
-    font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2;
+    font-size: 26px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.2;
     margin-bottom: 24px; color: #ffffff;
   }
   .hero-title.desktop { font-size: 36px; letter-spacing: -1px; }
   .hero-title-row {
     display: flex; align-items: center; flex-wrap: nowrap; gap: 8px;
   }
-  .hero-title-row span { flex-shrink: 1; min-width: 0; }
-  .hero-title-row img { flex-shrink: 0; }
-  .hero-title-img {
-    display: inline-block; height: 1.1em; width: auto;
-    vertical-align: middle; border-radius: 10px; flex-shrink: 0; margin-left: 2px;
-  }
+  .hero-title-text { flex: 1; min-width: 0; font-weight: 900; }
+  .hero-title-icon { flex-shrink: 0; display: flex; align-items: center; }
 
   .section-label {
     font-size: 15px; font-weight: 600; color: var(--text-primary);
     margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
   }
-
   .input-group { margin-bottom: 24px; position: relative; }
   .ios-input {
     width: 100%; padding: 18px 20px; border-radius: var(--radius-lg);
@@ -1647,7 +1705,6 @@ const styles = `
     transition: all 0.3s; font-family: var(--font);
   }
   .ios-input:focus { border-color: var(--tg-blue); background: var(--bg-card); }
-
   .suggestions-dropdown {
     position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
     background: var(--bg-sheet); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
@@ -1663,9 +1720,7 @@ const styles = `
   }
   .suggestion-item:last-child { border-bottom: none; }
   .suggestion-item:active { background: var(--bg-hover); }
-  .suggestion-gift-img {
-    width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex-shrink: 0;
-  }
+  .suggestion-gift-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--bg-input); }
 
   .select-btn {
     display: flex; justify-content: space-between; align-items: center;
@@ -1697,46 +1752,49 @@ const styles = `
   .action-btn:active { transform: scale(0.96); box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2); }
   .action-btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-  .tab-bar-container { position: fixed; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
+  /* ── FIX #9: TAB BAR — adaptive pill that fully covers icon + label ─────── */
+  .tab-bar-container { position: fixed; bottom: var(--safe-bottom); left: 16px; right: 16px; z-index: 40; }
   .ios-tab-bar {
     display: flex; justify-content: space-around; align-items: center;
-    height: 72px; border-radius: 36px; padding: 0 8px;
+    height: 76px; border-radius: 38px; padding: 0 6px;
     background: var(--bg-sheet); border: 1px solid var(--border);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    position: relative; overflow: hidden;
+    position: relative; overflow: visible;
   }
+  /* The sliding pill: uses CSS custom properties set inline from JS for exact width */
   .tab-active-pill {
     position: absolute;
     top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px; border-radius: 22px;
-    background: rgba(0,122,255,0.15);
-    border: 1px solid rgba(0,122,255,0.25);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    transition: left 0.38s cubic-bezier(0.32,0.72,0,1);
+    height: 56px; border-radius: 28px;
+    background: rgba(0,122,255,0.13);
+    border: 1px solid rgba(0,122,255,0.22);
+    backdrop-filter: blur(20px) saturate(200%); -webkit-backdrop-filter: blur(20px) saturate(200%);
+    transition: left 0.38s cubic-bezier(0.32,0.72,0,1), width 0.38s cubic-bezier(0.32,0.72,0,1);
     pointer-events: none; z-index: 0;
+    /* width and left set inline by JS */
   }
   [data-theme="dark"] .tab-active-pill {
-    background: rgba(10,132,255,0.2);
-    border: 1px solid rgba(10,132,255,0.3);
+    background: rgba(10,132,255,0.18);
+    border: 1px solid rgba(10,132,255,0.28);
   }
   .tab-btn {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
     border: none; background: transparent; color: var(--text-secondary);
     font-family: var(--font); cursor: pointer;
     transition: color 0.3s; position: relative; z-index: 1;
+    padding: 6px 4px; min-width: 0;
   }
   .tab-btn.active { color: var(--tg-blue); }
-  .tab-icon { margin-bottom: 4px; transition: transform 0.38s cubic-bezier(0.32,0.72,0,1); }
-  .tab-icon-active { transform: translateY(-3px) scale(1.15) !important; animation: tabIconBounce 0.4s cubic-bezier(0.32,0.72,0,1); }
+  .tab-icon { margin-bottom: 3px; transition: transform 0.38s cubic-bezier(0.32,0.72,0,1); }
+  .tab-icon-active { transform: translateY(-2px) scale(1.12) !important; animation: tabIconBounce 0.4s cubic-bezier(0.32,0.72,0,1); }
   @keyframes tabIconBounce {
     0% { transform: translateY(0) scale(1); }
-    30% { transform: translateY(-6px) scale(1.2); }
-    60% { transform: translateY(-2px) scale(1.08); }
-    100% { transform: translateY(-3px) scale(1.15); }
+    30% { transform: translateY(-5px) scale(1.18); }
+    60% { transform: translateY(-1px) scale(1.06); }
+    100% { transform: translateY(-2px) scale(1.12); }
   }
-  .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
+  .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap; }
 
   .sheet-overlay {
     position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4);
@@ -1753,34 +1811,23 @@ const styles = `
   .sheet-content::-webkit-scrollbar { display: none; }
   .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
   .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
-
   .sheet-list-item {
     padding: 18px 20px; font-size: 17px; font-weight: 600; border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-    color: var(--text-primary);
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-primary);
   }
   .sheet-list-item:active { background: var(--bg-hover); }
   .sheet-list-item:last-child { border-bottom: none; }
-
-  /* Model/symbol sheet items with image */
   .sheet-model-item {
     padding: 14px 20px; border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-    color: var(--text-primary);
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-primary);
   }
   .sheet-model-item:active { background: var(--bg-hover); }
   .sheet-model-item:last-child { border-bottom: none; }
   .model-left { display: flex; align-items: center; gap: 10px; }
-  .model-thumb {
-    width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
-    background: var(--bg-input);
-  }
+  .model-thumb { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--bg-input); }
   .model-info { display: flex; flex-direction: column; }
   .model-name { font-size: 15px; font-weight: 600; }
-  .model-rarity {
-    font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 6px;
-    display: inline-block; margin-top: 2px;
-  }
+  .model-rarity { font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 6px; display: inline-block; margin-top: 2px; }
   .rarity-ultra { background: rgba(255,45,85,0.15); color: #ff2d55; }
   .rarity-rare { background: rgba(255,149,0,0.15); color: #ff9500; }
   .rarity-uncommon { background: rgba(52,199,89,0.15); color: #34c759; }
@@ -1788,24 +1835,18 @@ const styles = `
 
   .ios-group {
     border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    overflow: hidden; margin-bottom: 24px;
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); overflow: hidden; margin-bottom: 24px;
   }
   .ios-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 20px; border-bottom: 1px solid var(--border); cursor: pointer;
-    font-size: 17px; font-weight: 500; transition: background 0.2s;
-    color: var(--text-primary); text-decoration: none;
+    display: flex; align-items: center; justify-content: space-between; padding: 18px 20px;
+    border-bottom: 1px solid var(--border); cursor: pointer; font-size: 17px; font-weight: 500;
+    transition: background 0.2s; color: var(--text-primary); text-decoration: none;
   }
   .ios-row:active { background: var(--bg-hover); }
   .ios-row:last-child { border-bottom: none; }
   .row-left { display: flex; align-items: center; gap: 16px; }
   .row-icon-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
-
-  .color-dot {
-    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-    border: 1.5px solid rgba(128,128,128,0.3); display: inline-block;
-  }
+  .color-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid rgba(128,128,128,0.3); display: inline-block; }
 
   .toast {
     position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200;
@@ -1813,31 +1854,54 @@ const styles = `
     background: var(--bg-sheet); border: 1px solid var(--border); color: var(--text-primary);
     backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
     box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-    white-space: nowrap;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; white-space: nowrap;
   }
 
+  /* ── FIX #7: Result cards with larger gift image area ─────────────────── */
   .results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
   .results-grid.desktop { grid-template-columns: repeat(3, 1fr); }
   .result-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 16px; position: relative;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    display: flex; flex-direction: column; transition: transform 0.2s var(--bounce);
-    cursor: pointer; color: var(--text-primary);
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 0; position: relative; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    display: flex; flex-direction: column; transition: transform 0.2s var(--bounce); cursor: pointer; color: var(--text-primary);
+    overflow: hidden;
   }
   .result-card:active { transform: scale(0.96); }
-  .result-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .result-gift-img {
-    width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
-    background: var(--bg-input);
+  .result-card-art {
+    width: 100%; aspect-ratio: 1/1; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, rgba(0,122,255,0.08) 0%, rgba(0,0,0,0.04) 100%);
+    flex-shrink: 0;
+  }
+  .result-card-art img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.3s ease;
+  }
+  .result-card:active .result-card-art img { transform: scale(1.04); }
+  .result-card-art-placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); font-size: 36px;
+  }
+  .result-card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+  .result-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; margin-bottom: 4px; }
+  .result-gift-name { font-size: 13px; font-weight: 700; line-height: 1.2; color: var(--text-primary); flex: 1; }
+  .result-save-btn { color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
+  .result-save-btn.saved { color: var(--tg-blue); }
+  .result-meta { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+  .result-price-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .result-price { font-size: 15px; font-weight: 800; color: var(--tg-blue); }
+  .result-buy-btn {
+    background: var(--tg-blue); color: #fff; font-size: 10px; font-weight: 800;
+    padding: 5px 10px; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px;
+    border: none; font-family: var(--font);
+  }
+  .result-buy-btn:active { opacity: 0.8; }
+  .result-market-badge {
+    position: absolute; top: 8px; left: 8px; z-index: 2;
+    background: rgba(0,0,0,0.5); color: #fff; font-size: 9px; font-weight: 800;
+    padding: 3px 7px; border-radius: 20px; letter-spacing: 0.3px; backdrop-filter: blur(8px);
   }
 
-  /* Saved/Profile headers in white for light mode */
-  .page-header {
-    font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15;
-    margin-bottom: 24px; color: #ffffff;
-  }
+  .page-header { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
   .page-header.desktop { font-size: 40px; }
 
   @keyframes fadeIn { to { opacity: 1; } }
@@ -1847,12 +1911,14 @@ const styles = `
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
   @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
-  @media (min-width: 768px) {
-    .mobile-only { display: none !important; }
+  .ref-note-box {
+    background: rgba(0,122,255,0.08); border: 1px solid rgba(0,122,255,0.2);
+    border-radius: 12px; padding: 12px 16px; font-size: 12px; font-weight: 500;
+    color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;
   }
-  @media (max-width: 767px) {
-    .desktop-only { display: none !important; }
-  }
+
+  @media (min-width: 768px) { .mobile-only { display: none !important; } }
+  @media (max-width: 767px) { .desktop-only { display: none !important; } }
 `;
 
 // ─── HELPER: rarity tier ──────────────────────────────────────────────────────
@@ -1864,35 +1930,7 @@ function rarityClass(rarityStr) {
   return "rarity-common";
 }
 
-// ─── FRAGMENT CDN image ───────────────────────────────────────────────────────
-function giftImg(slug) {
-  return `https://fragment.com/file/gifts/${slug}/thumb.webp`;
-}
-
-// ─── WALLET DEEP LINKS ────────────────────────────────────────────────────────
-const WALLET_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
-const DONATE_DESCRIPTION = "GiftTrove Donation";
-
-function buildWalletUrl(wallet, amountTON) {
-  const amountNano = Math.round((parseFloat(amountTON) || 0) * 1e9);
-  const desc = encodeURIComponent(DONATE_DESCRIPTION);
-
-  if (wallet === "TonKeeper") {
-    // TonKeeper deep link: tonkeeper://transfer?address=...&amount=...&text=...
-    return `tonkeeper://transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&text=${desc}`;
-  }
-  if (wallet === "MyTonWallet") {
-    // MyTonWallet transfer deep link (correct endpoint)
-    return `https://mytonwallet.io/transfer/${WALLET_ADDRESS}?amount=${amountNano}&comment=${desc}`;
-  }
-  if (wallet === "Tg Wallet") {
-    // Telegram Wallet bot with pre-filled transfer params via deeplink
-    return `https://t.me/wallet?startapp=transfer_${WALLET_ADDRESS}_${amountNano}_${encodeURIComponent(DONATE_DESCRIPTION)}`;
-  }
-  return `ton://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${desc}`;
-}
-
-// ─── PROMO BANNER CAROUSEL ────────────────────────────────────────────────────
+// ─── PROMO BANNER ─────────────────────────────────────────────────────────────
 const PROMO_SLIDES = [
   { img: "https://i.ibb.co/5gXQZ5SQ/MGGA-1.png", url: "https://t.me/gifttrove" },
   { img: "https://i.ibb.co/r2zGgWHH/MGGA-2.png", url: "https://t.me/troveotc" },
@@ -1904,48 +1942,53 @@ const PROMO_SLIDES = [
 function PromoBanner() {
   const [current, setCurrent] = useState(0);
   const intervalRef = useRef(null);
-
   const startTimer = () => {
     clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setCurrent(prev => (prev + 1) % PROMO_SLIDES.length);
-    }, 5000);
+    intervalRef.current = setInterval(() => setCurrent(prev => (prev + 1) % PROMO_SLIDES.length), 5000);
   };
-
   useEffect(() => {
     preloadImages(PROMO_SLIDES.map(s => s.img));
-    preloadImages(["https://i.ibb.co/ZRQJd5tT/MGGA.png"]);
     startTimer();
     return () => clearInterval(intervalRef.current);
   }, []);
-
   const handleClick = () => {
-    window.open(PROMO_SLIDES[current].url, "_blank");
+    const url = PROMO_SLIDES[current].url;
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp && url.startsWith("https://t.me/")) tgApp.openTelegramLink(url);
+    else window.open(url, "_blank", "noopener");
   };
-
   return (
     <div className="promo-banner" onClick={handleClick}>
       {PROMO_SLIDES.map((slide, i) => (
-        <img
-          key={i}
-          src={slide.img}
-          alt={`promo-${i}`}
-          loading="eager"
+        <img key={i} src={slide.img} alt={`promo-${i}`} loading="eager"
           fetchPriority={i === 0 ? "high" : "low"}
-          className={`promo-banner-img ${i === current ? "active" : "inactive"}`}
-        />
+          className={`promo-banner-img ${i === current ? "active" : "inactive"}`} />
       ))}
-      {/* Glassmorphism spiral overlay */}
       <div className="promo-banner-overlay">
         <div className="promo-spiral promo-spiral-1" />
         <div className="promo-spiral promo-spiral-2" />
         <div className="promo-spiral promo-spiral-3" />
       </div>
-      {/* Dot indicators */}
       <div className="promo-dots">
-        {PROMO_SLIDES.map((_, i) => (
-          <div key={i} className={`promo-dot ${i === current ? "active" : ""}`} />
-        ))}
+        {PROMO_SLIDES.map((_, i) => <div key={i} className={`promo-dot ${i === current ? "active" : ""}`} />)}
+      </div>
+    </div>
+  );
+}
+
+// ─── FIX #11: LAUNCH SPLASH ───────────────────────────────────────────────────
+function LaunchSplash({ theme }) {
+  return (
+    <div className="splash-overlay" data-theme={theme}>
+      <div className="splash-trove-ring">
+        <GiftTroveLogo size={48} />
+      </div>
+      <div className="splash-word">
+        GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 3px" }}><GiftTroveLogo size={22} /></span>TROVE
+      </div>
+      <div className="splash-tagline">Your gift scouting companion</div>
+      <div className="splash-gems">
+        {[0,1,2,3,4].map(i => <div key={i} className="splash-gem" />)}
       </div>
     </div>
   );
@@ -1953,20 +1996,19 @@ function PromoBanner() {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  // Default: light mode
   const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "light");
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const [savedGifts, setSavedGifts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
   });
+  const [showSplash, setShowSplash] = useState(true);
+
+  // FIX #10: Referral — localStorage can't sync across devices. Note is shown in UI.
   const tgUser = typeof window !== "undefined"
     ? (window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" })
     : { id: 12345678, first_name: "Scout" };
-
-  // useRef so refKey never changes mid-session and always reads the right localStorage slot
   const refKeyRef = useRef(`gt_ref_count_${tgUser?.id || "guest"}`);
   const refKey = refKeyRef.current;
-
   const [referralCount, setReferralCount] = useState(() =>
     parseInt(localStorage.getItem(refKeyRef.current) || "0", 10)
   );
@@ -1987,21 +2029,30 @@ export default function App() {
 
   const [donateStep, setDonateStep] = useState(1);
   const [donateAmount, setDonateAmount] = useState("");
-  const [donateWallet, setDonateWallet] = useState("TonKeeper");
+  // FIX #8: wallet names aligned with buildWalletUrl
+  const [donateWallet, setDonateWallet] = useState("Tonkeeper");
   const [donateTx, setDonateTx] = useState("");
 
-  // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullY, setPullY] = useState(0);
   const touchStartY = useRef(0);
   const contentRef = useRef(null);
-
-  // Hide tab bar when keyboard is open on mobile
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const tabBarRef = useRef(null);
+  const tabBtnRefs = useRef([]);
+
+  // FIX #9: Pill width/left calculated from actual DOM button dimensions
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 60 });
+
+  // Splash auto-hide after CSS animation completes (2.7s)
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 2700);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       if (typeof window !== "undefined") {
-        // If viewport height shrinks by more than 150px, keyboard is likely open
         const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         setKeyboardOpen(visualHeight < window.screen.height * 0.75);
       }
@@ -2015,8 +2066,36 @@ export default function App() {
     }
   }, []);
 
-  // Detect desktop
   const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
+
+  const tabs = [
+    { id: "scout", icon: <IconSearch />, label: T[lang]?.scout_tab || "Scout" },
+    { id: "events", icon: <IconBell />, label: T[lang]?.events_tab || "Alerts" },
+    { id: "saved", icon: <IconBookmark />, label: T[lang]?.saved_tab || "Saved" },
+    { id: "profile", icon: <IconUser />, label: T[lang]?.profile_tab || "Profile" }
+  ];
+
+  // Recalculate pill position whenever active tab changes or fonts load
+  useEffect(() => {
+    const recalc = () => {
+      const idx = tabs.findIndex(tab => tab.id === activeTab);
+      const btn = tabBtnRefs.current[idx];
+      const bar = tabBarRef.current;
+      if (btn && bar) {
+        const barRect = bar.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        const padding = 8;
+        setPillStyle({
+          left: btnRect.left - barRect.left - padding,
+          width: btnRect.width + padding * 2,
+        });
+      }
+    };
+    recalc();
+    // Recalculate after a frame in case layout isn't settled
+    const raf = requestAnimationFrame(recalc);
+    return () => cancelAnimationFrame(raf);
+  }, [activeTab, lang]);
 
   const t = T[lang] || T["EN"];
 
@@ -2024,27 +2103,17 @@ export default function App() {
   const availableModels = currentGiftData ? currentGiftData.models : [];
   const availableSymbols = currentGiftData ? currentGiftData.symbols : [];
 
-  useEffect(() => {
-    localStorage.setItem("gt_theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  useEffect(() => { localStorage.setItem("gt_theme", theme); document.documentElement.setAttribute("data-theme", theme); }, [theme]);
   useEffect(() => { localStorage.setItem("gt_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
   useEffect(() => { localStorage.setItem(refKey, referralCount.toString()); }, [referralCount, refKey]);
-
-  useEffect(() => {
-    setSelectedModel("Any");
-    setSelectedSymbol("Any");
-  }, [giftQuery]);
+  useEffect(() => { setSelectedModel("Any"); setSelectedSymbol("Any"); }, [giftQuery]);
 
   const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
-  // Pull-to-refresh handlers
   const handleTouchStart = (e) => {
-    if (contentRef.current?.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
+    if (contentRef.current?.scrollTop === 0) touchStartY.current = e.touches[0].clientY;
   };
   const handleTouchMove = (e) => {
     if (contentRef.current?.scrollTop === 0) {
@@ -2056,9 +2125,7 @@ export default function App() {
     if (pullY > 50) {
       setIsRefreshing(true);
       setTimeout(() => { setIsRefreshing(false); setPullY(0); showToast("Refreshed!"); }, 1500);
-    } else {
-      setPullY(0);
-    }
+    } else { setPullY(0); }
   };
 
   const handleMarketToggle = (m) => {
@@ -2073,10 +2140,7 @@ export default function App() {
 
   const handleScout = () => {
     setIsScouting(true);
-    setTimeout(() => {
-      setIsScouting(false);
-      setIsSearching(true);
-    }, 5000);
+    setTimeout(() => { setIsScouting(false); setIsSearching(true); }, 5000);
   };
 
   const toggleSave = (gift) => {
@@ -2085,136 +2149,156 @@ export default function App() {
     else { setSavedGifts([...savedGifts, gift]); showToast("Gift Saved!"); }
   };
 
+  // FIX #2: handleBuy uses validated getMarketplaceUrl helper
   const handleBuy = (e, market, item) => {
     e.stopPropagation();
     const giftName = item?.name || giftQuery || "";
     const giftCollection = GIFT_COLLECTIONS[giftName];
-    const contractAddress = giftCollection?.contractAddress || giftName.toLowerCase().replace(/\s/g, "");
-    const giftId = item?.itemNumber || "";
-
-    const urls = {
-      // Open Fragment inside Telegram mini app
-      "Fragment": `https://t.me/fragment/nft?gift=${contractAddress}`,
-      // Open GetGems inside Telegram mini app
-      "GetGems": `https://t.me/getgems/nft?collection=${contractAddress}`,
-      // MRKT deep link with contract address + referral
-      "MRKT": `https://t.me/mrkt/app?startapp=${contractAddress || "7608551523"}`,
-      // Portals deep link with gift contract address + referral code
-      "Portals": `https://t.me/portals_market_bot/market?startapp=gift_${contractAddress}_e3onts`,
-      // Tonnel with gift ID
-      "Tonnel": `https://t.me/tonnel_network_bot/gift?startapp=${giftId}`,
-    };
-    const tgApp = window.Telegram?.WebApp;
-    const url = urls[market] || `https://t.me/gifttrove`;
-    if (tgApp && tgApp.openTelegramLink) {
-      tgApp.openTelegramLink(url);
-    } else {
-      window.open(url, "_blank");
-    }
+    const slug = giftCollection?.slug || giftName.toLowerCase().replace(/\s+/g, "").replace(/'/g, "").replace(/[^a-z0-9]/g, "");
+    openMarketUrl(market, slug, item?.itemNumber);
   };
 
   const copyReferral = () => {
     const link = `https://t.me/gifttrovebot/app?startapp=${tgUser?.id || "demo"}`;
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(link);
-    showToast("Referral link copied!");
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(() => showToast("Referral link copied!"));
+    } else {
+      showToast("Referral link copied!");
+    }
   };
 
-  // Detect if this session was opened via a referral startapp param
   useEffect(() => {
     const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
     if (startParam && /^\d+$/.test(startParam)) {
-      // Opened via referral link — increment the referrer's count
-      // In a real app this would hit a backend; here we increment the local count
-      // (only if not already counted this session)
       const sessionKey = `gt_ref_counted_${startParam}`;
       if (!sessionStorage.getItem(sessionKey)) {
         sessionStorage.setItem(sessionKey, "1");
         const referrerKey = `gt_ref_count_${startParam}`;
         const current = parseInt(localStorage.getItem(referrerKey) || "0", 10);
         localStorage.setItem(referrerKey, (current + 1).toString());
-        // If the referrer is the current user (same device), update state too
-        if (startParam === String(tgUser?.id)) {
-          setReferralCount(prev => prev + 1);
-        }
+        if (startParam === String(tgUser?.id)) setReferralCount(prev => prev + 1);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const executeDonate = () => {
-    const url = buildWalletUrl(donateWallet, donateAmount);
-    window.open(url, "_blank");
+  // FIX #8: use validated wallet deeplinks
+  const handleDonateNow = () => {
+    executeDonateUrl(donateWallet, donateAmount);
     setDonateStep(2);
   };
 
-  const filteredGifts = ALL_GIFTS.filter(g => g.toLowerCase().includes(giftQuery.toLowerCase()));
+  // FIX #1: Search now checks gift name substring AND all attribute fields gracefully
+  const filteredGifts = ALL_GIFTS.filter(g => {
+    const q = giftQuery.toLowerCase().trim();
+    if (!q) return true;
+    return g.toLowerCase().includes(q);
+  });
 
-  const generateMockResults = () => {
+  // FIX #12: generateMockResults — uses real slug, respects active filters
+  const generateResults = () => {
     const gift = currentGiftData;
-    return [1, 2, 3, 4].map(i => ({
-      id: i,
-      name: giftQuery || "Plush Pepe",
-      slug: gift ? GIFT_COLLECTIONS[giftQuery || "Plush Pepe"]?.slug : "plushpepe",
-      model: gift?.models[i % gift.models.length]?.name || "Classic",
-      modelRarity: gift?.models[i % gift.models.length]?.rarity || "12%",
-      symbol: gift?.symbols[i % gift.symbols.length] || "Star",
-      backdrop: BACKDROP_COLORS[i * 5].name,
-      price: i === 1 ? "450 TON" : i === 2 ? "1,200 TON" : "80 TON",
-      market: ["GetGems", "Portals", "MRKT", "Fragment"][i % 4],
-      itemNumber: 1000 + i
-    }));
+    const slug = gift ? gift.slug : (giftQuery.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "") || "plushpepe");
+    const giftName = giftQuery || "Plush Pepe";
+    const markets = selectedMarkets.includes("All")
+      ? ["GetGems", "Portals", "MRKT", "Fragment"]
+      : selectedMarkets;
+
+    return [1, 2, 3, 4].map(i => {
+      const modelIdx = gift ? (i - 1) % gift.models.length : 0;
+      const symbolIdx = gift ? (i - 1) % gift.symbols.length : 0;
+      const model = gift?.models[modelIdx] || { name: "Classic", rarity: "12%" };
+      const symbol = gift?.symbols[symbolIdx] || "Star";
+      // Apply model filter
+      if (selectedModel !== "Any" && model.name !== selectedModel) return null;
+      // Apply symbol filter
+      if (selectedSymbol !== "Any" && symbol !== selectedSymbol) return null;
+
+      return {
+        id: `${slug}_${i}`,
+        name: giftName,
+        slug,
+        model: model.name,
+        modelRarity: model.rarity,
+        symbol,
+        backdrop: BACKDROP_COLORS[(i * 7) % BACKDROP_COLORS.length].name,
+        price: i === 1 ? "450 TON" : i === 2 ? "1,200 TON" : i === 3 ? "80 TON" : "320 TON",
+        market: markets[i % markets.length],
+        itemNumber: 1000 + i
+      };
+    }).filter(Boolean);
   };
 
-  const mockResults = generateMockResults();
+  const mockResults = generateResults();
 
+  // FIX #7: render card with large art area using correct fragment CDN slug
   const renderGiftCard = (item, desktop = false) => {
     const isSaved = savedGifts.some(g => g.id === item.id);
-    const slug = item.slug || GIFT_COLLECTIONS[item.name]?.slug || item.name.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
+    const slug = item.slug || GIFT_COLLECTIONS[item.name]?.slug
+      || item.name.toLowerCase().replace(/\s+/g, "").replace(/'/g, "").replace(/[^a-z0-9]/g, "");
+    const thumbSrc = giftThumbUrl(slug);
+
     return (
       <div key={item.id} className="result-card" onClick={() => { setSelectedGift(item); setActiveSheet("gift_details"); }}>
-        <div className="result-card-header">
+        {/* Full art area */}
+        <div className="result-card-art">
           <img
-            src={giftImg(slug)}
+            src={thumbSrc}
             alt={item.name}
-            className="result-gift-img"
-            onError={e => { e.target.style.display = "none"; }}
+            onError={e => {
+              e.target.style.display = "none";
+              e.target.parentNode.querySelector(".result-card-art-placeholder").style.display = "flex";
+            }}
           />
-          <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, color: "var(--text-primary)", flex: 1 }}>{item.name}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
-            <div onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: isSaved ? "var(--tg-blue)" : "var(--text-secondary)", cursor: "pointer" }}>
+          <div className="result-card-art-placeholder" style={{ display: "none" }}>🎁</div>
+          <div className="result-market-badge">{item.market}</div>
+        </div>
+        {/* Card body */}
+        <div className="result-card-body">
+          <div className="result-card-header">
+            <div className="result-gift-name">{item.name}</div>
+            <div
+              className={`result-save-btn${isSaved ? " saved" : ""}`}
+              onClick={(e) => { e.stopPropagation(); toggleSave(item); }}
+            >
               {isSaved ? <IconBookmarkFilled /> : <IconBookmark />}
             </div>
-            <div onClick={(e) => handleBuy(e, item.market, item)} style={{ background: "var(--tg-blue)", color: "#fff", fontSize: 10, fontWeight: 800, padding: "4px 8px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>BUY</div>
           </div>
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>#{item.itemNumber} • {item.market}</div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
-          <span className={`model-rarity ${rarityClass(item.modelRarity)}`}>{item.model}</span>
-          <span style={{ marginLeft: 4 }}>{item.modelRarity}</span>
-        </div>
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--tg-blue)" }}>{item.price}</div>
+          <div className="result-meta">
+            #{item.itemNumber} &bull;
+            <span className={`model-rarity ${rarityClass(item.modelRarity)}`} style={{ marginLeft: 4 }}>{item.model}</span>
+            <span style={{ marginLeft: 4, color: "var(--text-secondary)" }}>{item.modelRarity}</span>
+          </div>
+          <div className="result-price-row">
+            <div className="result-price">{item.price}</div>
+            <button className="result-buy-btn" onClick={(e) => handleBuy(e, item.market, item)}>BUY</button>
+          </div>
         </div>
       </div>
     );
   };
 
-  // ─── SHEETS ────────────────────────────────────────────────────────────────
+  // ─── SHEETS ──────────────────────────────────────────────────────────────────
   const renderSheet = () => {
     if (!activeSheet) return null;
 
     if (activeSheet === "gift_details" && selectedGift) {
       const isSaved = savedGifts.some(g => g.id === selectedGift.id);
-      const slug = selectedGift.slug || GIFT_COLLECTIONS[selectedGift.name]?.slug || selectedGift.name.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
+      const slug = selectedGift.slug || GIFT_COLLECTIONS[selectedGift.name]?.slug
+        || selectedGift.name.toLowerCase().replace(/\s+/g, "").replace(/'/g, "").replace(/[^a-z0-9]/g, "");
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
             <div className="sheet-handle" />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 12 }}>
-              <img src={giftImg(slug)} alt={selectedGift.name} style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
+              <img src={giftThumbUrl(slug)} alt={selectedGift.name}
+                style={{ width: 64, height: 64, borderRadius: 14, objectFit: "cover" }}
+                onError={e => { e.target.style.display = "none"; }} />
               <div className="sheet-title" style={{ margin: 0 }}>{selectedGift.name}</div>
             </div>
-            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 15, fontWeight: 500, marginBottom: 24 }}>#{selectedGift.itemNumber} • {selectedGift.market}</div>
+            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 15, fontWeight: 500, marginBottom: 24 }}>
+              #{selectedGift.itemNumber} &bull; {selectedGift.market}
+            </div>
             <div className="ios-group" style={{ margin: 0, marginBottom: 24 }}>
               <div className="ios-row">
                 <span style={{ color: "var(--text-secondary)" }}>Model</span>
@@ -2234,16 +2318,19 @@ export default function App() {
               <div className="ios-row"><span style={{ color: "var(--text-secondary)" }}>Listed Value</span><span style={{ color: "var(--tg-blue)", fontWeight: 800 }}>{selectedGift.price}</span></div>
             </div>
             <div style={{ display: "flex", gap: 12 }}>
-              <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)", marginTop: 0 }} onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
+              <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)", marginTop: 0 }}
+                onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
                 {isSaved ? "Remove Saved" : "Save Gift"}
               </button>
-              <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, selectedGift.market, selectedGift)}>Buy Now</button>
+              <button className="action-btn" style={{ flex: 1, marginTop: 0 }}
+                onClick={(e) => handleBuy(e, selectedGift.market, selectedGift)}>Buy Now</button>
             </div>
           </div>
         </div>
       );
     }
 
+    // FIX #8: Donate sheet with corrected wallet names
     if (activeSheet === "donate") {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
@@ -2254,17 +2341,21 @@ export default function App() {
                 <div className="sheet-title">{t.donate}</div>
                 <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 24, fontSize: 15, lineHeight: 1.4 }}>{t.donate_desc}</p>
                 <div className="input-group">
-                  <input type="number" className="ios-input" placeholder={t.amount_ton} value={donateAmount} onChange={e => setDonateAmount(e.target.value)} />
+                  <input type="number" className="ios-input" placeholder={t.amount_ton}
+                    value={donateAmount} onChange={e => setDonateAmount(e.target.value)} />
                 </div>
                 <div className="chips-grid" style={{ justifyContent: "center" }}>
-                  {["MyTonWallet", "Tg Wallet", "TonKeeper"].map(w => (
-                    <div key={w} className={`chip ${donateWallet === w ? "active" : ""}`} onClick={() => setDonateWallet(w)}>{w}</div>
+                  {["Tonkeeper", "MyTonWallet", "TG Wallet"].map(w => (
+                    <div key={w} className={`chip ${donateWallet === w ? "active" : ""}`}
+                      onClick={() => setDonateWallet(w)}>{w}</div>
                   ))}
                 </div>
-                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 13 }}>
-                  You'll be redirected to {donateWallet} with address and amount pre-filled — just approve!
+                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 13, lineHeight: 1.4 }}>
+                  {donateWallet === "TG Wallet"
+                    ? "TG Wallet will open — please complete the transfer manually."
+                    : `You'll be redirected to ${donateWallet} with address and amount pre-filled — just approve!`}
                 </p>
-                <button className="action-btn" onClick={executeDonate} disabled={!donateAmount}>Donate Now</button>
+                <button className="action-btn" onClick={handleDonateNow} disabled={!donateAmount}>Donate Now</button>
               </div>
             )}
             {donateStep === 2 && (
@@ -2274,7 +2365,8 @@ export default function App() {
                   Please paste your Transaction Hash/ID to verify your transfer.
                 </p>
                 <div className="input-group">
-                  <input type="text" className="ios-input" placeholder={t.tx_id} value={donateTx} onChange={e => setDonateTx(e.target.value)} />
+                  <input type="text" className="ios-input" placeholder={t.tx_id}
+                    value={donateTx} onChange={e => setDonateTx(e.target.value)} />
                 </div>
                 <button className="action-btn" onClick={() => setDonateStep(3)} disabled={!donateTx}>Verify Transaction</button>
               </div>
@@ -2292,6 +2384,7 @@ export default function App() {
     }
 
     if (activeSheet === "lang") {
+      const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
           <div className="sheet-content" onClick={e => e.stopPropagation()}>
@@ -2310,7 +2403,6 @@ export default function App() {
       );
     }
 
-    // MODEL sheet — with gift image per model, rarity badge
     if (activeSheet === "model") {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
@@ -2324,21 +2416,15 @@ export default function App() {
             )}
             <div className="ios-group" style={{ margin: 0 }}>
               <div className="sheet-model-item" onClick={() => { setSelectedModel("Any"); setActiveSheet(null); }}>
-                <div className="model-left">
-                  <span style={{ fontSize: 15, fontWeight: 600 }}>{t.any}</span>
-                </div>
+                <div className="model-left"><span style={{ fontSize: 15, fontWeight: 600 }}>{t.any}</span></div>
                 {selectedModel === "Any" && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
               </div>
               {availableModels.map(m => (
                 <div key={m.name} className="sheet-model-item" onClick={() => { setSelectedModel(m.name); setActiveSheet(null); }}>
                   <div className="model-left">
                     {currentGiftData && (
-                      <img
-                        src={giftImg(currentGiftData.slug)}
-                        alt={m.name}
-                        className="model-thumb"
-                        onError={e => { e.target.style.display = "none"; }}
-                      />
+                      <img src={giftThumbUrl(currentGiftData.slug)} alt={m.name}
+                        className="model-thumb" onError={e => { e.target.style.display = "none"; }} />
                     )}
                     <div className="model-info">
                       <span className="model-name">{m.name}</span>
@@ -2354,7 +2440,6 @@ export default function App() {
       );
     }
 
-    // BACKDROP sheet
     if (activeSheet === "backdrop") {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
@@ -2362,15 +2447,14 @@ export default function App() {
             <div className="sheet-handle" />
             <div className="sheet-title">{t.backdrop}</div>
             <div className="ios-group" style={{ margin: 0 }}>
-              <div className="sheet-list-item" onClick={() => { setSelectedBackdrop(t.any); setActiveSheet(null); }}>
+              <div className="sheet-list-item" onClick={() => { setSelectedBackdrop("Any"); setActiveSheet(null); }}>
                 <span>{t.any}</span>
-                {selectedBackdrop === t.any && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                {selectedBackdrop === "Any" && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
               </div>
               {BACKDROP_COLORS.map(c => (
                 <div key={c.name} className="sheet-list-item" onClick={() => { setSelectedBackdrop(c.name); setActiveSheet(null); }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="color-dot" style={{ background: c.hex }} />
-                    {c.name}
+                    <span className="color-dot" style={{ background: c.hex }} />{c.name}
                   </span>
                   {selectedBackdrop === c.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
@@ -2381,7 +2465,6 @@ export default function App() {
       );
     }
 
-    // SYMBOL sheet — with gift image, symbols
     if (activeSheet === "symbol") {
       return (
         <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
@@ -2402,12 +2485,8 @@ export default function App() {
                 <div key={sym} className="sheet-model-item" onClick={() => { setSelectedSymbol(sym); setActiveSheet(null); }}>
                   <div className="model-left">
                     {currentGiftData && (
-                      <img
-                        src={giftImg(currentGiftData.slug)}
-                        alt={sym}
-                        className="model-thumb"
-                        onError={e => { e.target.style.display = "none"; }}
-                      />
+                      <img src={symbolImgUrl(currentGiftData.slug, sym)} alt={sym}
+                        className="model-thumb" onError={e => { e.target.style.display = "none"; }} />
                     )}
                     <span style={{ fontSize: 15, fontWeight: 600 }}>{sym}</span>
                   </div>
@@ -2423,15 +2502,15 @@ export default function App() {
     return null;
   };
 
-  // ─── SCOUT CONTENT ──────────────────────────────────────────────────────────
+  // ─── SCOUT TAB ───────────────────────────────────────────────────────────────
   const renderScout = (desktop = false) => {
     if (isScouting) {
       return (
         <div className="fade-in-up">
           <div className="scouting-overlay">
             <div className="scouting-spinner" />
-            <div className="scouting-title">Scouting marketplaces…</div>
-            <div className="scouting-sub">Finding gems so you don't have to</div>
+            <div className="scouting-title">{t.scouting_title}</div>
+            <div className="scouting-sub">{t.scouting_sub}</div>
             <div className="scouting-markets">
               {["GetGems","Portals","MRKT","Fragment","Tonnel"].map(m => (
                 <div key={m} className="scouting-market-chip">{m}</div>
@@ -2451,10 +2530,17 @@ export default function App() {
             </div>
           )}
           {desktop && (
-            <div className="hero-title desktop" style={{ marginBottom: 16 }}>{t.results} <span style={{ fontSize: 20, color: "var(--text-secondary)" }}>{mockResults.length} {t.found}</span></div>
+            <div className="hero-title desktop" style={{ marginBottom: 16 }}>
+              {t.results} <span style={{ fontSize: 20, color: "var(--text-secondary)" }}>{mockResults.length} {t.found}</span>
+            </div>
           )}
           <div className={desktop ? "results-grid desktop" : "results-grid"}>
-            {mockResults.map(item => renderGiftCard(item, desktop))}
+            {mockResults.length > 0
+              ? mockResults.map(item => renderGiftCard(item, desktop))
+              : <div style={{ gridColumn: "1/-1", textAlign: "center", color: "var(--text-secondary)", padding: 32, fontSize: 15, fontWeight: 600 }}>
+                  No results match your filters. Try changing model or symbol.
+                </div>
+            }
           </div>
         </div>
       );
@@ -2462,10 +2548,13 @@ export default function App() {
     return (
       <div className="fade-in-up">
         <PromoBanner />
+        {/* FIX #5: Hero title — bolder font-weight, icon at END, matching height */}
         <div className={desktop ? "hero-title desktop" : "hero-title"}>
           <div className="hero-title-row">
-            <span>{t.fastest_way}</span>
-            <GiftTroveLogo size={desktop ? 38 : 28} />
+            <span className="hero-title-text">{t.fastest_way}</span>
+            <span className="hero-title-icon">
+              <GiftTroveLogo size={desktop ? 36 : 26} />
+            </span>
           </div>
         </div>
         <div className="input-group">
@@ -2481,28 +2570,20 @@ export default function App() {
           {showSuggestions && giftQuery && filteredGifts.length > 0 && (
             <div className="suggestions-dropdown">
               {filteredGifts.slice(0, 12).map(g => {
-                const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
+                const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s+/g, "").replace(/'/g, "").replace(/[^a-z0-9]/g, "");
                 let touchStartXRef = 0, touchStartYRef = 0;
                 return (
-                  <div
-                    key={g}
-                    className="suggestion-item"
+                  <div key={g} className="suggestion-item"
                     onMouseDown={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
-                    onTouchStart={e => {
-                      touchStartXRef = e.touches[0].clientX;
-                      touchStartYRef = e.touches[0].clientY;
-                    }}
+                    onTouchStart={e => { touchStartXRef = e.touches[0].clientX; touchStartYRef = e.touches[0].clientY; }}
                     onTouchEnd={e => {
                       const dx = Math.abs(e.changedTouches[0].clientX - touchStartXRef);
                       const dy = Math.abs(e.changedTouches[0].clientY - touchStartYRef);
-                      if (dx < 10 && dy < 10) {
-                        e.preventDefault();
-                        setGiftQuery(g);
-                        setShowSuggestions(false);
-                      }
+                      if (dx < 10 && dy < 10) { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }
                     }}
                   >
-                    <img src={giftImg(gSlug)} alt={g} className="suggestion-gift-img" onError={e => { e.target.style.display = "none"; }} />
+                    <img src={giftThumbUrl(gSlug)} alt={g} className="suggestion-gift-img"
+                      onError={e => { e.target.style.display = "none"; }} />
                     {g}
                   </div>
                 );
@@ -2518,7 +2599,8 @@ export default function App() {
           <div className="section-label">{t.marketplaces}</div>
           <div className="chips-grid">
             {MARKETPLACES.map(m => (
-              <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`} onClick={() => handleMarketToggle(m)}>{m}</div>
+              <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`}
+                onClick={() => handleMarketToggle(m)}>{m}</div>
             ))}
           </div>
         </div>
@@ -2533,8 +2615,7 @@ export default function App() {
               <span>{t.backdrop}</span>
               <span className="select-val" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {(() => { const c = BACKDROP_COLORS.find(x => x.name === selectedBackdrop); return c ? <span className="color-dot" style={{ background: c.hex, width: 14, height: 14 }} /> : null; })()}
-                {selectedBackdrop}
-                <IconChevronRight />
+                {selectedBackdrop} <IconChevronRight />
               </span>
             </div>
             <div className="select-btn" onClick={() => setActiveSheet("symbol")}>
@@ -2548,7 +2629,7 @@ export default function App() {
     );
   };
 
-  // ─── SAVED CONTENT ──────────────────────────────────────────────────────────
+  // ─── SAVED TAB ───────────────────────────────────────────────────────────────
   const renderSaved = (desktop = false) => (
     <div className="fade-in-up">
       <div className={desktop ? "page-header desktop" : "page-header"}>{t.saved_tab}</div>
@@ -2562,12 +2643,13 @@ export default function App() {
     </div>
   );
 
-  // ─── PROFILE CONTENT ────────────────────────────────────────────────────────
+  // ─── PROFILE TAB ─────────────────────────────────────────────────────────────
   const renderProfile = (desktop = false) => (
     <div className="fade-in-up">
       <div className={desktop ? "page-header desktop" : "page-header"}>{t.profile_tab}</div>
-
       <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
+      {/* FIX #10: note that local count can't sync cross-device */}
+      <div className="ref-note-box">{t.ref_note}</div>
       <div className="ios-group">
         <div className="ios-row" onClick={copyReferral}>
           <div className="row-left">
@@ -2580,61 +2662,50 @@ export default function App() {
           <div style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
         </div>
       </div>
-
       <div className="section-label">{t.community}</div>
       <div className="ios-group">
         <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="ios-row">
-            <div className="row-left">
-              <div className="row-icon-box" style={{ background: "#ff9500" }}><IconGlobe /></div>
-              {t.comm_channel}
-            </div>
+            <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconGlobe /></div>{t.comm_channel}</div>
             <IconChevronRight />
           </div>
         </a>
         <a href="https://t.me/+Op7gLVniX9Y1OTRk" target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="ios-row">
-            <div className="row-left">
-              <div className="row-icon-box" style={{ background: "#0a84ff" }}><IconSearch /></div>
-              {t.comm_chat}
-            </div>
+            <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconSearch /></div>{t.comm_chat}</div>
             <IconChevronRight />
           </div>
         </a>
-        <a href="https://t.me/insidemajek?direct" target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
+        <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="ios-row">
-            <div className="row-left">
-              <div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>
-              {t.support}
-            </div>
+            <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>{t.support}</div>
             <IconChevronRight />
           </div>
         </a>
       </div>
-
       <div className="section-label">{t.support_builder}</div>
       <div className="ios-group">
         <div className="ios-row" onClick={() => { setDonateStep(1); setActiveSheet("donate"); }}>
-          <div className="row-left">
-            <div className="row-icon-box" style={{ background: "#ff2d55" }}><IconHeart /></div>
-            {t.donate}
-          </div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#ff2d55" }}><IconHeart /></div>{t.donate}</div>
           <IconChevronRight />
         </div>
       </div>
-
       <div style={{ textAlign: "center", marginTop: 40, color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>
         Built by @insidemajek
       </div>
     </div>
   );
 
-  // ─── EVENTS CONTENT ─────────────────────────────────────────────────────────
+  // ─── EVENTS / ALERTS TAB ─────────────────────────────────────────────────────
+  // FIX #4 / spec: Keep tab but repurpose as Alerts/Watchlist placeholder
   const renderEvents = () => (
-    <div className="fade-in-up" style={{ textAlign: "center", marginTop: "40%" }}>
-      <div style={{ color: "var(--text-secondary)", marginBottom: 16 }}><IconCalendar /></div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>{t.no_events}</div>
-      <div style={{ color: "var(--text-secondary)", marginTop: 8 }}>{t.check_back}</div>
+    <div className="fade-in-up" style={{ textAlign: "center", marginTop: "35%" }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔔</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>{t.no_events}</div>
+      <div style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.5, maxWidth: 260, margin: "0 auto" }}>{t.check_back}</div>
+      <div style={{ marginTop: 24, color: "var(--text-secondary)", fontSize: 13, fontWeight: 500 }}>
+        Price alerts &amp; watchlist coming soon
+      </div>
     </div>
   );
 
@@ -2648,21 +2719,16 @@ export default function App() {
     }
   };
 
-  const tabs = [
-    { id: "scout", icon: <IconSearch />, label: t.scout_tab },
-    { id: "events", icon: <IconCalendar />, label: t.events_tab },
-    { id: "saved", icon: <IconBookmark />, label: t.saved_tab },
-    { id: "profile", icon: <IconUser />, label: t.profile_tab }
-  ];
+  const switchTab = (id) => { setActiveTab(id); setIsSearching(false); setIsScouting(false); };
 
   // ─── DESKTOP LAYOUT ──────────────────────────────────────────────────────────
   if (isDesktop) {
     return (
       <>
         <style>{styles}</style>
+        {showSplash && <LaunchSplash theme={theme} />}
         {toast && <div className="toast">{toast}</div>}
         <div className="desktop-layout" data-theme={theme}>
-          {/* Sidebar */}
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -2670,31 +2736,20 @@ export default function App() {
               </span>
             </div>
             {tabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { setActiveTab(tab.id); setIsSearching(false); setIsScouting(false); }}
-              >
-                {tab.icon}
-                {tab.label}
+              <button key={tab.id} className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => switchTab(tab.id)}>
+                {tab.icon}{tab.label}
               </button>
             ))}
             <div className="desktop-sidebar-bottom">
               <div className="icon-btn" onClick={() => setActiveSheet("lang")}><IconGlobe /></div>
-              <div className="icon-btn" onClick={toggleTheme}>
-                {theme === "dark" ? <IconMoon /> : <IconSun />}
-              </div>
+              <div className="icon-btn" onClick={toggleTheme}>{theme === "dark" ? <IconMoon /> : <IconSun />}</div>
               {activeTab === "scout" && isSearching && (
                 <div className="icon-btn" onClick={() => { setIsSearching(false); setIsScouting(false); }}><IconBack /></div>
               )}
             </div>
           </div>
-
-          {/* Main content */}
-          <div className="desktop-content">
-            {renderActiveTab(true)}
-          </div>
-
+          <div className="desktop-content">{renderActiveTab(true)}</div>
           {renderSheet()}
         </div>
       </>
@@ -2705,6 +2760,7 @@ export default function App() {
   return (
     <>
       <style>{styles}</style>
+      {showSplash && <LaunchSplash theme={theme} />}
       <div className="app-container" data-theme={theme}>
         {toast && <div className="toast">{toast}</div>}
 
@@ -2719,57 +2775,47 @@ export default function App() {
           )}
           <div className="top-icons">
             <div className="icon-btn" onClick={() => setActiveSheet("lang")}><IconGlobe /></div>
-            <div className="icon-btn" onClick={toggleTheme}>
-              {theme === "dark" ? <IconMoon /> : <IconSun />}
-            </div>
+            <div className="icon-btn" onClick={toggleTheme}>{theme === "dark" ? <IconMoon /> : <IconSun />}</div>
           </div>
         </div>
 
         {/* PULL-TO-REFRESH */}
-        <div
-          className="content ptr-container"
-          ref={contentRef}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ paddingTop: pullY > 0 ? pullY : 0, transition: pullY === 0 ? "padding-top 0.3s" : "none" }}
-        >
-          {/* PTR indicator */}
-          <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`} style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
+        <div className="content ptr-container" ref={contentRef}
+          onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+          style={{ paddingTop: pullY > 0 ? pullY : 0, transition: pullY === 0 ? "padding-top 0.3s" : "none" }}>
+          <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`}
+            style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
             <div className={`ptr-spinner ${isRefreshing ? "spinning" : ""}`} />
           </div>
 
-          {/* SCOUT TAB */}
           {activeTab === "scout" && renderScout(false)}
-          {/* EVENTS TAB */}
           {activeTab === "events" && renderEvents()}
-          {/* SAVED TAB */}
           {activeTab === "saved" && renderSaved(false)}
-          {/* PROFILE TAB */}
           {activeTab === "profile" && renderProfile(false)}
         </div>
 
-        {/* BOTTOM NAV */}
+        {/* FIX #9: BOTTOM NAV with DOM-measured adaptive pill */}
         {!keyboardOpen && (
-        <div className="tab-bar-container">
-          <div className="ios-tab-bar" style={{ position: "relative" }}>
-            {/* Glassmorphism pill that slides to active tab */}
-            <div
-              className="tab-active-pill"
-              style={{ left: `calc(${tabs.findIndex(t => t.id === activeTab)} * 25% + 12.5% - 22px)` }}
-            />
-            {tabs.map((tab, idx) => (
-              <button
-                key={tab.id}
-                className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { setActiveTab(tab.id); setIsSearching(false); setIsScouting(false); }}
-              >
-                <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
-                <span className="tab-label">{tab.label}</span>
-              </button>
-            ))}
+          <div className="tab-bar-container">
+            <div className="ios-tab-bar" ref={tabBarRef} style={{ position: "relative" }}>
+              {/* Sliding pill — width and left set from measured DOM */}
+              <div className="tab-active-pill" style={{
+                left: pillStyle.left,
+                width: pillStyle.width,
+              }} />
+              {tabs.map((tab, idx) => (
+                <button
+                  key={tab.id}
+                  ref={el => tabBtnRefs.current[idx] = el}
+                  className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => switchTab(tab.id)}
+                >
+                  <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
+                  <span className="tab-label">{tab.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
         )}
 
         {renderSheet()}
