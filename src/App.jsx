@@ -2686,6 +2686,9 @@ export default function App() {
               </div>
               {activeTab === "scout" && isSearching && (
                 <div className="icon-btn" onClick={() => { setIsSearching(false); setIsScouting(false); }}><IconBack /></div>
+              )}
+            </div>
+          </div>
 
           {/* Main content */}
           <div className="desktop-content">
