@@ -27,22 +27,27 @@ import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from
 const BACKEND_URL =
   (typeof window !== "undefined" && window.__GIFTTROVE_API__) ||
   "https://gift-trove-backend.onrender.com";
-const BACKEND_CONFIGURED = !https://gift-trove-backend.onrender.com.test(BACKEND_URL);
+const BACKEND_CONFIGURED = /^https?:\/\//.test(BACKEND_URL);
 
 const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 
-// Optional: drop a Lottie URL here for the launch splash (a treasure-chest / trove reveal).
-// If left empty, a fully animated CSS glassmorphism splash is used instead.
+// Brand logo (sits between GIFT and TROVE, the Scout tab icon, and the headline mark).
+const LOGO_URL = "https://i.ibb.co/nMV7Mvfp/Inria-Serif.png";
+
+// Optional: a Lottie URL for the launch splash. Left empty -> we show real
+// animated gifts (Plush Pepe + 2 others) pulled from the backend instead.
 const SPLASH_LOTTIE_URL = "";
 
 const DONATE_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
 const DONATE_COMMENT = "GiftTrove Donation";
 const REF_BOT_LINK = "https://t.me/gifttrovebot/app?startapp="; // + uid
 
+// Profile -> Community links
 const COMMUNITY = {
-  channel: "https://t.me/insidemajek",
-  chat: "https://t.me/+Op7gLVniX9Y1OTRk",
-  support: "https://t.me/insidemajek?direct",
+  channel: "https://t.me/gifttrove",
+  insideMajek: "https://t.me/insidemajek",
+  otc: "https://t.me/troveotc",
+  support: "https://t.me/insidemajek",
 };
 
 // Tiny offline fallback so search/autocomplete still works before the backend answers.
@@ -164,24 +169,58 @@ const haptic = (style = "light") => {
 };
 
 // ─── LOGO ─────────────────────────────────────────────────────────────────────
-const GiftTroveLogo = ({ size = 28 }) => (
+const GiftTroveLogo = ({ size = 28, className }) => (
   <img
-    src="https://i.ibb.co/ZRQJd5tT/MGGA.png"
+    src={LOGO_URL}
     alt="GiftTrove"
+    className={className}
     style={{ width: size, height: size, objectFit: "contain", display: "block", flexShrink: 0 }}
   />
 );
 
-// ─── SVG ICONS ──────────────────────────────────────────────────────────────
-const IconSearch = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
-const IconBell = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
-const IconBookmark = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
+// ─── ANIMATED ICONS (dependency-free; play on tap via the `trigger` prop) ─────
+// Equivalent behaviour to the Framer-Motion icons, but pure CSS so no extra
+// npm packages / TypeScript are needed and the Vercel build stays simple.
+function useIconPlay(trigger) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!trigger) return;
+    setOn(true);
+    const t = setTimeout(() => setOn(false), 850);
+    return () => clearTimeout(t);
+  }, [trigger]);
+  return on;
+}
+
+const IconSearch = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
-const IconUser = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
-const IconSun = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
-const IconMoon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
-const IconGlobe = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+
+const IconBell = ({ trigger, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-bell" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+};
+const IconBookmark = ({ trigger, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-bookmark" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
+};
+const IconUser = ({ trigger, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-user" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+};
+const IconGlobe = ({ trigger, size = 20 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-globe" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+};
+const IconRefresh = ({ trigger, spinning = false, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  const cls = spinning ? "ai-spin" : on ? "ai-refresh" : "";
+  return <svg className={`ai ${cls}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><g className="ai-refresh-g"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></g></svg>;
+};
+const IconContrast = ({ trigger, size = 20 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-contrast" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path className="ai-contrast-half" d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor" stroke="none"/></svg>;
+};
 const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
@@ -236,34 +275,40 @@ function LottieGift({ src, poster, size = 96, radius = 18 }) {
   return <div ref={ref} style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: "var(--bg-input)" }} />;
 }
 
-// ─── LAUNCH SPLASH (iOS glassmorphism + motion, "trove" treasure reveal) ──────
+// ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
 function LaunchLoader({ onDone }) {
   const [leaving, setLeaving] = useState(false);
+  const [gifts, setGifts] = useState([]);
+
   useEffect(() => {
-    const t1 = setTimeout(() => setLeaving(true), 1500); // don't block the UI for long
-    const t2 = setTimeout(() => onDone?.(), 1980);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    let alive = true;
+    api("/api/featured").then((d) => { if (alive && d?.gifts?.length) setGifts(d.gifts.slice(0, 3)); }).catch(() => {});
+    const t1 = setTimeout(() => setLeaving(true), 2200); // short, predictable splash
+    const t2 = setTimeout(() => onDone?.(), 2680);
+    return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
+
+  const hero = gifts[0];   // Plush Pepe
+  const left = gifts[1];
+  const right = gifts[2];
 
   return (
     <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
       <div className="splash-glow" />
       <div className="splash-card">
         {SPLASH_LOTTIE_URL ? (
-          <LottieGift src={SPLASH_LOTTIE_URL} size={140} radius={28} />
+          <LottieGift src={SPLASH_LOTTIE_URL} size={150} radius={28} />
         ) : (
-          <div className="trove-scene">
-            <span className="trove-coin trove-coin-1" />
-            <span className="trove-coin trove-coin-2" />
-            <span className="trove-coin trove-coin-3" />
-            <div className="trove-chest">
-              <div className="trove-chest-lid" />
-              <div className="trove-chest-base" />
-              <div className="trove-shine" />
+          <div className="splash-gifts">
+            <div className="splash-gift sg-left">
+              {left ? <LottieGift src={left.animation} poster={left.image} size={74} radius={18} /> : <div className="splash-gift-ph skeleton" />}
             </div>
-            <span className="trove-spark trove-spark-1" />
-            <span className="trove-spark trove-spark-2" />
-            <span className="trove-spark trove-spark-3" />
+            <div className="splash-gift sg-hero">
+              {hero ? <LottieGift src={hero.animation} poster={hero.image} size={116} radius={24} /> : <div className="splash-gift-ph big skeleton" />}
+            </div>
+            <div className="splash-gift sg-right">
+              {right ? <LottieGift src={right.animation} poster={right.image} size={74} radius={18} /> : <div className="splash-gift-ph skeleton" />}
+            </div>
           </div>
         )}
         <div className="splash-brand">
@@ -278,8 +323,8 @@ function LaunchLoader({ onDone }) {
 
 // ─── PROMO BANNER ─────────────────────────────────────────────────────────────
 const PROMO_SLIDES = [
-  { img: "https://i.ibb.co/5gXQZ5SQ/MGGA-1.png", url: "https://t.me/gifttrove" },
-  { img: "https://i.ibb.co/r2zGgWHH/MGGA-2.png", url: "https://t.me/troveotc" },
+  { img: "https://i.ibb.co/d08zfZmg/Inria-Serif-2.png", url: "https://t.me/gifttrove" },
+  { img: "https://i.ibb.co/Rk1hB0vS/Inria-Serif.png", url: "https://t.me/troveotc" },
   { img: "https://i.ibb.co/Kp2tJtQT/MGGA-4.png", url: "https://t.me/spinmibot?startapp=7608551523" },
   { img: "https://i.ibb.co/v5NvzS6/MGGA-3.png", url: "https://t.me/hotontgbot/app?startapp=UQC61-XV5zwCn-7eHbciHh8qR_3k6-6Bq458qrUkGhFoYxPo" },
   { img: "https://i.ibb.co/RkkHPgSV/MGGA-5.png", url: "https://t.me/insidemajek" },
@@ -296,7 +341,7 @@ function PromoBanner() {
 
   useEffect(() => {
     preloadImages(PROMO_SLIDES.map((s) => s.img));
-    preloadImages(["https://i.ibb.co/ZRQJd5tT/MGGA.png"]);
+    preloadImages([LOGO_URL]);
     start();
     return () => clearInterval(intervalRef.current);
   }, [start]);
@@ -336,6 +381,7 @@ const T = {
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of TON you'd like to donate.",
     amount_ton: "Amount (TON)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
@@ -362,6 +408,7 @@ const T = {
     add_alert: "Добавить алерт", watchlist: "Список наблюдения",
     no_saved: "Пока нет сохранённых подарков.",
     community: "Сообщество", support: "Поддержка", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "Поддержать создателя", donate: "Пожертвовать",
     donate_desc: "GiftTrove бесплатен. Введите сумму TON для пожертвования.",
     amount_ton: "Сумма (TON)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
@@ -388,6 +435,7 @@ const T = {
     add_alert: "添加提醒", watchlist: "关注列表",
     no_saved: "暂无收藏的礼物。",
     community: "社区", support: "联系客服", comm_chat: "社区群组", comm_channel: "社区频道",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "支持开发者", donate: "捐赠",
     donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 TON 数量。",
     amount_ton: "数量 (TON)", verify_tx: "验证交易", tx_id: "交易 ID",
@@ -492,45 +540,38 @@ const styles = `
     animation: splashBar 1.3s ease-in-out infinite; }
   @keyframes splashBar { 0% { transform: translateX(-130%); } 100% { transform: translateX(330%); } }
 
-  /* trove (treasure chest) CSS scene */
-  .trove-scene { position: relative; width: 132px; height: 120px; display: flex; align-items: flex-end; justify-content: center; }
-  .trove-chest { position: relative; width: 92px; height: 70px; animation: troveBob 2.2s ease-in-out infinite; }
-  @keyframes troveBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  .trove-chest-base {
-    position: absolute; bottom: 0; left: 0; width: 92px; height: 46px; border-radius: 10px;
-    background: linear-gradient(180deg, #c8841f 0%, #9a5e12 100%);
-    border: 2px solid rgba(255,255,255,0.18); box-shadow: inset 0 -6px 12px rgba(0,0,0,0.25);
-  }
-  .trove-chest-lid {
-    position: absolute; top: 4px; left: 0; width: 92px; height: 34px; border-radius: 18px 18px 6px 6px;
-    background: linear-gradient(180deg, #ffd34d 0%, #e0a52a 100%);
-    border: 2px solid rgba(255,255,255,0.22); transform-origin: bottom center;
-    animation: troveLid 2.6s ease-in-out infinite;
-  }
-  @keyframes troveLid { 0%,100% { transform: rotateX(0deg); } 45%,70% { transform: rotateX(-32deg); } }
-  .trove-shine {
-    position: absolute; top: 36px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%;
-    background: radial-gradient(circle, #fff 0%, rgba(255,230,150,0.6) 60%, transparent 80%);
-    box-shadow: 0 0 22px 8px rgba(255,220,120,0.7); animation: troveShine 2.6s ease-in-out infinite;
-  }
-  @keyframes troveShine { 0%,40%,100% { opacity: 0; transform: scale(0.4); } 55%,68% { opacity: 1; transform: scale(1.2); } }
-  .trove-coin { position: absolute; width: 14px; height: 14px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff2b0, #f4c12e);
-    box-shadow: 0 0 8px rgba(255,200,80,0.7); opacity: 0; }
-  .trove-coin-1 { left: 34px; bottom: 52px; animation: troveCoin 2.6s ease-in-out infinite 0.0s; }
-  .trove-coin-2 { left: 58px; bottom: 52px; animation: troveCoin 2.6s ease-in-out infinite 0.12s; }
-  .trove-coin-3 { left: 46px; bottom: 52px; animation: troveCoin 2.6s ease-in-out infinite 0.24s; }
-  @keyframes troveCoin {
-    0%,42% { opacity: 0; transform: translateY(0) scale(0.6); }
-    58% { opacity: 1; transform: translateY(-34px) scale(1); }
-    80% { opacity: 1; transform: translateY(-30px) scale(1); }
-    100% { opacity: 0; transform: translateY(-10px) scale(0.7); }
-  }
-  .trove-spark { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: 0; }
-  .trove-spark-1 { left: 18px; top: 26px; animation: troveSpark 2.6s ease-in-out infinite 0.4s; }
-  .trove-spark-2 { right: 16px; top: 34px; animation: troveSpark 2.6s ease-in-out infinite 0.6s; }
-  .trove-spark-3 { right: 30px; top: 12px; animation: troveSpark 2.6s ease-in-out infinite 0.8s; }
-  @keyframes troveSpark { 0%,45%,100% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.4); } }
+  /* splash gift tiles (Plush Pepe hero + 2 sides) */
+  .splash-gifts { display: flex; align-items: center; justify-content: center; gap: 14px; height: 132px; margin-bottom: 2px; }
+  .splash-gift { display: flex; align-items: center; justify-content: center; border-radius: 22px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.14); }
+  .splash-gift.sg-hero { width: 124px; height: 124px; animation: sgHero 3s ease-in-out infinite, sgIn 0.6s var(--bounce) both; z-index: 2; }
+  .splash-gift.sg-left, .splash-gift.sg-right { width: 84px; height: 84px; opacity: 0.96; }
+  .splash-gift.sg-left { animation: sgFloat 3.2s ease-in-out infinite, sgIn 0.6s var(--bounce) 0.08s both; transform-origin: center; }
+  .splash-gift.sg-right { animation: sgFloat 3.2s ease-in-out infinite 0.4s, sgIn 0.6s var(--bounce) 0.16s both; }
+  @keyframes sgHero { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7px) scale(1.03); } }
+  @keyframes sgFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes sgIn { from { opacity: 0; transform: translateY(16px) scale(0.85); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .splash-gift-ph { width: 100%; height: 100%; border-radius: 20px; }
+  .splash-gift-ph.big { border-radius: 22px; }
+
+  /* ─── ANIMATED ICON KEYFRAMES (dependency-free) ─── */
+  .ai { display: block; }
+  .tab-logo-icon { border-radius: 7px; }
+  .ai-bell { animation: aiBell .85s ease-in-out; transform-origin: top center; }
+  @keyframes aiBell { 0%,100% { transform: rotate(0); } 15% { transform: rotate(-13deg); } 35% { transform: rotate(11deg); } 55% { transform: rotate(-8deg); } 75% { transform: rotate(6deg); } }
+  .ai-bookmark { animation: aiBookmark .7s ease-out; transform-origin: center; }
+  @keyframes aiBookmark { 0% { transform: scaleY(1) scaleX(1); } 30% { transform: scaleY(1.28) scaleX(.88); } 55% { transform: scaleY(.9) scaleX(1.1); } 78% { transform: scaleY(1.04) scaleX(.97); } 100% { transform: scaleY(1) scaleX(1); } }
+  .ai-user { animation: aiUser .6s ease-out; transform-origin: center; }
+  @keyframes aiUser { 0% { transform: scale(.55); opacity: .25; } 60% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+  .ai-globe { animation: aiGlobe .75s ease-in-out; transform-origin: center; }
+  @keyframes aiGlobe { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .ai-refresh .ai-refresh-g { animation: aiSpin .8s ease-in-out; transform-origin: 12px 12px; transform-box: fill-box; }
+  .ai-spin .ai-refresh-g { animation: aiSpin .8s linear infinite; transform-origin: 12px 12px; transform-box: fill-box; }
+  @keyframes aiSpin { to { transform: rotate(360deg); } }
+  .ai-contrast .ai-contrast-half { animation: aiContrast .6s ease; transform-origin: 12px 12px; transform-box: fill-box; }
+  @keyframes aiContrast { from { transform: rotate(0); } to { transform: rotate(180deg); } }
 
   /* ─── DESKTOP ─── */
   .desktop-layout { display: flex; height: 100vh; overflow: hidden; }
@@ -574,6 +615,7 @@ const styles = `
   .ptr-indicator.visible { top: 0; }
   .ptr-spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid rgba(0,122,255,0.15); border-top-color: var(--tg-blue); border-right-color: var(--tg-blue); }
   .ptr-spinner.spinning { animation: iosSpin 0.7s cubic-bezier(0.4,0,0.2,1) infinite; }
+  .ptr-spinner-wrap { color: var(--tg-blue); display: flex; align-items: center; justify-content: center; }
   @keyframes iosSpin { 100% { transform: rotate(360deg); } }
 
   /* ─── SCOUTING LOADER (white, bold, consistent) ─── */
@@ -587,7 +629,7 @@ const styles = `
   @keyframes scoutChipPulse { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); background: rgba(255,255,255,0.22); } }
 
   /* ─── PROMO BANNER ─── */
-  .promo-banner { width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 24px; position: relative; cursor: pointer; aspect-ratio: 1500 / 450; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .promo-banner { width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 24px; position: relative; cursor: pointer; aspect-ratio: 1500 / 450; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85), 0 0 0 3px rgba(0,0,0,0.55), 0 8px 32px rgba(0,0,0,0.18); }
   .promo-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 20px; transition: opacity 0.7s ease; }
   .promo-banner-img.active { opacity: 1; z-index: 2; } .promo-banner-img.inactive { opacity: 0; z-index: 1; }
   .promo-banner-overlay { position: absolute; inset: 0; border-radius: 20px; z-index: 3; pointer-events: none; overflow: hidden; }
@@ -604,8 +646,7 @@ const styles = `
   /* ─── HERO TITLE (bolder; image at end, text-height) ─── */
   .hero-title { font-size: 27px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.18; margin-bottom: 24px; color: #ffffff; }
   .hero-title.desktop { font-size: 38px; letter-spacing: -1px; }
-  .hero-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-  .hero-title-img { height: 1em; width: auto; vertical-align: middle; border-radius: 8px; flex-shrink: 0; }
+  .hero-title-img { display: inline-block; height: 0.92em; width: auto; vertical-align: -0.12em; margin-left: 10px; border-radius: 7px; }
 
   .section-label { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
 
@@ -768,6 +809,11 @@ export default function App() {
   const tabRefs = useRef({});
   const tabBarRef = useRef(null);
   const [pill, setPill] = useState({ left: 6, width: 0 });
+  const [pillReady, setPillReady] = useState(false);
+
+  // one-shot icon animations (bump a key to replay)
+  const [pulse, setPulse] = useState({});
+  const bump = (k) => setPulse((p) => ({ ...p, [k]: (p[k] || 0) + 1 }));
 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const isDesktop = typeof window !== "undefined" && window.innerWidth >= 768;
@@ -777,7 +823,7 @@ export default function App() {
   const selectedCollection = collections.find((c) => c.name === giftQuery);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
-  const toggleTheme = () => { haptic(); setTheme((p) => (p === "dark" ? "light" : "dark")); };
+  const toggleTheme = () => { haptic(); bump("theme"); setTheme((p) => (p === "dark" ? "light" : "dark")); };
 
   // ── Telegram init ──
   useEffect(() => { try { tg?.ready?.(); tg?.expand?.(); } catch { /* noop */ } }, [tg]);
@@ -833,29 +879,44 @@ export default function App() {
     window.addEventListener("resize", onResize); return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ── tab pill measurement (adaptive: covers icon+label, adapts to label width) ──
+  // ── tabs (Scout icon = the logo; others are animated) ──
   const tabs = [
-    { id: "scout", icon: <IconSearch />, label: t.scout_tab },
-    { id: "alerts", icon: <IconBell />, label: t.alerts_tab },
-    { id: "saved", icon: <IconBookmark />, label: t.saved_tab },
-    { id: "profile", icon: <IconUser />, label: t.profile_tab },
+    { id: "scout", label: t.scout_tab },
+    { id: "alerts", label: t.alerts_tab },
+    { id: "saved", label: t.saved_tab },
+    { id: "profile", label: t.profile_tab },
   ];
+  const tabIcon = (id, trigger) => {
+    if (id === "scout") return <GiftTroveLogo size={24} className="tab-logo-icon" />;
+    if (id === "alerts") return <IconBell trigger={trigger} />;
+    if (id === "saved") return <IconBookmark trigger={trigger} />;
+    if (id === "profile") return <IconUser trigger={trigger} />;
+    return null;
+  };
+
+  // ── tab pill measurement (adaptive + correctly placed on first reveal) ──
   useLayoutEffect(() => {
+    let raf, t1;
     const measure = () => {
       const el = tabRefs.current[activeTab];
       const bar = tabBarRef.current;
       if (el && bar) {
         const er = el.getBoundingClientRect();
         const br = bar.getBoundingClientRect();
-        setPill({ left: er.left - br.left, width: er.width });
+        if (er.width > 0) {
+          setPill({ left: er.left - br.left, width: er.width });
+          setPillReady(true);
+        }
       }
     };
     measure();
+    raf = requestAnimationFrame(measure);   // after layout settles
+    t1 = setTimeout(measure, 140);           // after web fonts swap in
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
     if (ro && tabBarRef.current) ro.observe(tabBarRef.current);
     window.addEventListener("resize", measure);
-    return () => { ro?.disconnect(); window.removeEventListener("resize", measure); };
-  }, [activeTab, lang, keyboardOpen]);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t1); ro?.disconnect(); window.removeEventListener("resize", measure); };
+  }, [activeTab, lang, keyboardOpen, booting]);
 
   // ── pull to refresh ──
   const handleTouchStart = (e) => { if (contentRef.current?.scrollTop === 0) touchStartY.current = e.touches[0].clientY; };
@@ -1242,10 +1303,8 @@ export default function App() {
       <div className="fade-in-up">
         <PromoBanner />
         <div className={desktop ? "hero-title desktop" : "hero-title"}>
-          <div className="hero-title-row">
-            <span>{t.fastest_way}</span>
-            <img src="https://i.ibb.co/ZRQJd5tT/MGGA.png" alt="" className="hero-title-img" />
-          </div>
+          {t.fastest_way}
+          <img src={LOGO_URL} alt="" className="hero-title-img" />
         </div>
 
         <div className="input-group">
@@ -1360,12 +1419,16 @@ export default function App() {
           <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconGlobe /></div>{t.comm_channel}</div>
           <IconChevronRight />
         </div>
-        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.chat)}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconSearch /></div>{t.comm_chat}</div>
+        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
+          <IconChevronRight />
+        </div>
+        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.otc)}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconSearch /></div>{t.gifttrove_otc}</div>
           <IconChevronRight />
         </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.support)}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>{t.support}</div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconHeart /></div>{t.support}</div>
           <IconChevronRight />
         </div>
       </div>
@@ -1417,13 +1480,13 @@ export default function App() {
             </div>
             {tabs.map((tab) => (
               <button key={tab.id} className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { haptic(); setActiveTab(tab.id); exitSearch(); }}>
-                {tab.icon}{tab.label}
+                onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); exitSearch(); }}>
+                {tabIcon(tab.id, pulse[tab.id])}{tab.label}
               </button>
             ))}
             <div className="desktop-sidebar-bottom">
-              <div className="icon-btn" onClick={() => setActiveSheet("lang")}><IconGlobe /></div>
-              <div className="icon-btn" onClick={toggleTheme}>{theme === "dark" ? <IconMoon /> : <IconSun />}</div>
+              <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
+              <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
               {activeTab === "scout" && isSearching && <div className="icon-btn" onClick={exitSearch}><IconBack /></div>}
             </div>
           </div>
@@ -1450,8 +1513,8 @@ export default function App() {
             </div>
           )}
           <div className="top-icons">
-            <div className="icon-btn" onClick={() => setActiveSheet("lang")}><IconGlobe /></div>
-            <div className="icon-btn" onClick={toggleTheme}>{theme === "dark" ? <IconMoon /> : <IconSun />}</div>
+            <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
+            <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
           </div>
         </div>
 
@@ -1459,7 +1522,7 @@ export default function App() {
           onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
           style={{ paddingTop: pullY > 0 ? pullY : 0, transition: pullY === 0 ? "padding-top 0.3s" : "none" }}>
           <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`} style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
-            <div className={`ptr-spinner ${isRefreshing ? "spinning" : ""}`} />
+            <div className="ptr-spinner-wrap"><IconRefresh spinning={isRefreshing} trigger={pullY > 50 ? 1 : 0} size={26} /></div>
           </div>
           {renderActiveTab(false)}
         </div>
@@ -1467,12 +1530,12 @@ export default function App() {
         {!keyboardOpen && (
           <div className="tab-bar-container">
             <div className="ios-tab-bar" ref={tabBarRef}>
-              <div className="tab-active-pill" style={{ left: pill.left, width: pill.width }} />
+              <div className="tab-active-pill" style={{ left: pill.left, width: pill.width, opacity: pillReady ? 1 : 0, transition: pillReady ? "left 0.38s var(--bounce), width 0.38s var(--bounce), opacity 0.2s" : "none" }} />
               {tabs.map((tab) => (
                 <button key={tab.id} ref={(el) => (tabRefs.current[tab.id] = el)}
                   className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                  onClick={() => { haptic(); setActiveTab(tab.id); exitSearch(); }}>
-                  <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
+                  onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); exitSearch(); }}>
+                  <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tabIcon(tab.id, pulse[tab.id])}</div>
                   <span className="tab-label">{tab.label}</span>
                 </button>
               ))}
