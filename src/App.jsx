@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
+// ─── IMAGE PRELOADER ──────────────────────────────────────────────────────────
+function preloadImages(urls) {
+  urls.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+}
+
 // ─── CUSTOM LOGO IMAGE ───────────────────────────────────────────────────────
 const GiftTroveLogo = ({ size = 28 }) => (
   <img
@@ -1495,20 +1503,54 @@ const styles = `
   }
   .ptr-indicator.visible { top: 0; }
   .ptr-spinner {
-    width: 36px; height: 36px;
+    width: 28px; height: 28px;
     border-radius: 50%;
-    background: var(--bg-sheet);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(10,132,255,0.15);
-    color: var(--tg-blue);
+    border: 2.5px solid rgba(0,122,255,0.15);
+    border-top-color: var(--tg-blue);
+    border-right-color: var(--tg-blue);
+    background: transparent;
+    box-shadow: none;
   }
-  .ptr-spinner.spinning svg {
-    animation: spinAnim 0.8s linear infinite;
+  .ptr-spinner.spinning {
+    animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite;
   }
-  @keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes iosSpinAnim {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* SCOUTING LOADER */
+  .scouting-overlay {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 24px; text-align: center; animation: fadeInUp 0.4s var(--bounce) forwards;
+  }
+  .scouting-spinner {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 3px solid rgba(0,122,255,0.15);
+    border-top-color: var(--tg-blue);
+    border-right-color: var(--tg-blue);
+    animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite;
+    margin-bottom: 28px;
+  }
+  .scouting-title {
+    font-size: 20px; font-weight: 800; color: var(--text-primary);
+    margin-bottom: 10px; letter-spacing: -0.3px;
+  }
+  .scouting-sub { font-size: 15px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+  .scouting-markets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+  .scouting-market-chip {
+    padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 700;
+    background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
+    animation: scoutChipPulse 1.5s ease-in-out infinite;
+  }
+  .scouting-market-chip:nth-child(2) { animation-delay: 0.2s; }
+  .scouting-market-chip:nth-child(3) { animation-delay: 0.4s; }
+  .scouting-market-chip:nth-child(4) { animation-delay: 0.6s; }
+  .scouting-market-chip:nth-child(5) { animation-delay: 0.8s; }
+  @keyframes scoutChipPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.04); border-color: var(--tg-blue); color: var(--tg-blue); }
+  }
 
   /* PROMO BANNER CAROUSEL */
   .promo-banner {
@@ -1577,13 +1619,15 @@ const styles = `
 
   /* HERO TITLE — white in both modes */
   .hero-title {
-    font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15;
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2;
     margin-bottom: 24px; color: #ffffff;
   }
-  .hero-title.desktop { font-size: 40px; }
+  .hero-title.desktop { font-size: 36px; letter-spacing: -1px; }
   .hero-title-row {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    display: flex; align-items: center; flex-wrap: nowrap; gap: 8px;
   }
+  .hero-title-row span { flex-shrink: 1; min-width: 0; }
+  .hero-title-row img { flex-shrink: 0; }
   .hero-title-img {
     display: inline-block; height: 1.1em; width: auto;
     vertical-align: middle; border-radius: 10px; flex-shrink: 0; margin-left: 2px;
@@ -1838,8 +1882,8 @@ function buildWalletUrl(wallet, amountTON) {
     return `tonkeeper://transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&text=${desc}`;
   }
   if (wallet === "MyTonWallet") {
-    // MyTonWallet correct deep link
-    return `https://app.mytonwallet.io/transfer?address=${WALLET_ADDRESS}&amount=${amountNano}&comment=${desc}`;
+    // MyTonWallet transfer deep link (correct endpoint)
+    return `https://mytonwallet.io/transfer/${WALLET_ADDRESS}?amount=${amountNano}&comment=${desc}`;
   }
   if (wallet === "Tg Wallet") {
     // Telegram Wallet bot with pre-filled transfer params via deeplink
@@ -1869,6 +1913,8 @@ function PromoBanner() {
   };
 
   useEffect(() => {
+    preloadImages(PROMO_SLIDES.map(s => s.img));
+    preloadImages(["https://i.ibb.co/ZRQJd5tT/MGGA.png"]);
     startTimer();
     return () => clearInterval(intervalRef.current);
   }, []);
@@ -1884,6 +1930,8 @@ function PromoBanner() {
           key={i}
           src={slide.img}
           alt={`promo-${i}`}
+          loading="eager"
+          fetchPriority={i === 0 ? "high" : "low"}
           className={`promo-banner-img ${i === current ? "active" : "inactive"}`}
         />
       ))}
@@ -2021,7 +2069,15 @@ export default function App() {
     setSelectedMarkets(nm);
   };
 
-  const handleScout = () => setIsSearching(true);
+  const [isScouting, setIsScouting] = useState(false);
+
+  const handleScout = () => {
+    setIsScouting(true);
+    setTimeout(() => {
+      setIsScouting(false);
+      setIsSearching(true);
+    }, 5000);
+  };
 
   const toggleSave = (gift) => {
     const isSaved = savedGifts.some(g => g.id === gift.id);
@@ -2029,24 +2085,61 @@ export default function App() {
     else { setSavedGifts([...savedGifts, gift]); showToast("Gift Saved!"); }
   };
 
-  const handleBuy = (e, market) => {
+  const handleBuy = (e, market, item) => {
     e.stopPropagation();
+    const giftName = item?.name || giftQuery || "";
+    const giftCollection = GIFT_COLLECTIONS[giftName];
+    const contractAddress = giftCollection?.contractAddress || giftName.toLowerCase().replace(/\s/g, "");
+    const giftId = item?.itemNumber || "";
+
     const urls = {
-      "GetGems": "https://getgems.io/gifts-collection",
-      "Fragment": "https://fragment.com/gifts",
-      "Portals": "https://portals.gg",
-      "MRKT": "https://mrkt.ton",
-      "Tonnel": "https://t.me/tonnel_network_bot/gifts",
+      // Open Fragment inside Telegram mini app
+      "Fragment": `https://t.me/fragment/nft?gift=${contractAddress}`,
+      // Open GetGems inside Telegram mini app
+      "GetGems": `https://t.me/getgems/nft?collection=${contractAddress}`,
+      // MRKT deep link with contract address + referral
+      "MRKT": `https://t.me/mrkt/app?startapp=${contractAddress || "7608551523"}`,
+      // Portals deep link with gift contract address + referral code
+      "Portals": `https://t.me/portals_market_bot/market?startapp=gift_${contractAddress}_e3onts`,
+      // Tonnel with gift ID
+      "Tonnel": `https://t.me/tonnel_network_bot/gift?startapp=${giftId}`,
     };
-    window.open(urls[market] || "https://getgems.io/gifts-collection", "_blank");
+    const tgApp = window.Telegram?.WebApp;
+    const url = urls[market] || `https://t.me/gifttrove`;
+    if (tgApp && tgApp.openTelegramLink) {
+      tgApp.openTelegramLink(url);
+    } else {
+      window.open(url, "_blank");
+    }
   };
 
   const copyReferral = () => {
-    const link = `https://t.me/gifttrovebot?startapp=${tgUser?.id || "demo"}`;
+    const link = `https://t.me/gifttrovebot/app?startapp=${tgUser?.id || "demo"}`;
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(link);
-    setReferralCount(prev => prev + 1);
-    showToast("Copied to clipboard!");
+    showToast("Referral link copied!");
   };
+
+  // Detect if this session was opened via a referral startapp param
+  useEffect(() => {
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if (startParam && /^\d+$/.test(startParam)) {
+      // Opened via referral link — increment the referrer's count
+      // In a real app this would hit a backend; here we increment the local count
+      // (only if not already counted this session)
+      const sessionKey = `gt_ref_counted_${startParam}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "1");
+        const referrerKey = `gt_ref_count_${startParam}`;
+        const current = parseInt(localStorage.getItem(referrerKey) || "0", 10);
+        localStorage.setItem(referrerKey, (current + 1).toString());
+        // If the referrer is the current user (same device), update state too
+        if (startParam === String(tgUser?.id)) {
+          setReferralCount(prev => prev + 1);
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const executeDonate = () => {
     const url = buildWalletUrl(donateWallet, donateAmount);
@@ -2091,7 +2184,7 @@ export default function App() {
             <div onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: isSaved ? "var(--tg-blue)" : "var(--text-secondary)", cursor: "pointer" }}>
               {isSaved ? <IconBookmarkFilled /> : <IconBookmark />}
             </div>
-            <div onClick={(e) => handleBuy(e, item.market)} style={{ background: "var(--tg-blue)", color: "#fff", fontSize: 10, fontWeight: 800, padding: "4px 8px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>BUY</div>
+            <div onClick={(e) => handleBuy(e, item.market, item)} style={{ background: "var(--tg-blue)", color: "#fff", fontSize: 10, fontWeight: 800, padding: "4px 8px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>BUY</div>
           </div>
         </div>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>#{item.itemNumber} • {item.market}</div>
@@ -2144,7 +2237,7 @@ export default function App() {
               <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)", marginTop: 0 }} onClick={() => { toggleSave(selectedGift); setActiveSheet(null); }}>
                 {isSaved ? "Remove Saved" : "Save Gift"}
               </button>
-              <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, selectedGift.market)}>Buy Now</button>
+              <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, selectedGift.market, selectedGift)}>Buy Now</button>
             </div>
           </div>
         </div>
@@ -2333,13 +2426,26 @@ export default function App() {
   // ─── SCOUT CONTENT ──────────────────────────────────────────────────────────
   const renderScout = (desktop = false) => (
     <div className="fade-in-up">
+      {isScouting ? (
+        <div className="scouting-overlay">
+          <div className="scouting-spinner" />
+          <div className="scouting-title">Scouting marketplaces…</div>
+          <div className="scouting-sub">Finding gems so you don't have to</div>
+          <div className="scouting-markets">
+            {["GetGems","Portals","MRKT","Fragment","Tonnel"].map(m => (
+              <div key={m} className="scouting-market-chip">{m}</div>
+            ))}
+          </div>
+        </div>
+      ) : (
+      <>
       {!isSearching && (
         <>
           <PromoBanner />
           <div className={desktop ? "hero-title desktop" : "hero-title"}>
             <div className="hero-title-row">
               <span>{t.fastest_way}</span>
-              <GiftTroveLogo size={desktop ? 44 : 32} />
+              <GiftTroveLogo size={desktop ? 38 : 28} />
             </div>
           </div>
         </>
@@ -2360,12 +2466,26 @@ export default function App() {
               <div className="suggestions-dropdown">
                 {filteredGifts.slice(0, 12).map(g => {
                   const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
+                  let touchStartXRef = 0, touchStartYRef = 0;
                   return (
                     <div
                       key={g}
                       className="suggestion-item"
                       onMouseDown={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
-                      onTouchEnd={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
+                      onTouchStart={e => {
+                        touchStartXRef = e.touches[0].clientX;
+                        touchStartYRef = e.touches[0].clientY;
+                      }}
+                      onTouchEnd={e => {
+                        const dx = Math.abs(e.changedTouches[0].clientX - touchStartXRef);
+                        const dy = Math.abs(e.changedTouches[0].clientY - touchStartYRef);
+                        // Only select if it was a tap (< 10px movement), not a scroll
+                        if (dx < 10 && dy < 10) {
+                          e.preventDefault();
+                          setGiftQuery(g);
+                          setShowSuggestions(false);
+                        }
+                      }}
                     >
                       <img src={giftImg(gSlug)} alt={g} className="suggestion-gift-img" onError={e => { e.target.style.display = "none"; }} />
                       {g}
@@ -2429,6 +2549,8 @@ export default function App() {
             {mockResults.map(item => renderGiftCard(item, desktop))}
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
@@ -2551,14 +2673,14 @@ export default function App() {
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                GIFT<GiftTroveLogo size={26} />Trove
+                GIFT<GiftTroveLogo size={26} />TROVE
               </span>
             </div>
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { setActiveTab(tab.id); setIsSearching(false); }}
+                onClick={() => { setActiveTab(tab.id); setIsSearching(false); setIsScouting(false); }}
               >
                 {tab.icon}
                 {tab.label}
@@ -2570,7 +2692,7 @@ export default function App() {
                 {theme === "dark" ? <IconMoon /> : <IconSun />}
               </div>
               {activeTab === "scout" && isSearching && (
-                <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
+                <div className="icon-btn" onClick={() => setIsSearching(false); setIsScouting(false)}><IconBack /></div>
               )}
             </div>
           </div>
@@ -2596,10 +2718,10 @@ export default function App() {
         {/* TOP NAV */}
         <div className="top-nav">
           {activeTab === "scout" && isSearching ? (
-            <div className="icon-btn" onClick={() => setIsSearching(false)}><IconBack /></div>
+            <div className="icon-btn" onClick={() => setIsSearching(false); setIsScouting(false)}><IconBack /></div>
           ) : (
             <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
-              GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>Trove
+              GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>TROVE
             </div>
           )}
           <div className="top-icons">
@@ -2621,9 +2743,7 @@ export default function App() {
         >
           {/* PTR indicator */}
           <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`} style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
-            <div className={`ptr-spinner ${isRefreshing ? "spinning" : ""}`}>
-              <IconRefresh />
-            </div>
+            <div className={`ptr-spinner ${isRefreshing ? "spinning" : ""}`} />
           </div>
 
           {/* SCOUT TAB */}
@@ -2649,7 +2769,7 @@ export default function App() {
               <button
                 key={tab.id}
                 className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { setActiveTab(tab.id); setIsSearching(false); }}
+                onClick={() => { setActiveTab(tab.id); setIsSearching(false); setIsScouting(false); }}
               >
                 <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
                 <span className="tab-label">{tab.label}</span>
