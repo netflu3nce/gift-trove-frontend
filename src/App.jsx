@@ -26,8 +26,8 @@ import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from
 // Point this at your Render web service. You can also inject window.__GIFTTROVE_API__ at runtime.
 const BACKEND_URL =
   (typeof window !== "undefined" && window.__GIFTTROVE_API__) ||
-  "https://YOUR-BACKEND.onrender.com";
-const BACKEND_CONFIGURED = !/YOUR-BACKEND/.test(BACKEND_URL);
+  "https://gift-trove-backend.onrender.com";
+const BACKEND_CONFIGURED = !https://gift-trove-backend.onrender.com.test(BACKEND_URL);
 
 const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 
