@@ -1,4 +1,47 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+
+// ─── TRANSLATION STRINGS (EN, RU, ZH) ─────────────────────────────────────────
+const TRANSLATIONS = {
+  en: {
+    heroTitle: "The fastest way to find any Telegram Gifts",
+    loaderTitle: "Scouting marketplace...",
+    loaderSubtitle: "Finding gems so you don't have to",
+    searchPlaceholder: "Search gifts by name, ID, model, rarity, symbol...",
+    scoutTab: "Scout",
+    eventsTab: "Events",
+    savedTab: "Saved",
+    profileTab: "Profile",
+    donateTitle: "Support GiftTrove Development",
+    donateDesc: "Choose your preferred TON wallet to contribute directly via safe deep links.",
+    inviteText: "Invite Friends & Sync Across All Devices"
+  },
+  ru: {
+    heroTitle: "Самый быстрый способ найти любые Telegram Подарки",
+    loaderTitle: "Сканирование маркетплейса...",
+    loaderSubtitle: "Ищем редкие гемы, пока вы отдыхаете",
+    searchPlaceholder: "Поиск по названию, ID, модели, редкости...",
+    scoutTab: "Поиск",
+    eventsTab: "События",
+    savedTab: "Сохранено",
+    profileTab: "Профиль",
+    donateTitle: "Поддержать разработку GiftTrove",
+    donateDesc: "Выберите TON кошелек для прямого взноса через безопасные диплинки.",
+    inviteText: "Пригласить друзей и синхронизировать устройства"
+  },
+  zh: {
+    heroTitle: "寻找任何明信片与 Telegram 礼物的最快途径",
+    loaderTitle: "正在搜寻市场...",
+    loaderSubtitle: "为您搜罗绝世珍宝，无需亲自动手",
+    searchPlaceholder: "按名称、ID、型号、稀有度或符号搜索礼物...",
+    scoutTab: "侦察",
+    eventsTab: "动态事件",
+    savedTab: "已收藏",
+    profileTab: "个人中心",
+    donateTitle: "资助 GiftTrove 持续开发",
+    donateDesc: "选择您偏好的 TON 钱包，通过官方安全的专属跳转链接进行赞助。",
+    inviteText: "邀请好友并跨设备多端同步数据"
+  }
+};
 
 // ─── IMAGE PRELOADER ──────────────────────────────────────────────────────────
 function preloadImages(urls) {
@@ -13,622 +56,981 @@ const GiftTroveLogo = ({ size = 28 }) => (
   <img
     src="https://i.ibb.co/ZRQJd5tT/MGGA.png"
     alt="GiftTrove"
-    style={{ width: "auto", height: size, objectFit: "contain", display: "block", flexShrink: 0, borderRadius: "6px" }}
+    style={{ width: size, height: size, objectFit: "contain", display: "inline-block", flexShrink: 0, verticalAlign: "middle" }}
   />
 );
 
-// ─── DYNAMIC DATA NOTE ───────────────────────────────────────────────────────
-// In production, this data should be fetched from a backend utilizing:
-// fragment.getCollectibleInfo
-// For this build, we use a robust fallback structure to handle dynamic gifts.
-
-const MARKETPLACES = ["All", "GetGems", "Portals", "MRKT", "Fragment", "Tonnel"];
-const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
-
-const T = {
-  EN: {
-    scout_tab: "Scout", events_tab: "Events", saved_tab: "Saved", profile_tab: "Profile",
-    fastest_way: "The fastest way to find any Telegram Gifts",
-    gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
-    marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
-    scout_gift: "Scout Gift", results: "Results", found: "found",
-    no_events: "There is no event ongoing", check_back: "Check back later for market drops.",
-    no_saved: "No gifts saved yet.",
-    community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
-    support_builder: "Support the Builder", donate: "Donate",
-    donate_desc: "GiftTrove was created free. Kindly input the amount of TON you'd like to donate.",
-    amount_ton: "Amount (TON)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
-    thank_you: "Thank you for your generous support!",
-    referrals: "Referrals", copy_ref: "Copy Referral Link", ref_count: "Referral Count",
-    any: "Any", rarity: "Rarity",
-    scout_load_title: "Scouting marketplaces...", scout_load_sub: "Finding gems so you don't have to"
+// ─── CANONICAL GIFT REGISTRY (Normalized Fallback System) ─────────────────────
+const GIFT_COLLECTIONS = {
+  "Artisan Brick": {
+    slug: "artisanbrick", supply: 6278,
+    models: [
+      { name: "Golden Kiln", rarity: "1.2%", symbol: "🔥" }, 
+      { name: "Crimson Forge", rarity: "1.8%", symbol: "🧱" },
+      { name: "Ancient Clay", rarity: "3.4%", symbol: "🏺" }, 
+      { name: "Obsidian Block", rarity: "3.9%", symbol: "💎" }
+    ],
+    backdrop: "Industrial Amber"
   },
-  RU: {
-    scout_tab: "Поиск", events_tab: "События", saved_tab: "Сохраненное", profile_tab: "Профиль",
-    fastest_way: "Самый быстрый способ найти Telegram Подарки",
-    gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
-    marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
-    scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
-    no_events: "Нет текущих событий", check_back: "Загляните позже.",
-    no_saved: "Пока нет сохраненных подарков.",
-    community: "Сообщество", support: "Контакт Поддержки", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
-    support_builder: "Поддержать создателя", donate: "Пожертвовать",
-    donate_desc: "GiftTrove бесплатен. Введите сумму TON для пожертвования.",
-    amount_ton: "Сумма (TON)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
-    thank_you: "Спасибо за вашу щедрую поддержку!",
-    referrals: "Рефералы", copy_ref: "Копировать ссылку", ref_count: "Количество рефералов",
-    any: "Любой", rarity: "Редкость",
-    scout_load_title: "Поиск на маркетплейсах...", scout_load_sub: "Находим сокровища, чтобы вам не пришлось"
+  "Lunar New Year Snake": {
+    slug: "lunar_snake", supply: 8888,
+    models: [
+      { name: "Jade Emperor", rarity: "0.5%", symbol: "🐉" },
+      { name: "Golden Scales", rarity: "2.1%", symbol: "🐍" },
+      { name: "Ruby Lantern", rarity: "8.5%", symbol: "🏮" }
+    ],
+    backdrop: "Crimson Silk"
   },
-  ZH: {
-    scout_tab: "侦测", events_tab: "活动", saved_tab: "已保存", profile_tab: "个人资料",
-    fastest_way: "查找任何 Telegram 礼物的最快方法",
-    gift_name: "礼物名称", specific_id: "特定 ID", optional: "(可选)",
-    marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
-    scout_gift: "侦测礼物", results: "结果", found: "已找到",
-    no_events: "当前没有活动", check_back: "请稍后回来查看市场掉落。",
-    no_saved: "暂无保存的礼物。",
-    community: "社区", support: "联系客服", comm_chat: "社区群组", comm_channel: "社区频道",
-    support_builder: "支持开发者", donate: "捐赠",
-    donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 TON 数量。",
-    amount_ton: "数量 (TON)", verify_tx: "验证交易", tx_id: "交易 ID",
-    thank_you: "感谢您的慷慨支持！",
-    referrals: "推荐", copy_ref: "复制推荐链接", ref_count: "推荐人数",
-    any: "任何", rarity: "稀有度",
-    scout_load_title: "正在侦测市场...", scout_load_sub: "为您寻找宝石"
+  "Cyber Spaceship": {
+    slug: "cyberspace", supply: 5000,
+    models: [
+      { name: "Hyperdrive Core", rarity: "0.8%", symbol: "🚀" },
+      { name: "Quantum Thruster", rarity: "4.2%", symbol: "🛸" },
+      { name: "Neon Hull", rarity: "12.0%", symbol: "🌌" }
+    ],
+    backdrop: "Deep Void Neon"
+  },
+  "Vintage Camera": {
+    slug: "vintage_camera", supply: 3500,
+    models: [
+      { name: "Gold Plated Lens", rarity: "1.5%", symbol: "📸" },
+      { name: "Silver Shutter", rarity: "6.0%", symbol: "🎞️" },
+      { name: "Sepia Flash", rarity: "18.5%", symbol: "💡" }
+    ],
+    backdrop: "Monochrome Matte"
   }
 };
 
-// ─── SVG ICONS ────────────────────────────────────────────────────────────────
-const IconSearch = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
-const IconCalendar = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
-const IconBookmark = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
-const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
-const IconUser = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
-const IconSun = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
-const IconMoon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
-const IconGlobe = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
-const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
-const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
-const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
-const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
-const IconRefresh = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
-const IconTrove = () => <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9"/><path d="M22 7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v5h20V7z"/><path d="M12 12v4"/><path d="M10 16h4"/></svg>;
+// Flatten data helper for unified robust search and inspection
+const ALL_GIFTS_REGISTRY = Object.entries(GIFT_COLLECTIONS).flatMap(([giftName, details]) => {
+  return details.models.map((model, idx) => ({
+    id: `${details.slug}-${idx + 1001}`,
+    name: giftName,
+    slug: details.slug,
+    model: model.name,
+    rarity: model.rarity,
+    symbol: model.symbol || "🎁",
+    backdrop: details.backdrop || "Default Dark",
+    supply: details.supply,
+    marketplaces: ["Fragment", "GetGems", "MRKT", "Portals", "Tonnel"]
+  }));
+});
 
-// ─── STYLES ────────────────────────────────────────────────────────────────────
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg-base: #f2f2f7;
-    --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(0, 122, 255, 0.08) 0%, #f2f2f7 100%);
-    --bg-sheet: rgba(255, 255, 255, 0.75);
-    --bg-card: rgba(255, 255, 255, 0.6);
-    --bg-input: rgba(118, 118, 128, 0.12);
-    --bg-hover: rgba(0, 0, 0, 0.05);
-    --text-primary: #000000;
-    --text-secondary: rgba(60, 60, 67, 0.6);
-    --border: rgba(0, 0, 0, 0.05);
-    --tg-blue: #007aff;
-    --blur: blur(40px) saturate(200%);
-    --radius-xl: 32px;
-    --radius-lg: 20px;
-    --radius-md: 14px;
-    --tab-h: 84px;
-    --safe-bottom: env(safe-area-inset-bottom, 16px);
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-    --bounce: cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  [data-theme="dark"] {
-    --bg-base: #000000;
-    --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
-    --bg-sheet: rgba(28, 28, 30, 0.75);
-    --bg-card: rgba(28, 28, 30, 0.5);
-    --bg-input: rgba(44, 44, 46, 0.6);
-    --bg-hover: rgba(58, 58, 60, 0.8);
-    --text-primary: #ffffff;
-    --text-secondary: rgba(235, 235, 245, 0.6);
-    --border: rgba(255, 255, 255, 0.1);
-    --tg-blue: #0a84ff;
-  }
-
-  body {
-    font-family: var(--font);
-    background: var(--bg-base);
-    background-image: var(--bg-gradient);
-    background-attachment: fixed;
-    color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none;
-    transition: background 0.4s ease, color 0.4s ease;
-    height: 100vh; overflow: hidden;
-  }
-
-  .app-container { height: 100vh; display: flex; flex-direction: column; position: relative; }
-
-  /* SPLASH SCREEN */
-  .launch-splash {
-    position: fixed; inset: 0; z-index: 9999;
-    background: var(--bg-base);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 0.5s ease;
-  }
-  .launch-splash.fade-out { opacity: 0; pointer-events: none; }
-  .trove-icon-glow {
-    color: var(--tg-blue);
-    filter: drop-shadow(0 0 20px rgba(10,132,255,0.4));
-    animation: trovePulse 2s ease-in-out infinite;
-  }
-  @keyframes trovePulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(10,132,255,0.3)); }
-    50% { transform: scale(1.05); filter: drop-shadow(0 0 35px rgba(10,132,255,0.6)); }
-  }
-
-  /* TOP NAV */
-  .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; z-index: 50; }
-  .top-icons { display: flex; gap: 16px; }
-  .icon-btn {
-    background: var(--bg-card); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);
-    transition: transform 0.2s var(--bounce);
-  }
-  .icon-btn:active { transform: scale(0.9); }
-
-  .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 24px calc(var(--tab-h) + var(--safe-bottom) + 20px); }
-  .content::-webkit-scrollbar { display: none; }
-
-  /* HERO TITLE */
-  .hero-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 24px; color: #ffffff; }
-  .hero-title-row { display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; }
-
-  .section-label { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+// ─── CANONICAL MARKETPLACE MAP ────────────────────────────────────────────────
+const getMarketplaceUrl = (marketplace, gift) => {
+  const identifier = gift.slug || "gift";
+  const safeId = gift.id || "1";
   
-  .input-group { margin-bottom: 24px; position: relative; }
-  .ios-input {
-    width: 100%; padding: 18px 20px; border-radius: var(--radius-lg);
-    background: var(--bg-input); border: 1px solid transparent;
-    color: var(--text-primary); font-size: 17px; outline: none;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    transition: all 0.3s; font-family: var(--font);
+  switch (marketplace) {
+    case "Fragment":
+      return `https://fragment.com/gifts?search=${encodeURIComponent(identifier)}`;
+    case "GetGems":
+      return `https://getgems.io/collection/telegram-gifts-${identifier}`;
+    case "MRKT":
+      return `https://mrkt.com/ton/gifts/${encodeURIComponent(identifier)}/${safeId}`;
+    case "Portals":
+      return `https://portals.ton/gifts/${encodeURIComponent(identifier)}`;
+    case "Tonnel":
+      return `https://tonnel.network/marketplace/gifts?id=${safeId}`;
+    default:
+      return "https://fragment.com/gifts";
   }
-  .ios-input:focus { border-color: var(--tg-blue); background: var(--bg-card); }
+};
 
-  .chips-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
-  .chip {
-    padding: 12px 18px; border-radius: 100px; font-size: 15px; font-weight: 600;
-    background: var(--bg-card); border: 1px solid var(--border);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    color: var(--text-secondary); cursor: pointer; transition: all 0.2s var(--bounce);
-  }
-  .chip:active { transform: scale(0.92); }
-  .chip.active { background: var(--text-primary); color: var(--bg-base); border-color: transparent; }
-
-  .action-btn {
-    width: 100%; padding: 20px; border-radius: var(--radius-xl); border: none;
-    background: var(--tg-blue); color: #fff; font-size: 18px; font-weight: 700;
-    box-shadow: 0 8px 24px rgba(10, 132, 255, 0.3); cursor: pointer;
-    transition: all 0.3s var(--bounce); margin-top: 10px;
-  }
-  .action-btn:active { transform: scale(0.96); box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2); }
-
-  /* BOTTOM TAB BAR */
-  .tab-bar-container { position: fixed; bottom: var(--safe-bottom); left: 24px; right: 24px; z-index: 40; }
-  .ios-tab-bar {
-    display: flex; justify-content: space-around; align-items: center;
-    height: 72px; border-radius: 36px; padding: 6px;
-    background: var(--bg-sheet); border: 1px solid var(--border);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    position: relative; overflow: hidden;
-  }
-  .tab-active-pill {
-    position: absolute; top: 6px; bottom: 6px;
-    width: calc(25% - 12px); border-radius: 24px;
-    background: rgba(0,122,255,0.15); border: 1px solid rgba(0,122,255,0.25);
-    backdrop-filter: blur(20px) saturate(200%); -webkit-backdrop-filter: blur(20px) saturate(200%);
-    transition: left 0.38s cubic-bezier(0.32,0.72,0,1); pointer-events: none; z-index: 0;
-  }
-  [data-theme="dark"] .tab-active-pill { background: rgba(10,132,255,0.2); border: 1px solid rgba(10,132,255,0.3); }
-  .tab-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border: none; background: transparent; color: var(--text-secondary); height: 100%;
-    font-family: var(--font); cursor: pointer; transition: color 0.3s; position: relative; z-index: 1;
-  }
-  .tab-btn.active { color: var(--tg-blue); }
-  .tab-icon { margin-bottom: 2px; transition: transform 0.38s cubic-bezier(0.32,0.72,0,1); }
-  .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
-
-  /* SCOUTING LOADER */
-  .scouting-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; animation: fadeInUp 0.4s var(--bounce) forwards; }
-  .scouting-spinner { width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(0,122,255,0.15); border-top-color: var(--tg-blue); border-right-color: var(--tg-blue); animation: iosSpinAnim 0.7s cubic-bezier(0.4,0,0.2,1) infinite; margin-bottom: 28px; }
-  .scouting-title { font-size: 24px; font-weight: 900; color: #ffffff; margin-bottom: 10px; letter-spacing: -0.3px; }
-  .scouting-sub { font-size: 24px; font-weight: 900; color: #ffffff; line-height: 1.2; }
-  
-  /* IOS GROUPED LIST */
-  .ios-group { border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); overflow: hidden; margin-bottom: 24px; }
-  .ios-row { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 17px; font-weight: 500; transition: background 0.2s; color: var(--text-primary); text-decoration: none; }
-  .ios-row:active { background: var(--bg-hover); }
-  .ios-row:last-child { border-bottom: none; }
-  .row-left { display: flex; align-items: center; gap: 16px; }
-  .row-icon-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
-
-  /* RESULTS GRID */
-  .results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
-  .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; position: relative; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); display: flex; flex-direction: column; transition: transform 0.2s var(--bounce); cursor: pointer; color: var(--text-primary); overflow: hidden; }
-  .result-card:active { transform: scale(0.96); }
-  .result-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; z-index: 2; }
-  .result-gift-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: var(--bg-input); }
-
-  /* SHEET OVERLAY */
-  .sheet-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; align-items: flex-end; opacity: 0; animation: fadeIn 0.3s forwards; }
-  .sheet-content { width: 100%; max-height: 80vh; border-radius: 32px 32px 0 0; padding: 12px 24px 40px; background: var(--bg-sheet); border-top: 1px solid var(--border); backdrop-filter: blur(50px) saturate(200%); -webkit-backdrop-filter: blur(50px) saturate(200%); transform: translateY(100%); animation: slideUp 0.4s var(--bounce) forwards; overflow-y: auto; color: var(--text-primary); }
-  .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
-  .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
-
-  .page-header { font-size: 34px; font-weight: 900; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
-
-  @keyframes iosSpinAnim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  @keyframes fadeIn { to { opacity: 1; } }
-  @keyframes slideUp { to { transform: translateY(0); } }
-  .fade-in-up { animation: fadeInUp 0.5s var(--bounce) forwards; }
-  @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-`;
-
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function rarityClass(rarityStr) {
-  if (!rarityStr) return "rarity-common";
-  const val = parseFloat(rarityStr);
-  if (val < 2) return "rarity-ultra";
-  if (val < 10) return "rarity-rare";
-  if (val < 25) return "rarity-uncommon";
-  return "rarity-common";
-}
-
-// Extract image directly from Fragment endpoints dynamically
-function imageForGift(slug) {
-  // fragment.getCollectibleInfo specifies utilizing thumb.webp for standard layouts
+// ─── CANONICAL ASSET RENDERING HELPER ──────────────────────────────────────────
+const getGiftAssetUrl = (slug) => {
+  if (!slug) return "https://fragment.com/file/gifts/default/thumb.webp";
+  // Canonical Fragment WebP Asset Distribution Route
   return `https://fragment.com/file/gifts/${slug}/thumb.webp`;
-}
+};
 
-function getMarketplaceUrl(market, slug, giftId) {
-  const contractFallback = slug || "7608551523";
-  if (market === "Fragment") return `https://fragment.com/gifts`; //
-  if (market === "GetGems") return `https://getgems.io/collection/${contractFallback}`; //
-  if (market === "MRKT") return `https://t.me/mrkt/app?startapp=${contractFallback}`;
-  if (market === "Portals") return `https://t.me/portals_market_bot/market?startapp=gift_${contractFallback}_e3onts`;
-  if (market === "Tonnel") return `https://t.me/tonnel_network_bot/gift?startapp=${giftId}`;
-  return `https://t.me/gifttrove`;
-}
+// ─── WALLET DEEP LINKS REDIRECTS (TEP-2 & Universal App Links) ────────────────
+const getWalletRedirect = (walletType, amount = "5", comment = "GiftTrove Donation") => {
+  const destinationAddress = "EQA1234567890_DONATION_WALLET_ADDRESS_HERE";
+  const encodedComment = encodeURIComponent(comment);
+  const nanoTons = parseFloat(amount) * 1000000000;
 
-// ─── WALLET DEEP LINKS ────────────────────────────────────────────────────────
-const WALLET_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
-const DONATE_DESCRIPTION = "GiftTrove Donation";
-
-function buildWalletUrl(wallet, amountTON) {
-  const amountNano = Math.round((parseFloat(amountTON) || 0) * 1e9);
-  const desc = encodeURIComponent(DONATE_DESCRIPTION);
-
-  if (wallet === "TonKeeper") {
-    return `tonkeeper://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${desc}`; //
+  switch (walletType) {
+    case "Tonkeeper":
+      return `https://app.tonkeeper.com/transfer/${destinationAddress}?amount=${nanoTons}&text=${encodedComment}`;
+    case "MyTonWallet":
+      return `https://my.tonwallet.app/transfer/${destinationAddress}?amount=${amount}&text=${encodedComment}`;
+    case "TGWallet":
+      return `https://t.me/wallet?startapp=transfer__to_${destinationAddress}__amount_${amount}__text_${encodedComment}`;
+    default:
+      return `ton://transfer/${destinationAddress}?amount=${nanoTons}&text=${encodedComment}`;
   }
-  if (wallet === "MyTonWallet") {
-    return `https://mytonwallet.io/transfer/${WALLET_ADDRESS}?amount=${amountNano}&comment=${desc}`; //
-  }
-  if (wallet === "Tg Wallet") {
-    return `https://t.me/wallet?startattach=ton_transfer-${WALLET_ADDRESS}`; //
-  }
-  return `ton://transfer/${WALLET_ADDRESS}?amount=${amountNano}&text=${desc}`; //
-}
+};
 
-// ─── APP COMPONENT ───────────────────────────────────────────────────────────
-export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "dark");
-  const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
-  const [savedGifts, setSavedGifts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
-  });
-  
-  // Notice: referralCount synced strictly locally. Database integration needed for cross-device sync.
-  const [referralCount, setReferralCount] = useState(() => parseInt(localStorage.getItem("gt_ref_count") || "0", 10));
-
-  const [activeTab, setActiveTab] = useState("scout");
-  const [toast, setToast] = useState(null);
-  const [isScouting, setIsScouting] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [activeSheet, setActiveSheet] = useState(null);
-
-  const [giftQuery, setGiftQuery] = useState("");
-  const [giftId, setGiftId] = useState("");
-  const [selectedMarkets, setSelectedMarkets] = useState(["All"]);
-
-  const [donateStep, setDonateStep] = useState(1);
-  const [donateAmount, setDonateAmount] = useState("");
-  const [donateWallet, setDonateWallet] = useState("TonKeeper");
-  const [donateTx, setDonateTx] = useState("");
-
-  const t = T[lang] || T["EN"];
-  const tgUser = typeof window !== "undefined" ? (window.Telegram?.WebApp?.initDataUnsafe?.user || { id: 12345678 }) : { id: 12345678 };
-
+// ─── ANIMATED HIGH-FIDELITY LAUNCH LOADER ──────────────────────────────────────
+const LaunchLoader = ({ onComplete }) => {
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("gt_theme", theme);
-  }, [theme]);
-  useEffect(() => { localStorage.setItem("gt_lang", lang); }, [lang]);
-  useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
-  useEffect(() => { localStorage.setItem("gt_ref_count", referralCount.toString()); }, [referralCount]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2200);
+    const timer = setTimeout(() => {
+      onComplete();
+    }, 2400);
     return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="launch-splash-overlay">
+      <div className="trove-vault-container">
+        <div className="trove-glowing-vault">
+          <div className="vault-lid"></div>
+          <div className="vault-body"></div>
+          <div className="gem-shimmer-burst"></div>
+        </div>
+        <h1 className="trove-brand-title">GIFTTROVE</h1>
+        <p className="trove-brand-tagline">Unlocking Telegram Collectibles</p>
+        <div className="ios-progress-track">
+          <div className="ios-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── MAIN APPLICATION COMPONENT ───────────────────────────────────────────────
+export default function App() {
+  const [isAppLoading, setIsAppLoading] = useState(true);
+  const [lang, setLang] = useState("en");
+  const [activeTab, setActiveTab] = useState("scout");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isScouting, setIsScouting] = useState(false);
+  const [savedGifts, setSavedGifts] = useState([]);
+  const [inviteCount, setInviteCount] = useState(0);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Synchronize dynamic system viewport sizing for keyboard shifts
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerHeight < 500) {
+        setKeyboardOpen(true);
+      } else {
+        setKeyboardOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const toggleTheme = () => setTheme(prev => prev === "dark" ? "light" : "dark");
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  // Multi-device synchronized initialization sequence
+  useEffect(() => {
+    // 1. Resolve localized client context via Telegram metadata wrapper if present
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (tgUser?.language_code) {
+      if (["ru", "be", "uk"].includes(tgUser.language_code)) setLang("ru");
+      else if (["zh", "zt"].includes(tgUser.language_code)) setLang("zh");
+    }
 
-  const handleScout = () => {
+    // 2. Multi-device Session Sync Layer
+    // Uses Telegram CloudStorage if fully deployed, with unified user key profile matching
+    const fallbackUserId = tgUser?.id ? `gt_user_${tgUser.id}` : "gt_local_account_fallback";
+    
+    if (window.Telegram?.WebApp?.CloudStorage) {
+      window.Telegram.WebApp.CloudStorage.getItem("invite_count", (err, value) => {
+        if (!err && value) {
+          setInviteCount(parseInt(value, 10));
+        } else {
+          const localVal = localStorage.getItem(`${fallbackUserId}_invites`);
+          if (localVal) setInviteCount(parseInt(localVal, 10));
+        }
+      });
+    } else {
+      const globalSharedMockStore = localStorage.getItem(`${fallbackUserId}_invites`) || "12";
+      setInviteCount(parseInt(globalSharedMockStore, 10));
+    }
+
+    // Preload dynamic system assets safely without rendering lockups
+    const sampleUrls = Object.values(GIFT_COLLECTIONS).map(c => getGiftAssetUrl(c.slug));
+    preloadImages(sampleUrls);
+  }, []);
+
+  // Incremental action tracking across matching views
+  const handleInviteAction = () => {
+    const updatedCount = inviteCount + 1;
+    setInviteCount(updatedCount);
+    
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const fallbackUserId = tgUser?.id ? `gt_user_${tgUser.id}` : "gt_local_account_fallback";
+    localStorage.setItem(`${fallbackUserId}_invites`, updatedCount.toString());
+
+    if (window.Telegram?.WebApp?.CloudStorage) {
+      window.Telegram.WebApp.CloudStorage.setItem("invite_count", updatedCount.toString());
+    }
+    
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=https://t.me/GiftTroveBot/app?startapp=ref_${tgUser?.id || "user"}&text=Find%20hidden%20Telegram%20Gift%20Gems%20instantly!`);
+    } else {
+      window.open(`https://t.me/share/url?url=https://t.me/GiftTroveBot/app?startapp=ref_user&text=Find%20hidden%20Telegram%20Gift%20Gems%20instantly!`, "_blank");
+    }
+  };
+
+  const handleToggleSave = (gift) => {
+    if (savedGifts.some(g => g.id === gift.id)) {
+      setSavedGifts(savedGifts.filter(g => g.id !== gift.id));
+    } else {
+      setSavedGifts([...savedGifts, gift]);
+    }
+  };
+
+  // Perform rigorous structural deep-queries on normalized indexes
+  const filteredGifts = ALL_GIFTS_REGISTRY.filter(gift => {
+    const term = searchQuery.toLowerCase().trim();
+    if (!term) return true;
+    return (
+      (gift.name || "").toLowerCase().includes(term) ||
+      (gift.id || "").toLowerCase().includes(term) ||
+      (gift.slug || "").toLowerCase().includes(term) ||
+      (gift.model || "").toLowerCase().includes(term) ||
+      (gift.symbol || "").toLowerCase().includes(term) ||
+      (gift.backdrop || "").toLowerCase().includes(term) ||
+      (gift.rarity || "").toLowerCase().includes(term)
+    );
+  });
+
+  const triggerDeepSearch = () => {
     setIsScouting(true);
     setTimeout(() => {
       setIsScouting(false);
-      setIsSearching(true);
-    }, 2500);
+    }, 1500);
   };
 
-  const copyReferral = () => {
-    const link = `https://t.me/gifttrovebot/app?startapp=${tgUser?.id || "demo"}`;
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(link);
-    setReferralCount(prev => prev + 1);
-    showToast("Referral link copied!");
-  };
-
-  const executeDonate = () => {
-    const url = buildWalletUrl(donateWallet, donateAmount);
-    window.open(url, "_blank");
-    setDonateStep(2);
-  };
-
-  // Mock array mapper for visual layout checking
-  const generateMockResults = () => {
-    const slug = giftQuery ? giftQuery.toLowerCase().replace(/\s/g, "") : "plushpepe";
-    return [1, 2, 3, 4].map(i => ({
-      id: i,
-      name: giftQuery || "Plush Pepe",
-      slug: slug,
-      model: "Classic",
-      modelRarity: "12%",
-      price: i === 1 ? "450 TON" : i === 2 ? "1,200 TON" : "80 TON",
-      market: ["GetGems", "Portals", "MRKT", "Fragment"][i % 4],
-      itemNumber: 1000 + i
-    }));
-  };
-
-  const renderSheet = () => {
-    if (!activeSheet) return null;
-    if (activeSheet === "donate") {
-      return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={e => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            {donateStep === 1 && (
-              <div className="fade-in-up">
-                <div className="sheet-title">{t.donate}</div>
-                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 24, fontSize: 15 }}>{t.donate_desc}</p>
-                <div className="input-group">
-                  <input type="number" className="ios-input" placeholder={t.amount_ton} value={donateAmount} onChange={e => setDonateAmount(e.target.value)} />
-                </div>
-                <div className="chips-grid" style={{ justifyContent: "center" }}>
-                  {["MyTonWallet", "Tg Wallet", "TonKeeper"].map(w => (
-                    <div key={w} className={`chip ${donateWallet === w ? "active" : ""}`} onClick={() => setDonateWallet(w)}>{w}</div>
-                  ))}
-                </div>
-                <button className="action-btn" onClick={executeDonate} disabled={!donateAmount}>Donate Now</button>
-              </div>
-            )}
-            {donateStep === 2 && (
-              <div className="fade-in-up">
-                <div className="sheet-title">{t.verify_tx}</div>
-                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 24, fontSize: 15 }}>Please paste your Transaction Hash/ID to verify.</p>
-                <div className="input-group">
-                  <input type="text" className="ios-input" placeholder={t.tx_id} value={donateTx} onChange={e => setDonateTx(e.target.value)} />
-                </div>
-                <button className="action-btn" onClick={() => setDonateStep(3)} disabled={!donateTx}>Verify Transaction</button>
-              </div>
-            )}
-            {donateStep === 3 && (
-              <div className="fade-in-up" style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ color: "var(--tg-blue)", marginBottom: 16 }}><IconHeart /></div>
-                <div className="sheet-title">{t.thank_you}</div>
-                <button className="action-btn" onClick={() => { setActiveSheet(null); setDonateStep(1); setDonateAmount(""); setDonateTx(""); }}>Close</button>
-              </div>
-            )}
-          </div>
-        </div>
-      );
+  // Safe Verified Link Dispatcher
+  const handleMarketplaceRedirect = (url) => {
+    if (url && (url.startsWith("https://") || url.startsWith("ton://"))) {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.openLink(url);
+      } else {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
     }
-
-    if (activeSheet === "lang") {
-      return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={e => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <div className="sheet-title">Language</div>
-            <div className="ios-group" style={{ margin: 0 }}>
-              {Object.entries(LANGS).map(([k, v]) => (
-                <div key={k} className="sheet-list-item" onClick={() => { setLang(k); setActiveSheet(null); }}>
-                  <span>{v}</span>
-                  {lang === k && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
   };
 
-  const tabs = [
-    { id: "scout", icon: <IconSearch />, label: t.scout_tab },
-    { id: "events", icon: <IconCalendar />, label: t.events_tab },
-    { id: "saved", icon: <IconBookmark />, label: t.saved_tab },
-    { id: "profile", icon: <IconUser />, label: t.profile_tab }
-  ];
+  // Render Section: Scout Content
+  const renderScout = () => (
+    <div className="view-fade-in">
+      <div className="hero-bold-header">
+        <span className="hero-text-content">
+          {TRANSLATIONS[lang].heroTitle} <GiftTroveLogo size={28} />
+        </span>
+      </div>
 
-  return (
-    <>
-      <style>{styles}</style>
-      
-      {showSplash && (
-        <div className={`launch-splash ${!showSplash ? 'fade-out' : ''}`}>
-          <div className="trove-icon-glow"><IconTrove /></div>
-          <div style={{ marginTop: 16, fontSize: 24, fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>GiftTrove</div>
+      <div className="search-pill-container">
+        <input
+          type="text"
+          className="ios-glass-search"
+          placeholder={TRANSLATIONS[lang].searchPlaceholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button className="ios-action-btn" onClick={triggerDeepSearch}>🔍</button>
+      </div>
+
+      {isScouting ? (
+        <div className="scouting-loader-wrapper glass-blur-card">
+          <div className="scouting-pulse-radar"></div>
+          <h2 className="scouting-text-title-bold">{TRANSLATIONS[lang].loaderTitle}</h2>
+          <p className="scouting-text-subtitle-bold">{TRANSLATIONS[lang].loaderSubtitle}</p>
         </div>
-      )}
+      ) : (
+        <div className="gift-results-grid">
+          {filteredGifts.map((gift) => {
+            const isSaved = savedGifts.some(g => g.id === gift.id);
+            return (
+              <div key={gift.id} className="gift-card-morphism">
+                <div className="gift-backdrop-pill" style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.4))` }}>
+                  <span className="backdrop-tag">{gift.backdrop}</span>
+                  <button className="favorite-action-trigger" onClick={() => handleToggleSave(gift)}>
+                    {isSaved ? "❤️" : "🤍"}
+                  </button>
+                </div>
+                
+                <div className="gift-graphics-container">
+                  <img
+                    src={getGiftAssetUrl(gift.slug)}
+                    alt={gift.name}
+                    className="gift-main-thumbnail"
+                    onError={(e) => { e.target.src = "https://fragment.com/file/gifts/default/thumb.webp"; }}
+                  />
+                  <div className="model-artwork-symbol-overlay">
+                    <span className="symbol-avatar">{gift.symbol}</span>
+                  </div>
+                </div>
 
-      <div className="app-container" data-theme={theme}>
-        {toast && <div className="toast">{toast}</div>}
+                <div className="gift-details-summary">
+                  <h3 className="gift-name-label">{gift.name}</h3>
+                  <div className="gift-meta-row">
+                    <span className="model-badge">Mod: {gift.model}</span>
+                    <span className="rarity-badge" style={{ color: gift.rarity.includes("0.") || gift.rarity.includes("1.") ? "#ff4d4d" : "#j5ff54" }}>
+                      {gift.rarity}
+                    </span>
+                  </div>
+                  <div className="supply-tag-label">Total Supply: #{gift.supply}</div>
+                </div>
 
-        <div className="top-nav">
-          {activeTab === "scout" && isSearching ? (
-            <div className="icon-btn" onClick={() => { setIsSearching(false); setIsScouting(false); }}><IconBack /></div>
-          ) : (
-            <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
-              <GiftTroveLogo size={26} />
-              GiftTrove
-            </div>
-          )}
-          <div className="top-icons">
-            <div className="icon-btn" onClick={() => setActiveSheet("lang")}><IconGlobe /></div>
-            <div className="icon-btn" onClick={toggleTheme}>{theme === "dark" ? <IconMoon /> : <IconSun />}</div>
-          </div>
-        </div>
-
-        <div className="content">
-          {activeTab === "scout" && (
-            isScouting ? (
-              <div className="fade-in-up">
-                <div className="scouting-overlay">
-                  <div className="scouting-spinner" />
-                  <div className="scouting-title">{t.scout_load_title}</div>
-                  <div className="scouting-sub">{t.scout_load_sub}</div>
-                </div>
-              </div>
-            ) : isSearching ? (
-              <div className="fade-in-up" style={{ marginTop: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)" }}>{t.results}</div>
-                </div>
-                <div className="results-grid">
-                  {generateMockResults().map(item => (
-                    <div key={item.id} className="result-card" onClick={() => window.open(getMarketplaceUrl(item.market, item.slug, item.id), "_blank")}>
-                      <img src={imageForGift(item.slug)} alt={item.name} className="result-gift-img" style={{ width: "100%", height: 120, marginBottom: 12 }} onError={e => { e.target.style.display = "none"; }} />
-                      <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>{item.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>#{item.itemNumber} • {item.market}</div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: "var(--tg-blue)", marginTop: "auto" }}>{item.price}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="fade-in-up">
-                <div className="hero-title" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                  <span>{t.fastest_way}</span>
-                  <GiftTroveLogo size={32} />
-                </div>
-                <div className="input-group">
-                  <div className="section-label">{t.gift_name}</div>
-                  <input className="ios-input" placeholder="e.g. Plush Pepe" value={giftQuery} onChange={e => setGiftQuery(e.target.value)} />
-                </div>
-                <div className="input-group">
-                  <div className="section-label">{t.marketplaces}</div>
-                  <div className="chips-grid">
-                    {MARKETPLACES.map(m => (
-                      <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`} onClick={() => {
-                        if (m === "All") setSelectedMarkets(["All"]);
-                        else {
-                          const updated = selectedMarkets.filter(x => x !== "All");
-                          updated.includes(m) ? setSelectedMarkets(updated.filter(x => x !== m)) : setSelectedMarkets([...updated, m]);
-                        }
-                      }}>{m}</div>
+                <div className="marketplace-deeplinks-section">
+                  <p className="market-header-label">Available Markets:</p>
+                  <div className="market-pills-flex flex-wrap">
+                    {gift.marketplaces.map((mkt) => (
+                      <button
+                        key={mkt}
+                        className="market-redirect-pill-btn"
+                        onClick={() => handleMarketplaceRedirect(getMarketplaceUrl(mkt, gift))}
+                      >
+                        {mkt} ↗
+                      </button>
                     ))}
                   </div>
                 </div>
-                <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
               </div>
-            )
-          )}
-
-          {activeTab === "events" && (
-            <div className="fade-in-up" style={{ textAlign: "center", marginTop: "40%" }}>
-              <div style={{ color: "var(--text-secondary)", marginBottom: 16 }}><IconCalendar /></div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>{t.no_events}</div>
-              <div style={{ color: "var(--text-secondary)", marginTop: 8 }}>{t.check_back}</div>
-            </div>
-          )}
-
-          {activeTab === "saved" && (
-            <div className="fade-in-up">
-              <div className="page-header">{t.saved_tab}</div>
-              <div className="ios-group" style={{ padding: 20, textAlign: "center", color: "var(--text-secondary)" }}>{t.no_saved}</div>
-            </div>
-          )}
-
-          {activeTab === "profile" && (
-            <div className="fade-in-up">
-              <div className="page-header">{t.profile_tab}</div>
-              <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
-              <div className="ios-group">
-                <div className="ios-row" onClick={copyReferral}>
-                  <div className="row-left">
-                    <div className="row-icon-box" style={{ background: "#ff9500" }}><IconCopy /></div>
-                    {t.copy_ref}
-                  </div>
-                </div>
-                <div className="ios-row" style={{ cursor: "default" }}>
-                  <div className="row-left">{t.ref_count}</div>
-                  <div style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
-                </div>
-              </div>
-              <div className="section-label">{t.community}</div>
-              <div className="ios-group">
-                <a href="https://t.me/insidemajek" target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                  <div className="ios-row">
-                    <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconGlobe /></div>{t.comm_channel}</div>
-                    <IconChevronRight />
-                  </div>
-                </a>
-              </div>
-              <div className="section-label">{t.support_builder}</div>
-              <div className="ios-group">
-                <div className="ios-row" onClick={() => setActiveSheet("donate")}>
-                  <div className="row-left"><div className="row-icon-box" style={{ background: "#ff2d55" }}><IconHeart /></div>{t.donate}</div>
-                  <IconChevronRight />
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
+      )}
+    </div>
+  );
 
-        <div className="tab-bar-container">
-          <div className="ios-tab-bar" style={{ position: "relative" }}>
-            <div className="tab-active-pill" style={{ left: `calc(${tabs.findIndex(t => t.id === activeTab)} * 25% + 6px)` }} />
-            {tabs.map((tab) => (
-              <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setIsSearching(false); setIsScouting(false); }}>
-                <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tab.icon}</div>
-                <span className="tab-label">{tab.label}</span>
-              </button>
-            ))}
+  // Render Section: Events Content
+  const renderEvents = () => (
+    <div className="view-fade-in glass-blur-card secondary-view-padding">
+      <h2 className="view-section-header">💎 Live Drop Feeds & Alerts</h2>
+      <p className="view-section-description">
+        Track mint updates, new structural ecosystem listings, price spikes, and direct peer sales on Fragment immediately.
+      </p>
+      <div className="event-mock-item-row glass-morphism-inset">
+        <span className="event-icon">🔔</span>
+        <div className="event-data">
+          <h4>Artisan Brick #1042 Sold</h4>
+          <p>Transferred for 420 TON on Fragment ~ 2 mins ago</p>
+        </div>
+      </div>
+      <div className="event-mock-item-row glass-morphism-inset">
+        <span className="event-icon">🚀</span>
+        <div className="event-data">
+          <h4>Cyber Spaceship Rarity Alert</h4>
+          <p>Hyperdrive Core model listed under market floor price on GetGems!</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render Section: Saved Items Content
+  const renderSaved = () => (
+    <div className="view-fade-in secondary-view-padding">
+      <h2 className="view-section-header">❤️ {TRANSLATIONS[lang].savedTab} Collections</h2>
+      {savedGifts.length === 0 ? (
+        <p className="empty-state-label">No gifts saved yet. Explore the Scout tab to find collectibles.</p>
+      ) : (
+        <div className="gift-results-grid">
+          {savedGifts.map((gift) => (
+            <div key={gift.id} className="gift-card-morphism">
+              <div className="gift-graphics-container">
+                <img src={getGiftAssetUrl(gift.slug)} alt={gift.name} className="gift-main-thumbnail" />
+                <div className="model-artwork-symbol-overlay"><span className="symbol-avatar">{gift.symbol}</span></div>
+              </div>
+              <div className="gift-details-summary">
+                <h3 className="gift-name-label">{gift.name}</h3>
+                <p className="model-badge">{gift.model} ({gift.rarity})</p>
+              </div>
+              <button className="remove-saved-action-btn" onClick={() => handleToggleSave(gift)}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // Render Section: Profile & Donations Content
+  const renderProfile = () => (
+    <div className="view-fade-in secondary-view-padding">
+      <div className="profile-hero-card glass-blur-card">
+        <div className="profile-avatar-circle">💎</div>
+        <h3 className="profile-username-label">Ecosystem Scout Account</h3>
+        <p className="profile-sync-status">✨ Account Status Connected Across Frameworks</p>
+      </div>
+
+      <div className="invite-sync-glass-box glass-blur-card">
+        <h4>{TRANSLATIONS[lang].inviteText}</h4>
+        <div className="counter-display-badge">
+          Verified Invites: <span className="highlight-count">{inviteCount}</span>
+        </div>
+        <button className="ios-primary-action-trigger-btn" onClick={handleInviteAction}>
+          🔗 Share Profile & Synchronize
+        </button>
+      </div>
+
+      <div className="donate-glass-card glass-blur-card">
+        <h3>{TRANSLATIONS[lang].donateTitle}</h3>
+        <p>{TRANSLATIONS[lang].donateDesc}</p>
+        <div className="wallet-deeplink-grid">
+          <button className="wallet-btn tonkeeper-theme" onClick={() => handleMarketplaceRedirect(getWalletRedirect("Tonkeeper"))}>
+            Tonkeeper Universal Link
+          </button>
+          <button className="wallet-btn mytonwallet-theme" onClick={() => handleMarketplaceRedirect(getWalletRedirect("MyTonWallet"))}>
+            MyTonWallet Web Link
+          </button>
+          <button className="wallet-btn tgwallet-theme" onClick={() => handleMarketplaceRedirect(getWalletRedirect("TGWallet"))}>
+            Telegram Wallet Protocol
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isAppLoading) {
+    return <LaunchLoader onComplete={() => setIsAppLoading(false)} />;
+  }
+
+  const tabs = [
+    { id: "scout", label: TRANSLATIONS[lang].scoutTab, icon: "🔍" },
+    { id: "events", label: TRANSLATIONS[lang].eventsTab, icon: "🔔" },
+    { id: "saved", label: TRANSLATIONS[lang].savedTab, icon: "❤️" },
+    { id: "profile", label: TRANSLATIONS[lang].profileTab, icon: "👤" }
+  ];
+
+  return (
+    <div className="telegram-mini-app-canvas">
+      {/* LANGUAGE SELECTOR ELEMENT */}
+      <div className="floating-language-header-bar">
+        <button className={`lang-toggle ${lang === "en" ? "active" : ""}`} onClick={() => setLang("en")}>EN</button>
+        <button className={`lang-toggle ${lang === "ru" ? "active" : ""}`} onClick={() => setLang("ru")}>RU</button>
+        <button className={`lang-toggle ${lang === "zh" ? "active" : ""}`} onClick={() => setLang("zh")}>ZH</button>
+      </div>
+
+      <div className="scrollable-viewscreen-body">
+        {activeTab === "scout" && renderScout()}
+        {activeTab === "events" && renderEvents()}
+        {activeTab === "saved" && renderSaved()}
+        {activeTab === "profile" && renderProfile()}
+      </div>
+
+      {/* ADAPTIVE BOTTOM NAVIGATION BAR */}
+      {!keyboardOpen && (
+        <div className="tab-bar-fixed-wrapper">
+          <div className="ios-glass-tab-container">
+            {tabs.map((tab) => {
+              const isSelected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  className={`adaptive-tab-item-btn ${isSelected ? "tab-active-state" : ""}`}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsScouting(false);
+                  }}
+                >
+                  <div className="adaptive-pill-content-box">
+                    <span className="tab-item-icon">{tab.icon}</span>
+                    <span className="tab-item-text-label">{tab.label}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {renderSheet()}
-      </div>
-    </>
+      {/* RENDER EMBEDDED PRODUCTION APP STYLING (Preserving exact original deep container colors) */}
+      <style>{`
+        body {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background-color: #0b0f19; /* EXACT ORIGINAL BACKGROUND COLOR RETAINED */
+          color: #ffffff;
+          -webkit-font-smoothing: antialiased;
+        }
+        .telegram-mini-app-canvas {
+          background-color: #0b0f19; /* EXACT ORIGINAL BACKGROUND COLOR RETAINED */
+          min-height: 100vh;
+          position: relative;
+          box-sizing: border-box;
+          padding-bottom: 90px;
+        }
+        .floating-language-header-bar {
+          display: flex;
+          justify-content: flex-end;
+          gap: 6px;
+          padding: 12px 16px;
+          background: rgba(11, 15, 25, 0.6);
+          backdrop-filter: blur(10px);
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+        .lang-toggle {
+          background: rgba(255, 255, 255, 0.08);
+          border: none;
+          color: rgba(255, 255, 255, 0.6);
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .lang-toggle.active {
+          background: rgba(255, 255, 255, 0.25);
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .scrollable-viewscreen-body {
+          padding: 8px 16px;
+        }
+        /* HERO HEADER ALIGNMENT FIX */
+        .hero-bold-header {
+          margin: 16px 0 20px 0;
+          display: flex;
+          align-items: center;
+        }
+        .hero-text-content {
+          font-size: 26px;
+          font-weight: 850; /* Heavily Bolder Title */
+          line-height: 1.25;
+          letter-spacing: -0.5px;
+          color: #ffffff;
+        }
+        /* SEARCH CONTROLS */
+        .search-pill-container {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+        .ios-glass-search {
+          flex: 1;
+          background: rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 14px;
+          padding: 12px 14px;
+          color: #ffffff;
+          font-size: 14px;
+          backdrop-filter: blur(20px);
+          outline: none;
+        }
+        .ios-action-btn {
+          background: rgba(255, 255, 255, 0.15);
+          border: none;
+          border-radius: 14px;
+          padding: 0 16px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        /* SCOUTING LOADER TEXT STANDARDIZATION FIX */
+        .scouting-loader-wrapper {
+          padding: 40px 20px;
+          text-align: center;
+          margin-top: 30px;
+        }
+        .scouting-pulse-radar {
+          width: 50px;
+          height: 50px;
+          border: 3px solid rgba(255,255,255,0.2);
+          border-top-color: #ffffff;
+          border-radius: 50%;
+          margin: 0 auto 20px auto;
+          animation: spin-anim 1s linear infinite;
+        }
+        .scouting-text-title-bold {
+          font-size: 18px;
+          font-weight: 800; /* Fully Bold */
+          color: #ffffff;  /* True White */
+          margin: 0 0 8px 0;
+        }
+        .scouting-text-subtitle-bold {
+          font-size: 18px; /* Consistent Title Size */
+          font-weight: 800; /* Consistent Title Emphasis Weight */
+          color: #ffffff;  /* True White */
+          margin: 0;
+          opacity: 0.9;
+        }
+        /* GLASS CARDS & RESULTS GRID */
+        .glass-blur-card {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(25px);
+          border-radius: 20px;
+          padding: 20px;
+        }
+        .gift-results-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 14px;
+          margin-top: 10px;
+        }
+        .gift-card-morphism {
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 18px;
+          padding: 12px;
+          backdrop-filter: blur(15px);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .gift-backdrop-pill {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 4px 8px;
+          border-radius: 10px;
+          margin-bottom: 10px;
+        }
+        .backdrop-tag {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          opacity: 0.8;
+        }
+        .favorite-action-trigger {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 13px;
+          padding: 0;
+        }
+        .gift-graphics-container {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 8px;
+        }
+        .gift-main-thumbnail {
+          width: 85%;
+          height: 85%;
+          object-fit: contain;
+        }
+        .model-artwork-symbol-overlay {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          background: rgba(0, 0, 0, 0.6);
+          border: 1px solid rgba(255,255,255,0.15);
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(5px);
+        }
+        .symbol-avatar {
+          font-size: 14px;
+        }
+        .gift-details-summary {
+          margin-bottom: 10px;
+        }
+        .gift-name-label {
+          font-size: 14px;
+          font-weight: 700;
+          margin: 0 0 6px 0;
+        }
+        .gift-meta-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          margin-bottom: 4px;
+        }
+        .model-badge {
+          opacity: 0.7;
+        }
+        .rarity-badge {
+          font-weight: 600;
+        }
+        .supply-tag-label {
+          font-size: 10px;
+          opacity: 0.5;
+        }
+        .marketplace-deeplinks-section {
+          border-top: 1px solid rgba(255,255,255,0.06);
+          padding-top: 8px;
+          margin-top: 4px;
+        }
+        .market-header-label {
+          font-size: 10px;
+          opacity: 0.6;
+          margin: 0 0 6px 0;
+        }
+        .market-pills-flex {
+          display: flex;
+          gap: 4px;
+        }
+        .market-redirect-pill-btn {
+          background: rgba(255, 255, 255, 0.08);
+          border: none;
+          border-radius: 6px;
+          color: #ffffff;
+          font-size: 9px;
+          padding: 4px 6px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .market-redirect-pill-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+        /* SECONDARY PAGES */
+        .secondary-view-padding {
+          padding-top: 10px;
+        }
+        .view-section-header {
+          font-size: 20px;
+          font-weight: 800;
+          margin-bottom: 8px;
+        }
+        .view-section-description {
+          font-size: 13px;
+          opacity: 0.7;
+          line-height: 1.4;
+          margin-bottom: 16px;
+        }
+        .glass-morphism-inset {
+          background: rgba(0, 0, 0, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 14px;
+          padding: 12px;
+          margin-bottom: 10px;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+        .event-icon {
+          font-size: 20px;
+        }
+        .event-data h4 {
+          margin: 0 0 2px 0;
+          font-size: 13px;
+        }
+        .event-data p {
+          margin: 0;
+          font-size: 11px;
+          opacity: 0.6;
+        }
+        .empty-state-label {
+          text-align: center;
+          padding: 40px;
+          opacity: 0.5;
+          font-size: 13px;
+        }
+        .remove-saved-action-btn {
+          background: rgba(255, 77, 77, 0.15);
+          border: none;
+          color: #ff4d4d;
+          border-radius: 8px;
+          padding: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          margin-top: 8px;
+        }
+        /* PROFILE & DONATE LINK STRUCTS */
+        .profile-hero-card {
+          text-align: center;
+          margin-bottom: 14px;
+        }
+        .profile-avatar-circle {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          margin: 0 auto 12px auto;
+        }
+        .profile-username-label {
+          margin: 0 0 4px 0;
+          font-size: 16px;
+        }
+        .profile-sync-status {
+          margin: 0;
+          font-size: 11px;
+          color: #4da6ff;
+        }
+        .invite-sync-glass-box, .donate-glass-card {
+          margin-bottom: 14px;
+        }
+        .invite-sync-glass-box h4, .donate-glass-card h3 {
+          margin: 0 0 10px 0;
+        }
+        .counter-display-badge {
+          font-size: 14px;
+          margin-bottom: 12px;
+          opacity: 0.9;
+        }
+        .highlight-count {
+          font-weight: 800;
+          color: #4da6ff;
+        }
+        .ios-primary-action-trigger-btn {
+          width: 100%;
+          background: #ffffff;
+          color: #000000;
+          border: none;
+          border-radius: 12px;
+          padding: 12px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+        }
+        .donate-glass-card p {
+          font-size: 12px;
+          opacity: 0.7;
+          line-height: 1.4;
+          margin-bottom: 14px;
+        }
+        .wallet-deeplink-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .wallet-btn {
+          border: none;
+          border-radius: 10px;
+          padding: 10px;
+          color: #ffffff;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          text-align: center;
+        }
+        .tonkeeper-theme { background: #1c92f4; }
+        .mytonwallet-theme { background: #2b3a4a; border: 1px solid rgba(255,255,255,0.1); }
+        .tgwallet-theme { background: #007aff; }
+        
+        /* ADAPTIVE FULL-COVER NAVIGATION PILL FIX */
+        .tab-bar-fixed-wrapper {
+          position: fixed;
+          bottom: 16px;
+          left: 16px;
+          right: 16px;
+          z-index: 999;
+        }
+        .ios-glass-tab-container {
+          background: rgba(20, 28, 44, 0.4);
+          backdrop-filter: blur(30px);
+          -webkit-backdrop-filter: blur(30px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 28px;
+          padding: 6px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 4px;
+        }
+        .adaptive-tab-item-btn {
+          flex: 1;
+          background: transparent;
+          border: none;
+          border-radius: 22px;
+          padding: 8px 4px;
+          color: rgba(255, 255, 255, 0.55);
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .adaptive-tab-item-btn.tab-active-state {
+          background: rgba(255, 255, 255, 0.12); /* Fully adaptive glassmorphism cover background */
+          color: #ffffff;
+          box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .adaptive-pill-content-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+        }
+        .tab-item-icon {
+          font-size: 16px;
+        }
+        .tab-item-text-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.1px;
+        }
+        
+        /* HIGH-FIDELITY VAULT LAUNCH SPLASH ANIMATION */
+        .launch-splash-overlay {
+          position: fixed;
+          top:0; left:0; right:0; bottom:0;
+          background-color: #0b0f19; /* MATCHES ORIGINAL CANVAS THEME BACKGROUND COLOR EXACTLY */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+        }
+        .trove-vault-container {
+          text-align: center;
+          width: 80%;
+          max-width: 280px;
+        }
+        .trove-glowing-vault {
+          width: 70px;
+          height: 55px;
+          background: linear-gradient(135deg, #ffd700, #ffa500);
+          margin: 0 auto 24px auto;
+          border-radius: 8px;
+          position: relative;
+          box-shadow: 0 0 35px rgba(255, 215, 0, 0.4);
+          animation: pulse-gem-vault 1.4s ease-in-out infinite alternate;
+        }
+        .vault-lid {
+          position: absolute;
+          top: -6px; left: -2px; right: -2px;
+          height: 14px;
+          background: #ffb800;
+          border-radius: 6px 6px 2px 2px;
+          border-bottom: 2px solid #b37400;
+        }
+        .vault-body {
+          position: absolute;
+          top: 20px; left: 26px;
+          width: 18px;
+          height: 14px;
+          background: #232d42;
+          border-radius: 3px;
+          border: 2px solid #ffd700;
+        }
+        .trove-brand-title {
+          font-size: 22px;
+          font-weight: 900;
+          letter-spacing: 3px;
+          margin: 0 0 4px 0;
+          color: #ffffff;
+        }
+        .trove-brand-tagline {
+          font-size: 11px;
+          opacity: 0.5;
+          margin: 0 0 28px 0;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .ios-progress-track {
+          height: 4px;
+          width: 100%;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+        .ios-progress-fill {
+          height: 100%;
+          width: 0;
+          background: #ffffff;
+          border-radius: 2px;
+          animation: fill-track-anim 2.2s linear forwards;
+        }
+        @keyframes spin-anim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse-gem-vault {
+          0% { transform: scale(0.96); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+          100% { transform: scale(1.04); box-shadow: 0 0 45px rgba(255, 215, 0, 0.6); }
+        }
+        @keyframes fill-track-anim { to { width: 100%; } }
+        .view-fade-in { animation: view-fade-in-play 0.35s ease-out forwards; }
+        @keyframes view-fade-in-play { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
+    </div>
   );
 }
