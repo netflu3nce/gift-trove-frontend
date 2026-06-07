@@ -2424,117 +2424,25 @@ export default function App() {
   };
 
   // ─── SCOUT CONTENT ──────────────────────────────────────────────────────────
-  const renderScout = (desktop = false) => (
-    <div className="fade-in-up">
-      {isScouting ? (
-        <div className="scouting-overlay">
-          <div className="scouting-spinner" />
-          <div className="scouting-title">Scouting marketplaces…</div>
-          <div className="scouting-sub">Finding gems so you don't have to</div>
-          <div className="scouting-markets">
-            {["GetGems","Portals","MRKT","Fragment","Tonnel"].map(m => (
-              <div key={m} className="scouting-market-chip">{m}</div>
-            ))}
-          </div>
-        </div>
-      ) : (
-      <>
-      {!isSearching && (
-        <>
-          <PromoBanner />
-          <div className={desktop ? "hero-title desktop" : "hero-title"}>
-            <div className="hero-title-row">
-              <span>{t.fastest_way}</span>
-              <GiftTroveLogo size={desktop ? 38 : 28} />
-            </div>
-          </div>
-        </>
-      )}
-      {!isSearching ? (
-        <div>
-          <div className="input-group">
-            <div className="section-label">{t.gift_name}</div>
-            <input
-              className="ios-input"
-              placeholder="e.g. Plush Pepe"
-              value={giftQuery}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              onChange={e => setGiftQuery(e.target.value)}
-            />
-            {showSuggestions && giftQuery && filteredGifts.length > 0 && (
-              <div className="suggestions-dropdown">
-                {filteredGifts.slice(0, 12).map(g => {
-                  const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
-                  let touchStartXRef = 0, touchStartYRef = 0;
-                  return (
-                    <div
-                      key={g}
-                      className="suggestion-item"
-                      onMouseDown={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
-                      onTouchStart={e => {
-                        touchStartXRef = e.touches[0].clientX;
-                        touchStartYRef = e.touches[0].clientY;
-                      }}
-                      onTouchEnd={e => {
-                        const dx = Math.abs(e.changedTouches[0].clientX - touchStartXRef);
-                        const dy = Math.abs(e.changedTouches[0].clientY - touchStartYRef);
-                        // Only select if it was a tap (< 10px movement), not a scroll
-                        if (dx < 10 && dy < 10) {
-                          e.preventDefault();
-                          setGiftQuery(g);
-                          setShowSuggestions(false);
-                        }
-                      }}
-                    >
-                      <img src={giftImg(gSlug)} alt={g} className="suggestion-gift-img" onError={e => { e.target.style.display = "none"; }} />
-                      {g}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="input-group">
-            <div className="section-label">{t.specific_id} <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>{t.optional}</span></div>
-            <input type="number" className="ios-input" placeholder="#12345" value={giftId} onChange={e => setGiftId(e.target.value)} />
-          </div>
-
-          <div className="input-group">
-            <div className="section-label">{t.marketplaces}</div>
-            <div className="chips-grid">
-              {MARKETPLACES.map(m => (
-                <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`} onClick={() => handleMarketToggle(m)}>{m}</div>
+  const renderScout = (desktop = false) => {
+    if (isScouting) {
+      return (
+        <div className="fade-in-up">
+          <div className="scouting-overlay">
+            <div className="scouting-spinner" />
+            <div className="scouting-title">Scouting marketplaces…</div>
+            <div className="scouting-sub">Finding gems so you don't have to</div>
+            <div className="scouting-markets">
+              {["GetGems","Portals","MRKT","Fragment","Tonnel"].map(m => (
+                <div key={m} className="scouting-market-chip">{m}</div>
               ))}
             </div>
           </div>
-
-          <div className="input-group">
-            <div className="section-label">{t.attributes}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div className="select-btn" onClick={() => setActiveSheet("model")}>
-                <span>{t.model}</span>
-                <span className="select-val">{selectedModel} <IconChevronRight /></span>
-              </div>
-              <div className="select-btn" onClick={() => setActiveSheet("backdrop")}>
-                <span>{t.backdrop}</span>
-                <span className="select-val" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {(() => { const c = BACKDROP_COLORS.find(x => x.name === selectedBackdrop); return c ? <span className="color-dot" style={{ background: c.hex, width: 14, height: 14 }} /> : null; })()}
-                  {selectedBackdrop}
-                  <IconChevronRight />
-                </span>
-              </div>
-              <div className="select-btn" onClick={() => setActiveSheet("symbol")}>
-                <span>{t.symbol}</span>
-                <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
-              </div>
-            </div>
-          </div>
-
-          <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
         </div>
-      ) : (
+      );
+    }
+    if (isSearching) {
+      return (
         <div className="fade-in-up" style={{ marginTop: 10 }}>
           {!desktop && (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -2549,11 +2457,96 @@ export default function App() {
             {mockResults.map(item => renderGiftCard(item, desktop))}
           </div>
         </div>
-      )}
-      </>
-      )}
-    </div>
-  );
+      );
+    }
+    return (
+      <div className="fade-in-up">
+        <PromoBanner />
+        <div className={desktop ? "hero-title desktop" : "hero-title"}>
+          <div className="hero-title-row">
+            <span>{t.fastest_way}</span>
+            <GiftTroveLogo size={desktop ? 38 : 28} />
+          </div>
+        </div>
+        <div className="input-group">
+          <div className="section-label">{t.gift_name}</div>
+          <input
+            className="ios-input"
+            placeholder="e.g. Plush Pepe"
+            value={giftQuery}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            onChange={e => setGiftQuery(e.target.value)}
+          />
+          {showSuggestions && giftQuery && filteredGifts.length > 0 && (
+            <div className="suggestions-dropdown">
+              {filteredGifts.slice(0, 12).map(g => {
+                const gSlug = GIFT_COLLECTIONS[g]?.slug || g.toLowerCase().replace(/\s/g, "").replace(/'/g, "");
+                let touchStartXRef = 0, touchStartYRef = 0;
+                return (
+                  <div
+                    key={g}
+                    className="suggestion-item"
+                    onMouseDown={e => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
+                    onTouchStart={e => {
+                      touchStartXRef = e.touches[0].clientX;
+                      touchStartYRef = e.touches[0].clientY;
+                    }}
+                    onTouchEnd={e => {
+                      const dx = Math.abs(e.changedTouches[0].clientX - touchStartXRef);
+                      const dy = Math.abs(e.changedTouches[0].clientY - touchStartYRef);
+                      if (dx < 10 && dy < 10) {
+                        e.preventDefault();
+                        setGiftQuery(g);
+                        setShowSuggestions(false);
+                      }
+                    }}
+                  >
+                    <img src={giftImg(gSlug)} alt={g} className="suggestion-gift-img" onError={e => { e.target.style.display = "none"; }} />
+                    {g}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="input-group">
+          <div className="section-label">{t.specific_id} <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>{t.optional}</span></div>
+          <input type="number" className="ios-input" placeholder="#12345" value={giftId} onChange={e => setGiftId(e.target.value)} />
+        </div>
+        <div className="input-group">
+          <div className="section-label">{t.marketplaces}</div>
+          <div className="chips-grid">
+            {MARKETPLACES.map(m => (
+              <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`} onClick={() => handleMarketToggle(m)}>{m}</div>
+            ))}
+          </div>
+        </div>
+        <div className="input-group">
+          <div className="section-label">{t.attributes}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="select-btn" onClick={() => setActiveSheet("model")}>
+              <span>{t.model}</span>
+              <span className="select-val">{selectedModel} <IconChevronRight /></span>
+            </div>
+            <div className="select-btn" onClick={() => setActiveSheet("backdrop")}>
+              <span>{t.backdrop}</span>
+              <span className="select-val" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {(() => { const c = BACKDROP_COLORS.find(x => x.name === selectedBackdrop); return c ? <span className="color-dot" style={{ background: c.hex, width: 14, height: 14 }} /> : null; })()}
+                {selectedBackdrop}
+                <IconChevronRight />
+              </span>
+            </div>
+            <div className="select-btn" onClick={() => setActiveSheet("symbol")}>
+              <span>{t.symbol}</span>
+              <span className="select-val">{selectedSymbol} <IconChevronRight /></span>
+            </div>
+          </div>
+        </div>
+        <button className="action-btn" onClick={handleScout}>{t.scout_gift}</button>
+      </div>
+    );
+  };
 
   // ─── SAVED CONTENT ──────────────────────────────────────────────────────────
   const renderSaved = (desktop = false) => (
@@ -2692,10 +2685,7 @@ export default function App() {
                 {theme === "dark" ? <IconMoon /> : <IconSun />}
               </div>
               {activeTab === "scout" && isSearching && (
-                <div className="icon-btn" onClick={() => setIsSearching(false); setIsScouting(false)}><IconBack /></div>
-              )}
-            </div>
-          </div>
+                <div className="icon-btn" onClick={() => { setIsSearching(false); setIsScouting(false); }}><IconBack /></div>
 
           {/* Main content */}
           <div className="desktop-content">
@@ -2718,7 +2708,7 @@ export default function App() {
         {/* TOP NAV */}
         <div className="top-nav">
           {activeTab === "scout" && isSearching ? (
-            <div className="icon-btn" onClick={() => setIsSearching(false); setIsScouting(false)}><IconBack /></div>
+            <div className="icon-btn" onClick={() => { setIsSearching(false); setIsScouting(false); }}><IconBack /></div>
           ) : (
             <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
               GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>TROVE
