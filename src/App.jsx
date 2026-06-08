@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 
 /* ════════════════════════════════════════════════════════════════════════
    GiftTrove — Telegram Gift Scouting Mini App
@@ -233,6 +233,14 @@ const IconContrast = ({ trigger, size = 20 }) => {
   const on = useIconPlay(trigger);
   return <svg className={`ai${on ? " ai-contrast" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path className="ai-contrast-half" d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor" stroke="none"/></svg>;
 };
+const IconSearchAnim = ({ trigger, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-search" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle className="ai-search-lens" cx="11" cy="11" r="7"/><line className="ai-search-handle" x1="21" y1="21" x2="16.5" y2="16.5"/></svg>;
+};
+const IconClipboard = ({ trigger, size = 22 }) => {
+  const on = useIconPlay(trigger);
+  return <svg className={`ai${on ? " ai-clip" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v0a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v0a1 1 0 0 1 1-1z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><line className="ai-clip-l1" x1="8.5" y1="11" x2="15.5" y2="11"/><line className="ai-clip-l2" x1="8.5" y1="15" x2="13.5" y2="15"/></svg>;
+};
 const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
@@ -351,6 +359,34 @@ const PROMO_SLIDES = [
   { img: "https://i.ibb.co/RkkHPgSV/MGGA-5.png", url: "https://t.me/insidemajek" },
 ];
 
+// Few slow, faint gifts drifting in the background like they're in a void.
+// On desktop they're clickable (redirect); on mobile they're purely decorative.
+function VoidGifts({ images, onPick }) {
+  const items = useMemo(() => {
+    const pics = (images || []).filter(Boolean).slice(0, 6);
+    return pics.map((src, i) => ({
+      src,
+      size: 60 + ((i * 17) % 46),
+      left: [6, 78, 30, 60, 14, 86][i % 6],
+      top: [16, 26, 64, 72, 44, 8][i % 6],
+      dur: 22 + ((i * 7) % 16),
+      delay: -(i * 5),
+      url: ["https://t.me/gifttrove", "https://t.me/troveotc"][i % 2],
+    }));
+  }, [images]);
+  if (!items.length) return null;
+  return (
+    <div className="void-layer" aria-hidden="true">
+      {items.map((it, i) => (
+        <img key={i} src={it.src} alt="" className="void-gift"
+          onClick={() => onPick?.(it.url)}
+          style={{ width: it.size, height: it.size, left: `${it.left}vw`, top: `${it.top}vh`, animationDuration: `${it.dur}s`, animationDelay: `${it.delay}s` }}
+          onError={(e) => { e.target.style.display = "none"; }} />
+      ))}
+    </div>
+  );
+}
+
 function PromoBanner() {
   const [current, setCurrent] = useState(0);
   const intervalRef = useRef(null);
@@ -389,7 +425,8 @@ function PromoBanner() {
 // ─── TRANSLATIONS (EN / RU / ZH) ──────────────────────────────────────────────
 const T = {
   EN: {
-    scout_tab: "Scout", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
+    scout_tab: "Scout", results_tab: "Results", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
+    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_admin: "Admins are let in automatically.",
     fastest_way: "The fastest way to find any Telegram Gift",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
@@ -416,7 +453,8 @@ const T = {
     floor: "Floor", view_on: "View on Telegram",
   },
   RU: {
-    scout_tab: "Поиск", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
+    scout_tab: "Поиск", results_tab: "Итоги", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
+    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_admin: "Админы входят автоматически.",
     fastest_way: "Самый быстрый способ найти любой Telegram подарок",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
@@ -443,7 +481,8 @@ const T = {
     floor: "Флор", view_on: "Открыть в Telegram",
   },
   ZH: {
-    scout_tab: "侦测", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
+    scout_tab: "侦测", results_tab: "结果", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
+    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_admin: "管理员自动进入。",
     fastest_way: "查找任何 Telegram 礼物的最快方法",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
@@ -766,6 +805,80 @@ const styles = `
 
   @media (min-width: 768px) { .mobile-only { display: none !important; } }
   @media (max-width: 767px) { .desktop-only { display: none !important; } }
+
+  /* ── Bigger animated result card ─────────────────────────────────────── */
+  .result-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,0.28); }
+  .result-gift-hero { position: relative; display: flex; align-items: center; justify-content: center; padding: 12px 0 14px; border-radius: 16px; }
+  .result-save { position: absolute; top: 4px; right: 4px; cursor: pointer; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); transition: transform .2s var(--bounce); }
+  .result-save:active { transform: scale(0.82); }
+  .result-name { font-size: 15px; font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 6px; }
+  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+  .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .result-price { font-size: 17px; font-weight: 800; color: var(--tg-blue); }
+  .result-foot .badge-buy { font-size: 12px; padding: 7px 14px; border-radius: 9px; box-shadow: 0 6px 16px rgba(10,132,255,0.35); }
+
+  /* ── Results header + filter bar ─────────────────────────────────────── */
+  .results-head { display: flex; align-items: baseline; justify-content: space-between; margin: 2px 2px 12px; }
+  .results-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); }
+  .results-count { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .sort-toggle { display: inline-flex; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; padding: 4px; gap: 4px; }
+  .sort-pill { border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13px; padding: 7px 14px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .25s var(--bounce); }
+  .sort-pill.active { background: var(--tg-blue); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
+  .range-mini { display: inline-flex; align-items: center; gap: 6px; }
+  .range-input { width: 64px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 13px; font-family: var(--font); outline: none; }
+  .range-input:focus { border-color: var(--tg-blue); }
+  .range-dash { color: var(--text-secondary); }
+  .range-go { border: none; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 12px; cursor: pointer; font-family: var(--font); }
+  .range-go:active { transform: scale(0.95); }
+  .load-more-btn { width: 100%; margin-top: 18px; padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font); display: flex; align-items: center; justify-content: center; transition: all .2s var(--bounce); }
+  .load-more-btn:hover { border-color: var(--tg-blue); }
+  .load-more-btn:active { transform: scale(0.98); }
+  .lm-spin { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--tg-blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── animate-ui style icon motion ────────────────────────────────────── */
+  .ai { display: block; }
+  .ai-search .ai-search-lens { transform-origin: 11px 11px; animation: aiSearchLens 0.9s var(--bounce); }
+  .ai-search .ai-search-handle { animation: aiSearchHandle 0.9s var(--bounce); }
+  @keyframes aiSearchLens { 0% { transform: scale(1) translate(0,0); } 40% { transform: scale(0.82) translate(2px,2px); } 100% { transform: scale(1) translate(0,0); } }
+  @keyframes aiSearchHandle { 0%,100% { transform: translate(0,0); } 50% { transform: translate(2px,2px); } }
+  .ai-clip .ai-clip-l1 { stroke-dasharray: 8; animation: aiClipLine 0.7s ease both; }
+  .ai-clip .ai-clip-l2 { stroke-dasharray: 6; animation: aiClipLine 0.7s ease 0.08s both; }
+  @keyframes aiClipLine { from { stroke-dashoffset: 8; opacity: 0.2; } to { stroke-dashoffset: 0; opacity: 1; } }
+  .ai-contrast { animation: aiContrastSpin 0.9s var(--bounce); transform-origin: 12px 12px; }
+  @keyframes aiContrastSpin { from { transform: rotate(-25deg); } to { transform: rotate(0deg); } }
+
+  /* ── Floating background gifts (space / void) ────────────────────────── */
+  .void-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .void-gift { position: absolute; opacity: 0.10; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
+  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; transition: opacity .3s; } .void-gift:hover { opacity: 0.32; } }
+  @keyframes voidFloat { 0% { transform: translateY(8vh) translateX(0) rotate(0deg); } 50% { transform: translateY(-6vh) translateX(14px) rotate(8deg); } 100% { transform: translateY(8vh) translateX(0) rotate(0deg); } }
+
+  /* ── Access gate ─────────────────────────────────────────────────────── */
+  .gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 26px; text-align: center; position: relative; z-index: 2; }
+  .gate-card { width: 100%; max-width: 380px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 28px; padding: 34px 26px; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: 0 24px 70px rgba(0,0,0,0.45); animation: fadeInUp 0.6s var(--bounce) both; }
+  .gate-logo { width: 76px; height: 76px; border-radius: 22px; margin: 0 auto 18px; display: block; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  .gate-title { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; letter-spacing: -0.5px; }
+  .gate-sub { font-size: 15px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 22px; }
+  .gate-sub a { color: var(--tg-blue); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .gate-input { width: 100%; padding: 16px 18px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 17px; text-align: center; letter-spacing: 3px; font-weight: 700; font-family: var(--font); outline: none; transition: border-color .2s; margin-bottom: 14px; }
+  .gate-input:focus { border-color: var(--tg-blue); }
+  .gate-input.err { border-color: #ff453a; animation: shake 0.4s; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+  .gate-note { font-size: 12px; color: var(--text-secondary); margin-top: 16px; opacity: 0.7; }
+
+  /* ── Desktop compact mode ────────────────────────────────────────────── */
+  .desktop-content.compact { max-width: 680px; margin: 0 auto; transform: scale(0.93); transform-origin: top center; }
+  .desktop-mini-btn { margin-top: 8px; width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-secondary); border-radius: 12px; padding: 11px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: all .2s var(--bounce); }
+  .desktop-mini-btn:hover { border-color: var(--tg-blue); color: var(--text-primary); }
+  .desktop-mini-btn:active { transform: scale(0.96); }
+
+  /* keep interactive content above the floating-gift void layer */
+  .app-container > .content { position: relative; z-index: 1; }
+  .desktop-layout > .desktop-content { position: relative; z-index: 1; }
+  .desktop-layout > .desktop-sidebar { position: relative; z-index: 2; }
 `;
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -794,6 +907,23 @@ export default function App() {
   const [isScouting, setIsScouting] = useState(false);
   const [activeSheet, setActiveSheet] = useState(null);
   const [selectedGift, setSelectedGift] = useState(null);
+
+  // results / sorting / pagination
+  const [sortBy, setSortBy] = useState("price_asc");      // price_asc | price_desc
+  const [nextOffset, setNextOffset] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const lastSearch = useRef(null);   // remembers params for load-more / re-sort
+
+  // access gate (admins auto-pass; everyone else needs the code)
+  const [access, setAccess] = useState("checking");        // checking | locked | granted
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState(false);
+
+  // desktop compact mode
+  const [compact, setCompact] = useState(() => localStorage.getItem("gt_compact") === "1");
 
   // live collection data
   const [collections, setCollections] = useState([]); // [{name,slug,gift_id,supply,preview}]
@@ -864,6 +994,39 @@ export default function App() {
     return () => { alive = false; };
   }, []);
 
+  // ── ACCESS GATE: admins auto-pass; others need the code (verified server-side) ──
+  useEffect(() => {
+    let alive = true;
+    const uid = tgUser?.id || "";
+    const savedCode = localStorage.getItem("gt_code") || "";
+    api(`/api/access?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(savedCode)}`)
+      .then((d) => { if (alive) setAccess(d?.ok ? "granted" : "locked"); })
+      .catch(() => { if (alive) setAccess("locked"); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submitCode = async () => {
+    const code = codeInput.trim();
+    if (!code) return;
+    haptic("medium");
+    try {
+      const d = await api(`/api/access?uid=${encodeURIComponent(tgUser?.id || "")}&code=${encodeURIComponent(code)}`);
+      if (d?.ok) {
+        localStorage.setItem("gt_code", code);
+        setCodeError(false);
+        setAccess("granted");
+      } else {
+        setCodeError(true);
+        haptic("heavy");
+        setTimeout(() => setCodeError(false), 600);
+      }
+    } catch {
+      setCodeError(true);
+      setTimeout(() => setCodeError(false), 600);
+    }
+  };
+
   // ── load attributes when a known collection is picked ──
   useEffect(() => {
     setSelectedModel("Any"); setSelectedSymbol("Any"); setSelectedBackdrop("Any");
@@ -900,16 +1063,16 @@ export default function App() {
     window.addEventListener("resize", onResize); return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ── tabs (Scout icon = the logo; others are animated) ──
+  // ── tabs (Scout = animated search, Results = clipboard) ──
   const tabs = [
     { id: "scout", label: t.scout_tab },
-    { id: "alerts", label: t.alerts_tab },
+    { id: "results", label: t.results_tab },
     { id: "saved", label: t.saved_tab },
     { id: "profile", label: t.profile_tab },
   ];
   const tabIcon = (id, trigger) => {
-    if (id === "scout") return <GiftTroveLogo size={24} className="tab-logo-icon" />;
-    if (id === "alerts") return <IconBell trigger={trigger} />;
+    if (id === "scout") return <IconSearchAnim trigger={trigger} size={23} />;
+    if (id === "results") return <IconClipboard trigger={trigger} size={23} />;
     if (id === "saved") return <IconBookmark trigger={trigger} />;
     if (id === "profile") return <IconUser trigger={trigger} />;
     return null;
@@ -966,35 +1129,87 @@ export default function App() {
     setSelectedMarkets(nm);
   };
 
-  // ── SCOUT (real backend search; graceful) ──
+  // ── SCOUT (real backend search; results live in the Results tab) ──
+  const buildSearchParams = (sort, offset) => {
+    const col = collections.find((c) => c.name === giftQuery);
+    const p = new URLSearchParams();
+    if (giftQuery) p.set("gift", giftQuery);
+    if (col?.gift_id) p.set("gift_id", col.gift_id);
+    if (col?.slug) p.set("slug", col.slug);
+    if (giftId) p.set("num", giftId);
+    if (selectedModel !== "Any") p.set("model", selectedModel);
+    if (selectedSymbol !== "Any") p.set("symbol", selectedSymbol);
+    if (selectedBackdrop !== "Any") p.set("backdrop", selectedBackdrop);
+    if (!selectedMarkets.includes("All")) p.set("markets", selectedMarkets.join(","));
+    if (tgUser?.id) p.set("uid", tgUser.id);
+    p.set("sort", sort || sortBy);
+    p.set("limit", "100");
+    if (minPrice) p.set("min_price", minPrice);
+    if (maxPrice) p.set("max_price", maxPrice);
+    if (offset) p.set("offset", offset);
+    return p;
+  };
+
   const handleScout = async () => {
     haptic("medium");
     setScoutError(null);
+    setHasSearched(true);
+    setResults([]);            // cancel/replace any previous search
+    setNextOffset("");
     setIsScouting(true);
+    setActiveTab("results");   // results pop up in the next tab
     const started = Date.now();
     try {
-      const col = collections.find((c) => c.name === giftQuery);
-      const p = new URLSearchParams();
-      if (giftQuery) p.set("gift", giftQuery);
-      if (col?.gift_id) p.set("gift_id", col.gift_id);
-      if (col?.slug) p.set("slug", col.slug);
-      if (giftId) p.set("num", giftId);
-      if (selectedModel !== "Any") p.set("model", selectedModel);
-      if (selectedSymbol !== "Any") p.set("symbol", selectedSymbol);
-      if (selectedBackdrop !== "Any") p.set("backdrop", selectedBackdrop);
-      if (!selectedMarkets.includes("All")) p.set("markets", selectedMarkets.join(","));
-      const d = await api(`/api/search?${p.toString()}`, { timeout: 15000 });
+      const p = buildSearchParams(sortBy, "");
+      lastSearch.current = { sort: sortBy };
+      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
+      setNextOffset(d?.next_offset || "");
     } catch {
       setScoutError("offline");
       setResults([]);
     }
-    // keep the (now meaningful) loader visible briefly for a smooth feel
     const elapsed = Date.now() - started;
-    setTimeout(() => { setIsScouting(false); setIsSearching(true); }, Math.max(0, 850 - elapsed));
+    setTimeout(() => { setIsScouting(false); setIsSearching(true); }, Math.max(0, 650 - elapsed));
   };
 
-  const exitSearch = () => { setIsSearching(false); setIsScouting(false); setResults([]); setScoutError(null); };
+  // Load the next page of listings and append.
+  const loadMore = async () => {
+    if (!nextOffset || loadingMore) return;
+    setLoadingMore(true);
+    haptic();
+    try {
+      const p = buildSearchParams(sortBy, nextOffset);
+      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      const more = Array.isArray(d?.results) ? d.results : [];
+      setResults((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...more.filter((x) => !seen.has(x.id))];
+      });
+      setNextOffset(d?.next_offset || "");
+    } catch { /* keep what we have */ }
+    setLoadingMore(false);
+  };
+
+  // Re-run the current search with a new sort order.
+  const reSort = async (sort) => {
+    if (sort === sortBy) return;
+    setSortBy(sort);
+    if (!hasSearched) return;
+    haptic();
+    setIsScouting(true);
+    setResults([]);
+    setNextOffset("");
+    try {
+      const p = buildSearchParams(sort, "");
+      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      setResults(Array.isArray(d?.results) ? d.results : []);
+      setNextOffset(d?.next_offset || "");
+    } catch { setScoutError("offline"); }
+    setIsScouting(false);
+  };
+
+  const exitSearch = () => { setIsSearching(false); setIsScouting(false); setResults([]); setScoutError(null); setHasSearched(false); setNextOffset(""); };
 
   // ── saved ──
   const isSavedGift = (g) => savedGifts.some((s) => s.id === g.id);
@@ -1034,39 +1249,32 @@ export default function App() {
 
   // ── card renderer ──
   const renderGiftCard = (item) => {
-    const img = item.image || giftImage(item.slug, item.num);
+    const poster = item.image || giftImage(item.slug, item.num);
+    const anim = giftAnimation(item.slug, item.num);
     const saved = isSavedGift(item);
     const dotHex = item.backdropHex;
     return (
       <div key={item.id} className="result-card" onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
-        <div className="result-card-header">
-          {img
-            ? <img src={img} alt={item.name} className="result-gift-img" onError={(e) => { e.target.style.opacity = 0.2; }} />
-            : <div className="result-gift-img" />}
-          <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, color: "var(--text-primary)", flex: 1 }}>
-            {item.name}{item.num != null ? ` #${item.num}` : ""}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
-            <div onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "var(--text-secondary)", cursor: "pointer" }}>
-              {saved ? <IconBookmarkFilled /> : <IconBookmark />}
-            </div>
-            <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>BUY</div>
+        <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
+          <LottieGift src={anim} poster={poster} size={132} radius={18} />
+          <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
+            {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
         </div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-          {dotHex && <span className="color-dot" style={{ width: 12, height: 12, background: dotHex }} />}
+        <div className="result-name">{item.name}{item.num != null ? ` #${item.num}` : ""}</div>
+        <div className="result-meta">
+          {dotHex && <span className="color-dot" style={{ width: 11, height: 11, background: dotHex }} />}
           <span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span>
         </div>
         {item.model && (
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>
+          <div className="result-model">
             <span className={`model-rarity ${rarityClass(item.modelRarity)}`}>{item.model}</span>
             {item.modelRarity != null && <span style={{ marginLeft: 6 }}>{fmtRarity(item.modelRarity)}</span>}
           </div>
         )}
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--tg-blue)" }}>
-            {fmtPrice(item) || t.view_on}
-          </div>
+        <div className="result-foot">
+          <div className="result-price">{fmtPrice(item) || t.view_on}</div>
+          <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy_now || "BUY"}</div>
         </div>
       </div>
     );
@@ -1274,52 +1482,9 @@ export default function App() {
     return null;
   };
 
-  // ── SCOUT TAB ──
+  // ── SCOUT TAB (search form only — results render in the Results tab) ──
   const filteredGifts = collectionNames.filter((g) => g.toLowerCase().includes(giftQuery.toLowerCase()));
   const renderScout = (desktop = false) => {
-    if (isScouting) {
-      return (
-        <div className="fade-in-up">
-          <div className="scouting-overlay">
-            <div className="scouting-spinner" />
-            <div className="scouting-title">{t.scouting_title}</div>
-            <div className="scouting-sub">{t.scouting_sub}</div>
-            <div className="scouting-markets">
-              {["Telegram", "GetGems", "Portals", "MRKT", "Tonnel"].map((m) => (
-                <div key={m} className="scouting-market-chip">{m}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    if (isSearching) {
-      return (
-        <div className="fade-in-up" style={{ marginTop: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)" }}>{t.results}</div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 600 }}>{results.length} {t.found}</div>
-          </div>
-          {scoutError ? (
-            <div className="empty-state">
-              <IconGlobe />
-              <div className="es-title">{t.offline_title}</div>
-              <div>{t.offline_sub}</div>
-              <button className="action-btn" style={{ marginTop: 20 }} onClick={handleScout}>{t.try_again}</button>
-            </div>
-          ) : results.length === 0 ? (
-            <div className="empty-state">
-              <IconSearch />
-              <div className="es-title">{t.no_results}</div>
-            </div>
-          ) : (
-            <div className={desktop ? "results-grid desktop" : "results-grid"}>
-              {results.map((item) => renderGiftCard(item))}
-            </div>
-          )}
-        </div>
-      );
-    }
     return (
       <div className="fade-in-up">
         <PromoBanner />
@@ -1391,18 +1556,83 @@ export default function App() {
     );
   };
 
-  // ── ALERTS TAB (replacement direction for "Events" — Watchlist & Alerts) ──
-  const renderAlerts = (desktop = false) => (
-    <div className="fade-in-up">
-      <div className={desktop ? "page-header desktop" : "page-header"}>{t.alerts_tab}</div>
-      <div className="empty-state">
-        <IconBell />
-        <div className="es-title">{t.no_alerts}</div>
-        <div>{t.alerts_hint}</div>
-        <button className="action-btn" style={{ marginTop: 20 }} onClick={() => { haptic(); setActiveTab("scout"); }}>{t.add_alert}</button>
+  // ── RESULTS TAB (persistent; replaces Alerts) ──
+  const renderResults = (desktop = false) => {
+    if (isScouting) {
+      return (
+        <div className="fade-in-up">
+          <div className="scouting-overlay">
+            <div className="scouting-spinner" />
+            <div className="scouting-title">{t.scouting_title}</div>
+            <div className="scouting-sub">{t.scouting_sub}</div>
+            <div className="scouting-markets">
+              {["Telegram", "GetGems", "Portals", "MRKT", "Tonnel"].map((m) => (
+                <div key={m} className="scouting-market-chip">{m}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (scoutError) {
+      return (
+        <div className="fade-in-up">
+          <div className={desktop ? "page-header desktop" : "page-header"}>{t.results_tab}</div>
+          <div className="empty-state">
+            <IconGlobe />
+            <div className="es-title">{t.offline_title}</div>
+            <div>{t.offline_sub}</div>
+            <button className="action-btn" style={{ marginTop: 20 }} onClick={handleScout}>{t.try_again}</button>
+          </div>
+        </div>
+      );
+    }
+    if (!hasSearched || (results.length === 0)) {
+      return (
+        <div className="fade-in-up">
+          <div className={desktop ? "page-header desktop" : "page-header"}>{t.results_tab}</div>
+          <div className="empty-state">
+            <IconClipboard trigger={activeTab === "results"} size={30} />
+            <div className="es-title">{hasSearched ? t.no_results : t.results_empty_title}</div>
+            <div>{hasSearched ? "" : t.results_empty_sub}</div>
+            <button className="action-btn" style={{ marginTop: 20 }} onClick={() => { haptic(); setActiveTab("scout"); }}>{t.scout_tab}</button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="fade-in-up" style={{ marginTop: 4 }}>
+        <div className="results-head">
+          <div className="results-title">{t.results}</div>
+          <div className="results-count">{t.showing_n.replace("{n}", results.length)}</div>
+        </div>
+
+        {/* sort + price filter */}
+        <div className="filter-bar">
+          <div className="sort-toggle">
+            <button className={`sort-pill ${sortBy === "price_asc" ? "active" : ""}`} onClick={() => reSort("price_asc")}>↑ {t.sort_low}</button>
+            <button className={`sort-pill ${sortBy === "price_desc" ? "active" : ""}`} onClick={() => reSort("price_desc")}>↓ {t.sort_high}</button>
+          </div>
+          <div className="range-mini">
+            <input className="range-input" inputMode="numeric" placeholder={t.min_label} value={minPrice} onChange={(e) => setMinPrice(e.target.value.replace(/[^\d.]/g, ""))} />
+            <span className="range-dash">–</span>
+            <input className="range-input" inputMode="numeric" placeholder={t.max_label} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value.replace(/[^\d.]/g, ""))} />
+            <button className="range-go" onClick={handleScout}>{t.apply_filter}</button>
+          </div>
+        </div>
+
+        <div className={desktop ? "results-grid desktop" : "results-grid"}>
+          {results.map((item) => renderGiftCard(item))}
+        </div>
+
+        {nextOffset && (
+          <button className="load-more-btn" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? <span className="lm-spin" /> : t.load_more}
+          </button>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── SAVED TAB ──
   const renderSaved = (desktop = false) => (
@@ -1471,7 +1701,7 @@ export default function App() {
   const renderActiveTab = (desktop = false) => {
     switch (activeTab) {
       case "scout": return renderScout(desktop);
-      case "alerts": return renderAlerts(desktop);
+      case "results": return renderResults(desktop);
       case "saved": return renderSaved(desktop);
       case "profile": return renderProfile(desktop);
       default: return null;
@@ -1488,30 +1718,77 @@ export default function App() {
     );
   }
 
+  // ── ACCESS GATE (non-admins need the code; admins pass automatically) ──
+  if (access !== "granted") {
+    const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
+    return (
+      <>
+        <style>{styles}</style>
+        <div className="app-container" data-theme={theme} style={{ position: "relative", overflow: "hidden" }}>
+          <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
+          <div className="gate">
+            <div className="gate-card">
+              <img src={LOGO_URL} alt="GiftTrove" className="gate-logo" />
+              <div className="gate-title">GiftTrove</div>
+              {access === "checking" ? (
+                <>
+                  <div className="gate-sub">{t.gate_checking}</div>
+                  <div className="lm-spin" style={{ margin: "6px auto 0" }} />
+                </>
+              ) : (
+                <>
+                  <div className="gate-sub">
+                    {t.gate_a}
+                    <a onClick={() => safeOpen("https://t.me/insidemajek")}>@{t.gate_link}</a>
+                    {t.gate_b}
+                  </div>
+                  <input
+                    className={`gate-input ${codeError ? "err" : ""}`}
+                    placeholder={t.gate_code_ph}
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") submitCode(); }}
+                    autoCapitalize="none" autoCorrect="off" spellCheck="false"
+                  />
+                  <button className="action-btn" style={{ marginTop: 0 }} onClick={submitCode}>{t.gate_unlock}</button>
+                  <div className="gate-note">{t.gate_admin}</div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   // ── DESKTOP ──
   if (isDesktop) {
+    const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
     return (
       <>
         <style>{styles}</style>
         {toast && <div className="toast">{toast}</div>}
         <div className="desktop-layout" data-theme={theme}>
+          <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>GIFT<GiftTroveLogo size={26} />TROVE</span>
             </div>
             {tabs.map((tab) => (
               <button key={tab.id} className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); exitSearch(); }}>
+                onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); }}>
                 {tabIcon(tab.id, pulse[tab.id])}{tab.label}
               </button>
             ))}
+            <button className="desktop-mini-btn" onClick={() => { haptic(); setCompact((v) => { localStorage.setItem("gt_compact", v ? "0" : "1"); return !v; }); }}>
+              {compact ? "⤢ Expand" : "⤡ Minimize"}
+            </button>
             <div className="desktop-sidebar-bottom">
               <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
               <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
-              {activeTab === "scout" && isSearching && <div className="icon-btn" onClick={exitSearch}><IconBack /></div>}
             </div>
           </div>
-          <div className="desktop-content">{renderActiveTab(true)}</div>
+          <div className={`desktop-content ${compact ? "compact" : ""}`}>{renderActiveTab(true)}</div>
           {renderSheet()}
         </div>
       </>
@@ -1519,20 +1796,18 @@ export default function App() {
   }
 
   // ── MOBILE ──
+  const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
   return (
     <>
       <style>{styles}</style>
       <div className="app-container" data-theme={theme}>
+        <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
         {toast && <div className="toast">{toast}</div>}
 
         <div className="top-nav">
-          {activeTab === "scout" && isSearching ? (
-            <div className="icon-btn" onClick={exitSearch}><IconBack /></div>
-          ) : (
-            <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
-              GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>TROVE
-            </div>
-          )}
+          <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
+            GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>TROVE
+          </div>
           <div className="top-icons">
             <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
             <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
@@ -1555,7 +1830,7 @@ export default function App() {
               {tabs.map((tab) => (
                 <button key={tab.id} ref={(el) => (tabRefs.current[tab.id] = el)}
                   className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                  onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); exitSearch(); }}>
+                  onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); }}>
                   <div className={`tab-icon ${activeTab === tab.id ? "tab-icon-active" : ""}`}>{tabIcon(tab.id, pulse[tab.id])}</div>
                   <span className="tab-label">{tab.label}</span>
                 </button>
