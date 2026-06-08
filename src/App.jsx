@@ -104,6 +104,18 @@ function marketplaceUrl(item) {
   return null;
 }
 
+// Format a listing price. Telegram resale is in Stars (show ⭐); TON-only
+// listings come back as GRAM (the renamed TON token).
+function fmtPrice(item) {
+  if (!item || item.price == null) return null;
+  const cur = item.currency || "GRAM";
+  if (cur === "Stars") {
+    const n = Number(item.price);
+    return `⭐ ${Number.isFinite(n) ? n.toLocaleString("en-US") : item.price}`;
+  }
+  return `${item.price} ${cur}`;
+}
+
 // Wallet deeplinks — TON spec, address in the PATH, amount in nanotons, comment as `text`.
 // TonKeeper + MyTonWallet only. TG Wallet is handled via copy-address (no public transfer deeplink).
 function walletUrl(wallet, address, amountTON, comment) {
@@ -246,20 +258,24 @@ function loadLottie() {
 
 function LottieGift({ src, poster, size = 96, radius = 18 }) {
   const ref = useRef(null);
+  const [ready, setReady] = useState(false);   // animation mounted
   const [failed, setFailed] = useState(!src);
 
   useEffect(() => {
     if (!src) { setFailed(true); return; }
     let anim, cancelled = false;
-    setFailed(false);
+    setFailed(false); setReady(false);
     (async () => {
       try {
         const lottie = await loadLottie();
-        const data = await (await fetch(src)).json();
+        const res = await fetch(src);
+        if (!res.ok) throw new Error("no anim");
+        const data = await res.json();
         if (cancelled || !ref.current) return;
         anim = lottie.loadAnimation({
           container: ref.current, renderer: "svg", loop: true, autoplay: true, animationData: data,
         });
+        setReady(true);
       } catch {
         if (!cancelled) setFailed(true);
       }
@@ -267,12 +283,17 @@ function LottieGift({ src, poster, size = 96, radius = 18 }) {
     return () => { cancelled = true; try { anim?.destroy(); } catch { /* noop */ } };
   }, [src]);
 
-  if (failed) {
-    return poster
-      ? <img src={poster} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", background: "var(--bg-input)" }} onError={(e) => { e.target.style.opacity = 0.25; }} />
-      : <div style={{ width: size, height: size, borderRadius: radius, background: "var(--bg-input)" }} />;
-  }
-  return <div ref={ref} style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: "var(--bg-input)" }} />;
+  // Poster (static .jpg) paints INSTANTLY; the Lottie fades in over it when ready.
+  return (
+    <div style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: "var(--bg-input)", position: "relative" }}>
+      {poster && (
+        <img src={poster} alt="" loading="eager" decoding="async"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: ready ? 0 : 1, transition: "opacity .3s" }}
+          onError={(e) => { e.target.style.opacity = 0; }} />
+      )}
+      {!failed && <div ref={ref} style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transition: "opacity .3s" }} />}
+    </div>
+  );
 }
 
 // ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
@@ -383,13 +404,13 @@ const T = {
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
     inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "Support the Builder", donate: "Donate",
-    donate_desc: "GiftTrove was created free. Kindly input the amount of TON you'd like to donate.",
-    amount_ton: "Amount (TON)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
+    donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
+    amount_ton: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
     thank_you: "Thank you for your generous support!",
     referrals: "Referrals", copy_ref: "Copy Referral Link", ref_count: "Referral Count",
     any: "Any", rarity: "Rarity", language: "Language",
     wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just approve.",
-    tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} TON from @wallet.",
+    tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} GRAM from @wallet.",
     copy_address: "Copy Address", address_copied: "Address copied — send from @wallet",
     listed_value: "Listed Value", buy_now: "Buy / View", save_gift: "Save Gift", remove_saved: "Remove Saved",
     floor: "Floor", view_on: "View on Telegram",
@@ -410,13 +431,13 @@ const T = {
     community: "Сообщество", support: "Поддержка", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
     inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "Поддержать создателя", donate: "Пожертвовать",
-    donate_desc: "GiftTrove бесплатен. Введите сумму TON для пожертвования.",
-    amount_ton: "Сумма (TON)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
+    donate_desc: "GiftTrove бесплатен. Введите сумму GRAM для пожертвования.",
+    amount_ton: "Сумма (GRAM)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
     thank_you: "Спасибо за вашу щедрую поддержку!",
     referrals: "Рефералы", copy_ref: "Копировать ссылку", ref_count: "Кол-во рефералов",
     any: "Любой", rarity: "Редкость", language: "Язык",
     wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — просто подтвердите.",
-    tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} TON из @wallet.",
+    tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} GRAM из @wallet.",
     copy_address: "Копировать адрес", address_copied: "Адрес скопирован — отправьте из @wallet",
     listed_value: "Цена листинга", buy_now: "Купить / Открыть", save_gift: "Сохранить", remove_saved: "Убрать",
     floor: "Флор", view_on: "Открыть в Telegram",
@@ -437,13 +458,13 @@ const T = {
     community: "社区", support: "联系客服", comm_chat: "社区群组", comm_channel: "社区频道",
     inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
     support_builder: "支持开发者", donate: "捐赠",
-    donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 TON 数量。",
-    amount_ton: "数量 (TON)", verify_tx: "验证交易", tx_id: "交易 ID",
+    donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 GRAM 数量。",
+    amount_ton: "数量 (GRAM)", verify_tx: "验证交易", tx_id: "交易 ID",
     thank_you: "感谢您的慷慨支持！",
     referrals: "推荐", copy_ref: "复制推荐链接", ref_count: "推荐人数",
     any: "任何", rarity: "稀有度", language: "语言",
     wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——确认即可。",
-    tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} TON。",
+    tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} GRAM。",
     copy_address: "复制地址", address_copied: "地址已复制——请从 @wallet 发送",
     listed_value: "挂单价", buy_now: "购买 / 查看", save_gift: "收藏", remove_saved: "取消收藏",
     floor: "地板价", view_on: "在 Telegram 中打开",
@@ -1044,7 +1065,7 @@ export default function App() {
         )}
         <div style={{ marginTop: "auto" }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: "var(--tg-blue)" }}>
-            {item.price != null ? `${item.price} ${item.currency || "TON"}` : t.view_on}
+            {fmtPrice(item) || t.view_on}
           </div>
         </div>
       </div>
@@ -1095,7 +1116,7 @@ export default function App() {
               <div className="ios-row" style={{ cursor: "default" }}>
                 <span style={{ color: "var(--text-secondary)" }}>{t.listed_value}</span>
                 <span style={{ color: "var(--tg-blue)", fontWeight: 800 }}>
-                  {g.price != null ? `${g.price} ${g.currency || "TON"}` : "—"}
+                  {fmtPrice(g) || "—"}
                 </span>
               </div>
             </div>
