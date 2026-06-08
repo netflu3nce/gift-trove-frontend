@@ -6,19 +6,24 @@
     <title>GiftTrove</title>
     <!-- Telegram Mini App SDK (required). -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Anti-flash: paint the correct background before React mounts. -->
+    <!--
+      Keep the body dark navy (#0f172a) in ALL themes.
+      This is intentional — it's the outer shell visible through the
+      translucent top-nav backdrop-filter, giving light mode its fancy
+      dark top edge. The app's content areas define their own backgrounds
+      via --bg-base (#f2f2f7 light / #000 dark) and are NOT affected.
+    -->
     <script>
       (function () {
         try {
           var t = localStorage.getItem("gt_theme") || "light";
           document.documentElement.setAttribute("data-theme", t);
-          document.documentElement.style.background = t === "dark" ? "#000000" : "#f2f2f7";
         } catch (e) {}
       })();
     </script>
     <style>
-      html, body { margin: 0; padding: 0; }
-      body { background: transparent; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden; }
+      html, body { margin: 0; padding: 0; background: #0f172a; }
+      body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden; }
     </style>
   </head>
   <body>
