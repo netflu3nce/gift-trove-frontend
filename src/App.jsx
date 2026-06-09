@@ -454,25 +454,26 @@ const PROMO_SLIDES = [
 
 // Few slow, faint gifts drifting in the background like they're in a void.
 // On desktop they're clickable (redirect); on mobile they're purely decorative.
-function VoidGifts({ images, onPick }) {
+function VoidGifts({ gifts, onPick, count = 12 }) {
   const items = useMemo(() => {
-    const pics = (images || []).filter(Boolean).slice(0, 6);
-    return pics.map((src, i) => ({
-      src,
-      size: 60 + ((i * 17) % 46),
-      left: [6, 78, 30, 60, 14, 86][i % 6],
-      top: [16, 26, 64, 72, 44, 8][i % 6],
-      dur: 22 + ((i * 7) % 16),
-      delay: -(i * 5),
-      url: ["https://t.me/gifttrove", "https://t.me/troveotc"][i % 2],
+    const pics = (gifts || []).filter((g) => g && g.preview).slice(0, count);
+    const lefts = [6, 78, 30, 60, 14, 86, 44, 70, 22, 52, 90, 38, 4, 66];
+    const tops = [15, 26, 64, 73, 44, 9, 84, 36, 54, 18, 60, 90, 48, 70];
+    return pics.map((g, i) => ({
+      g, src: g.preview,
+      size: 54 + ((i * 19) % 50),
+      left: lefts[i % lefts.length],
+      top: tops[i % tops.length],
+      dur: 20 + ((i * 7) % 18),
+      delay: -(i * 4),
     }));
-  }, [images]);
+  }, [gifts, count]);
   if (!items.length) return null;
   return (
     <div className="void-layer" aria-hidden="true">
       {items.map((it, i) => (
         <img key={i} src={it.src} alt="" className="void-gift"
-          onClick={() => onPick?.(it.url)}
+          onClick={() => onPick?.(it.g)}
           style={{ width: it.size, height: it.size, left: `${it.left}vw`, top: `${it.top}vh`, animationDuration: `${it.dur}s`, animationDelay: `${it.delay}s` }}
           onError={(e) => { e.target.style.display = "none"; }} />
       ))}
@@ -997,7 +998,7 @@ const styles = `
   /* ── Floating background gifts (space / void) ────────────────────────── */
   .void-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .void-gift { position: absolute; opacity: 0.10; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
-  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; transition: opacity .3s; } .void-gift:hover { opacity: 0.32; } }
+  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.16; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.45; } }
   @keyframes voidFloat { 0% { transform: translateY(8vh) translateX(0) rotate(0deg); } 50% { transform: translateY(-6vh) translateX(14px) rotate(8deg); } 100% { transform: translateY(8vh) translateX(0) rotate(0deg); } }
 
   /* ── Access gate ─────────────────────────────────────────────────────── */
@@ -1373,6 +1374,10 @@ export default function App() {
   const [savedGifts, setSavedGifts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
   });
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("gt_recent") || "[]"); } catch { return []; }
+  });
+  const userSynced = useRef(false);   // becomes true once server data is merged
 
   const refKey = `gt_ref_count_${tgUser?.id || "guest"}`;
   const [referralCount, setReferralCount] = useState(() => parseInt(localStorage.getItem(refKey) || "0", 10));
@@ -1510,6 +1515,42 @@ export default function App() {
   useEffect(() => { localStorage.setItem("gt_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
   useEffect(() => { localStorage.setItem(refKey, String(referralCount)); }, [referralCount, refKey]);
+  useEffect(() => { localStorage.setItem("gt_recent", JSON.stringify(recentSearches)); }, [recentSearches]);
+
+  // ── cross-device sync: pull saved + searches from the server on launch ──
+  useEffect(() => {
+    if (!window.Telegram?.WebApp?.initData) { userSynced.current = true; return; }
+    api(`/api/userdata?uid=${encodeURIComponent(tgUser?.id || "")}`)
+      .then((d) => {
+        if (d && d.synced) {
+          if (Array.isArray(d.saved) && d.saved.length) {
+            setSavedGifts((local) => {
+              const byId = new Map();
+              [...d.saved, ...local].forEach((gg) => { if (gg && gg.id != null) byId.set(String(gg.id), gg); });
+              return Array.from(byId.values());
+            });
+          }
+          if (Array.isArray(d.searches) && d.searches.length) {
+            setRecentSearches((local) => {
+              const merged = [];
+              const seen = new Set();
+              [...d.searches, ...local].forEach((q) => { const k = String(q).toLowerCase(); if (q && !seen.has(k)) { seen.add(k); merged.push(q); } });
+              return merged.slice(0, 20);
+            });
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => { userSynced.current = true; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── push saved gifts to the server when they change (after the first sync) ──
+  useEffect(() => {
+    if (!userSynced.current || !window.Telegram?.WebApp?.initData) return;
+    const id = setTimeout(() => { api("/api/userdata", { method: "POST", body: { saved: savedGifts } }).catch(() => {}); }, 700);
+    return () => clearTimeout(id);
+  }, [savedGifts]);
 
   // ── load live collections (dynamic; no hardcoding) ──
   useEffect(() => {
@@ -1690,6 +1731,19 @@ export default function App() {
     return p;
   };
 
+  // Remember a search term (synced across devices via /api/userdata).
+  const recordSearch = (q) => {
+    q = (q || "").trim();
+    if (!q) return;
+    setRecentSearches((prev) => {
+      const next = [q, ...prev.filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 20);
+      if (userSynced.current && window.Telegram?.WebApp?.initData) {
+        api("/api/userdata", { method: "POST", body: { searches: next } }).catch(() => {});
+      }
+      return next;
+    });
+  };
+
   const handleScout = async () => {
     haptic("medium");
     setScoutError(null);
@@ -1704,6 +1758,7 @@ export default function App() {
       const q = giftQuery.trim();
       const known = collectionNames.some((n) => n.toLowerCase() === q.toLowerCase());
       lastSearch.current = { sort: sortBy, query: q, known };
+      if (known) recordSearch(q);
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
       setNextOffset(d?.next_offset || "");
@@ -1713,6 +1768,32 @@ export default function App() {
     }
     const elapsed = Date.now() - started;
     setTimeout(() => { setIsScouting(false); setIsSearching(true); }, Math.max(0, 650 - elapsed));
+  };
+
+  // Click a floating background gift -> run a clean in-app search for it
+  // (stays inside the app; no window switch).
+  const scoutGift = async (col) => {
+    if (!col?.name) return;
+    haptic("medium");
+    setGiftQuery(col.name);
+    setGiftId(""); setSelectedModel("Any"); setSelectedSymbol("Any");
+    setSelectedBackdrop("Any"); setSelectedMarkets(["All"]);
+    setScoutError(null); setHasSearched(true); setResults([]); setNextOffset("");
+    setIsScouting(true); setActiveTab("results");
+    recordSearch(col.name);
+    try {
+      const p = new URLSearchParams();
+      p.set("gift", col.name);
+      if (col.gift_id) p.set("gift_id", col.gift_id);
+      if (col.slug) p.set("slug", col.slug);
+      if (tgUser?.id) p.set("uid", tgUser.id);
+      p.set("sort", sortBy); p.set("limit", "100");
+      lastSearch.current = { sort: sortBy, query: col.name, known: true };
+      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      setResults(Array.isArray(d?.results) ? d.results : []);
+      setNextOffset(d?.next_offset || "");
+    } catch { setScoutError("offline"); setResults([]); }
+    setTimeout(() => { setIsScouting(false); setIsSearching(true); }, 300);
   };
 
   // Load the next page of listings and append.
@@ -1776,18 +1857,28 @@ export default function App() {
     const link = `${REF_BOT_LINK}${myRef}`;
     if (copyText(link)) showToast(t.link_copied);
   };
-  const shareGift = (item) => {
+  const shareGift = async (item) => {
     haptic();
     const link = giftDeepLink(item, myRef);
     const name = `${item?.name || "Telegram gift"}${item?.num != null ? ` #${item.num}` : ""}`;
     const mkt = item?.market || "Telegram";
-    const emoji = { Telegram: "\u2708\ufe0f", GetGems: "\U0001f6d2", Portals: "\U0001f6d2", MRKT: "\U0001f6d2", Tonnel: "\U0001f6d2", Fragment: "\U0001f3f4\u200d\u2620\ufe0f" }[mkt] || "\U0001f6cd\ufe0f";
     let price = "";
     if (item?.price != null) {
       const n = Number(item.price);
       const amt = Number.isFinite(n) ? n.toLocaleString("en-US") : item.price;
       price = item.currency === "Stars" ? `${amt} Stars` : `${amt} GRAM`;
     }
+    // Preferred: a prepared message carrying the marketplace's PREMIUM custom
+    // emoji (only possible through savePreparedInlineMessage + shareMessage).
+    try {
+      if (tg?.shareMessage && window.Telegram?.WebApp?.initData) {
+        const r = await api("/api/share", { method: "POST", body: {
+          name: item?.name, num: item?.num != null ? String(item.num) : "", market: mkt, price, link,
+        } });
+        if (r?.ok && r.id) { tg.shareMessage(r.id); return; }
+      }
+    } catch { /* fall back to the plain share sheet */ }
+    const emoji = { Telegram: "\u2708\ufe0f", GetGems: "\u{1f6d2}", Portals: "\u{1f6d2}", MRKT: "\u{1f6d2}", Tonnel: "\u{1f6d2}", Fragment: "\u{1f3f4}\u200d\u2620\ufe0f" }[mkt] || "\u{1f6cd}\ufe0f";
     const text = [name, `${emoji} ${mkt}${price ? ` \u00b7 ${price}` : ""}`, "Scout it on GiftTrove"].join("\n");
     safeOpen(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
   };
@@ -2269,13 +2360,13 @@ export default function App() {
 
   // ── ACCESS GATE (non-admins need the code; admins pass automatically) ──
   if (access !== "granted") {
-    const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
+    const voidGifts = collections.filter((c) => c.preview).slice(0, 12);
     return (
       <>
         <style>{styles}</style>
         <GoldDefs />
-        <div className="app-container" data-theme={theme} style={{ position: "relative", overflow: "hidden" }}>
-          <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
+        <div className="app-container" data-theme="light" style={{ position: "relative", overflow: "hidden" }}>
+          <VoidGifts gifts={voidGifts} onPick={() => safeOpen("https://t.me/gifttrove")} />
           <div className="gate">
             <div className="gate-card">
               <img src={LOGO_URL} alt="GiftTrove" className="gate-logo" />
@@ -2334,14 +2425,14 @@ export default function App() {
 
   // ── DESKTOP ──
   if (isDesktop) {
-    const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
+    const voidGifts = collections.filter((c) => c.preview);
     return (
       <>
         <style>{styles}</style>
         <GoldDefs />
         {toast && <div className="toast">{toast}</div>}
         <div className="desktop-layout" data-theme={theme}>
-          <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
+          <VoidGifts gifts={voidGifts} count={14} onPick={scoutGift} />
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span className="logo-tile lg"><img src={LOGO_URL} alt="GiftTrove" /></span>
@@ -2368,13 +2459,11 @@ export default function App() {
   }
 
   // ── MOBILE ──
-  const voidImgs = collections.filter((c) => c.preview).slice(0, 6).map((c) => c.preview);
   return (
     <>
       <style>{styles}</style>
         <GoldDefs />
       <div className="app-container" data-theme={theme}>
-        <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
         {toast && <div className="toast">{toast}</div>}
 
         <div className="top-nav">
