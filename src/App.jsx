@@ -33,6 +33,7 @@ const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 
 // Brand logo (sits between GIFT and TROVE, the Scout tab icon, and the headline mark).
 const LOGO_URL = "https://i.ibb.co/nMV7Mvfp/Inria-Serif.png";
+const HERO_IMG = "https://i.ibb.co/PsCBq79k/MGGA.png";  // image beside the hero title
 
 // Optional: a Lottie URL for the launch splash. Left empty -> we show real
 // animated gifts (Plush Pepe + 2 others) pulled from the backend instead.
@@ -93,10 +94,15 @@ async function api(path, { method = "GET", body, timeout = 10000 } = {}) {
   if (!BACKEND_CONFIGURED) throw new Error("backend-not-configured");
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), timeout);
+  // Signed Telegram initData proves the caller's identity to the backend.
+  const initData = (typeof window !== "undefined" && window.Telegram?.WebApp?.initData) || "";
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (initData) headers["X-Init-Data"] = initData;
   try {
     const res = await fetch(`${BACKEND_URL}${path}`, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });
@@ -397,10 +403,16 @@ function LaunchLoader({ onDone }) {
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
 
-  const pick = (i) => (gifts.length ? gifts[i % gifts.length] : null);
-  const hero = pick(0);
-  const left = pick(1);
-  const right = pick(2);
+  // distinct gifts so the three slots never repeat the same gift
+  const uniq = [];
+  const seen = new Set();
+  for (const g of gifts) {
+    const key = (g && (g.name || g.slug)) || "";
+    if (key && !seen.has(key)) { seen.add(key); uniq.push(g); }
+  }
+  const hero = uniq[0] || null;
+  const left = uniq[1] || uniq[0] || null;
+  const right = uniq[2] || uniq[1] || uniq[0] || null;
 
   return (
     <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
@@ -838,7 +850,7 @@ const styles = `
   /* ─── HERO TITLE (bolder; image at end, text-height) ─── */
   .hero-title { font-size: 27px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.18; margin-bottom: 24px; color: #ffffff; }
   .hero-title.desktop { font-size: 38px; letter-spacing: -1px; }
-  .hero-title-img { display: inline-block; height: 0.92em; width: auto; vertical-align: -0.12em; margin-left: 10px; border-radius: 7px; }
+  .hero-title-img { display: inline-block; height: 1.18em; width: auto; vertical-align: -0.24em; margin-left: 10px; border-radius: 9px; }
 
   .section-label { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
 
@@ -1170,6 +1182,23 @@ const styles = `
   .admin-action-2:hover { border-color: var(--accent); }
   .admin-action-2:active { transform: scale(0.98); }
   .admin-foot { text-align: center; font-size: 11.5px; color: var(--text-secondary); opacity: 0.65; margin-top: 18px; }
+  .admin-tabs { display: flex; gap: 6px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
+  .admin-tab { flex: 1; border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13.5px; padding: 9px 0; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .25s var(--spring); }
+  .admin-tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
+  .admin-strip { display: flex; align-items: center; justify-content: space-between; background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 18px; box-shadow: var(--shadow-card); font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+  .admin-strip strong { color: var(--accent); font-size: 20px; font-variant-numeric: tabular-nums; }
+  .admin-chart-card { background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px 12px; box-shadow: var(--shadow-card); margin-bottom: 18px; }
+  .admin-chart-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 16px; }
+  .admin-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
+  .admin-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-left: 8px; }
+  .admin-legend .lg-o { background: #5e5ce6; } .admin-legend .lg-s { background: #ff375f; }
+  .admin-bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; height: 130px; }
+  .admin-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .admin-bar-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 3px; width: 100%; }
+  .admin-bar { width: 8px; min-height: 3px; border-radius: 4px 4px 0 0; transition: height .5s var(--ease); }
+  .admin-bar.o { background: linear-gradient(180deg, #7a78ff, #5e5ce6); }
+  .admin-bar.s { background: linear-gradient(180deg, #ff6a85, #ff375f); }
+  .admin-bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; }
   @media (min-width: 768px) { .admin-screen { max-width: 760px; margin: 0 auto; padding: 36px 32px 60px; } .admin-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 `;
 
@@ -1181,6 +1210,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(0);
+  const [tab, setTab] = useState("overview");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -1192,17 +1222,43 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const cards = [
+  const g = (k) => (stats && stats[k]) || 0;
+  const overviewCards = [
     { k: "members_total", label: "Members", c: "#0a84ff" },
-    { k: "returning_members", label: "Returning", c: "#30d158" },
     { k: "active_24h", label: "Active · 24h", c: "#ff9f0a" },
     { k: "active_7d", label: "Active · 7d", c: "#bf5af2" },
-    { k: "new_members_24h", label: "New · 24h", c: "#64d2ff" },
-    { k: "opens_24h", label: "Opens · 24h", c: "#5e5ce6" },
+    { k: "returning_members", label: "Returning", c: "#30d158" },
     { k: "searches_total", label: "Searches", c: "#ff375f" },
     { k: "searches_24h", label: "Searches · 24h", c: "#ffd60a" },
+    { k: "opens_24h", label: "Opens · 24h", c: "#5e5ce6" },
+    { k: "new_members_24h", label: "New · 24h", c: "#64d2ff" },
+  ];
+  const growthCards = [
+    { k: "new_members_24h", label: "New · 24h", c: "#64d2ff" },
+    { k: "new_members_7d", label: "New · 7d", c: "#0a84ff" },
+    { k: "referrals_total", label: "Referrals", c: "#30d158" },
+    { k: "unique_referrers", label: "Referrers", c: "#bf5af2" },
+    { k: "opens_7d", label: "Opens · 7d", c: "#5e5ce6" },
+    { k: "avg_searches_per_member", label: "Avg / member", c: "#ff9f0a", raw: true },
   ];
   const top = (stats && stats.top_searches) || [];
+  const daily = (stats && stats.daily) || [];
+  const maxDaily = Math.max(1, ...daily.map((d) => Math.max(d.opens || 0, d.searches || 0)));
+  const dayLabels = ["6d", "5d", "4d", "3d", "2d", "1d", "now"];
+
+  const Cards = ({ list }) => (
+    <div className="admin-grid">
+      {list.map((c, i) => (
+        <div key={c.k} className="admin-card" style={{ animationDelay: `${i * 0.04}s` }}>
+          <span className="admin-dot" style={{ background: c.c }} />
+          <div className="admin-card-val">{c.raw ? g(c.k) : compactNum(g(c.k))}</div>
+          <div className="admin-card-label">{c.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"]];
 
   return (
     <div className="admin-screen">
@@ -1221,30 +1277,77 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
       {loading && !stats ? (
         <div className="empty-state"><div className="lm-spin" style={{ margin: "0 auto" }} /></div>
       ) : stats && stats.error ? (
-        <div className="empty-state"><div className="es-title">Couldn't load analytics</div><div>{String(stats.error)}</div>
+        <div className="empty-state"><div className="es-title">Couldn't load analytics</div><div>{stats.error === "forbidden" ? "Not authorized." : String(stats.error)}</div>
           <button className="action-btn" style={{ marginTop: 18 }} onClick={load}>Try again</button></div>
       ) : (
         <>
-          <div className="admin-grid">
-            {cards.map((c, i) => (
-              <div key={c.k} className="admin-card" style={{ animationDelay: `${i * 0.04}s` }}>
-                <span className="admin-dot" style={{ background: c.c }} />
-                <div className="admin-card-val">{compactNum((stats && stats[c.k]) || 0)}</div>
-                <div className="admin-card-label">{c.label}</div>
-              </div>
+          <div className="admin-tabs">
+            {tabs.map(([id, label]) => (
+              <button key={id} className={`admin-tab ${tab === id ? "active" : ""}`} onClick={() => { haptic(); setTab(id); }}>{label}</button>
             ))}
           </div>
 
-          <div className="admin-section-title">Top searches</div>
-          <div className="admin-list">
-            {top.length ? top.map((s, i) => (
-              <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
-                <span className="admin-rank">{i + 1}</span>
-                <span className="admin-gift">{s.gift}</span>
-                <span className="admin-count">{compactNum(s.count)}</span>
+          {tab === "overview" && (
+            <div className="fade-in-up">
+              <Cards list={overviewCards} />
+              <div className="admin-strip">
+                <span>Avg searches / member</span>
+                <strong>{g("avg_searches_per_member")}</strong>
               </div>
-            )) : <div className="admin-empty">No searches recorded yet.</div>}
-          </div>
+              <div className="admin-section-title">Top searches</div>
+              <div className="admin-list">
+                {top.length ? top.slice(0, 8).map((s, i) => (
+                  <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
+                    <span className="admin-rank">{i + 1}</span>
+                    <span className="admin-gift">{s.gift}</span>
+                    <span className="admin-count">{compactNum(s.count)}</span>
+                  </div>
+                )) : <div className="admin-empty">No searches recorded yet.</div>}
+              </div>
+            </div>
+          )}
+
+          {tab === "activity" && (
+            <div className="fade-in-up">
+              <div className="admin-chart-card">
+                <div className="admin-chart-head">
+                  <span>Last 7 days</span>
+                  <span className="admin-legend"><i className="lg-o" /> opens <i className="lg-s" /> searches</span>
+                </div>
+                <div className="admin-bars">
+                  {daily.map((d, i) => (
+                    <div key={i} className="admin-bar-col">
+                      <div className="admin-bar-pair">
+                        <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
+                        <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
+                      </div>
+                      <span className="admin-bar-label">{dayLabels[i] || ""}</span>
+                    </div>
+                  ))}
+                  {!daily.length && <div className="admin-empty">No activity yet.</div>}
+                </div>
+              </div>
+              <Cards list={[
+                { k: "opens_7d", label: "Opens · 7d", c: "#5e5ce6" },
+                { k: "searches_7d", label: "Searches · 7d", c: "#ff375f" },
+                { k: "active_7d", label: "Active · 7d", c: "#bf5af2" },
+                { k: "new_members_7d", label: "New · 7d", c: "#0a84ff" },
+              ]} />
+            </div>
+          )}
+
+          {tab === "growth" && (
+            <div className="fade-in-up">
+              <Cards list={growthCards} />
+              <div className="admin-section-title">Reach</div>
+              <div className="admin-list">
+                <div className="admin-row"><span className="admin-gift">Members total</span><span className="admin-count">{compactNum(g("members_total"))}</span></div>
+                <div className="admin-row"><span className="admin-gift">Returning members</span><span className="admin-count">{compactNum(g("returning_members"))}</span></div>
+                <div className="admin-row"><span className="admin-gift">Unique gifts searched</span><span className="admin-count">{compactNum(g("unique_gifts"))}</span></div>
+                <div className="admin-row"><span className="admin-gift">Total referrals</span><span className="admin-count">{compactNum(g("referrals_total"))}</span></div>
+              </div>
+            </div>
+          )}
 
           <div className="admin-actions">
             <button className="action-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(); }}>Refresh data</button>
@@ -1369,7 +1472,38 @@ export default function App() {
   const toggleTheme = () => { haptic(); bump("theme"); setTheme((p) => (p === "dark" ? "light" : "dark")); };
 
   // ── Telegram init ──
-  useEffect(() => { try { tg?.ready?.(); tg?.expand?.(); } catch { /* noop */ } }, [tg]);
+  useEffect(() => {
+    if (!tg) return;
+    try { tg.ready?.(); tg.expand?.(); } catch { /* noop */ }
+    // Full-screen mode: offset the UI below Telegram's header controls so the
+    // language / theme buttons aren't hidden under the close/collapse buttons.
+    const applyInsets = () => {
+      try {
+        const sa = tg.safeAreaInset || {};
+        const csa = tg.contentSafeAreaInset || {};
+        const top = Math.max(Number(sa.top) || 0, 0) + Math.max(Number(csa.top) || 0, 0);
+        const bottom = Math.max(Number(sa.bottom) || 0, 0) + Math.max(Number(csa.bottom) || 0, 0);
+        const root = document.documentElement;
+        if (top > 0) root.style.setProperty("--safe-top", `${top}px`);
+        if (bottom > 0) root.style.setProperty("--safe-bottom", `${Math.max(bottom, 16)}px`);
+      } catch { /* noop */ }
+    };
+    applyInsets();
+    try {
+      tg.onEvent?.("safeAreaChanged", applyInsets);
+      tg.onEvent?.("contentSafeAreaChanged", applyInsets);
+      tg.onEvent?.("fullscreenChanged", applyInsets);
+      tg.onEvent?.("viewportChanged", applyInsets);
+    } catch { /* noop */ }
+    return () => {
+      try {
+        tg.offEvent?.("safeAreaChanged", applyInsets);
+        tg.offEvent?.("contentSafeAreaChanged", applyInsets);
+        tg.offEvent?.("fullscreenChanged", applyInsets);
+        tg.offEvent?.("viewportChanged", applyInsets);
+      } catch { /* noop */ }
+    };
+  }, [tg]);
 
   // ── persistence ──
   useEffect(() => { localStorage.setItem("gt_theme", theme); document.documentElement.setAttribute("data-theme", theme); }, [theme]);
@@ -1645,7 +1779,16 @@ export default function App() {
   const shareGift = (item) => {
     haptic();
     const link = giftDeepLink(item, myRef);
-    const text = `${item?.name || "Telegram gift"}${item?.num != null ? ` #${item.num}` : ""} on GiftTrove`;
+    const name = `${item?.name || "Telegram gift"}${item?.num != null ? ` #${item.num}` : ""}`;
+    const mkt = item?.market || "Telegram";
+    const emoji = { Telegram: "\u2708\ufe0f", GetGems: "\U0001f6d2", Portals: "\U0001f6d2", MRKT: "\U0001f6d2", Tonnel: "\U0001f6d2", Fragment: "\U0001f3f4\u200d\u2620\ufe0f" }[mkt] || "\U0001f6cd\ufe0f";
+    let price = "";
+    if (item?.price != null) {
+      const n = Number(item.price);
+      const amt = Number.isFinite(n) ? n.toLocaleString("en-US") : item.price;
+      price = item.currency === "Stars" ? `${amt} Stars` : `${amt} GRAM`;
+    }
+    const text = [name, `${emoji} ${mkt}${price ? ` \u00b7 ${price}` : ""}`, "Scout it on GiftTrove"].join("\n");
     safeOpen(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
   };
 
@@ -1891,7 +2034,7 @@ export default function App() {
       <div className="fade-in-up">
         <div className={desktop ? "hero-title desktop" : "hero-title"}>
           {t.fastest_way}
-          <img src={LOGO_URL} alt="" className="hero-title-img" />
+          <img src={HERO_IMG} alt="" className="hero-title-img" />
         </div>
 
         <div className="input-group">
