@@ -111,7 +111,7 @@ function compactNum(n) {
   const trim = (v) => (v % 1 === 0 ? String(v) : v.toFixed(1).replace(/\.0$/, ""));
   if (n >= 1e9) return trim(Math.floor(n / 1e8) / 10) + "B";
   if (n >= 1e6) return trim(Math.floor(n / 1e5) / 10) + "M";
-  if (n >= 1e4) return trim(Math.floor(n / 100) / 10) + "K";
+  if (n >= 1e3) return trim(Math.floor(n / 100) / 10) + "K";
   return Math.round(n).toLocaleString("en-US");
 }
 
@@ -276,6 +276,7 @@ const IconMinimize = ({ size = 16 }) => <svg width={size} height={size} viewBox=
 const IconExpand = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>;
 const IconArrowUp = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V6M6 12l6-6 6 6"/></svg>;
 const IconArrowDown = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>;
+const IconGiftBox = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8"/><path d="M2 8h20v4H2z"/><path d="M12 8v13"/><path d="M12 8S10.5 3.5 7.5 4.2C5.7 4.6 5.6 7 7.2 7.6 9 8.2 12 8 12 8z"/><path d="M12 8s1.5-4.5 4.5-3.8C18.3 4.6 18.4 7 16.8 7.6 15 8.2 12 8 12 8z"/></svg>;
 const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
@@ -441,6 +442,57 @@ function VoidGifts({ images, onPick }) {
   );
 }
 
+// Reusable bottom sheet with swipe-down-to-dismiss + spring open/close.
+function BottomSheet({ onClose, children }) {
+  const [y, setY] = useState(1200);          // current translateY in px
+  const [dragging, setDragging] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const startY = useRef(null);
+  const curY = useRef(1200);
+  const scRef = useRef(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => { curY.current = 0; setY(0); });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const close = () => {
+    if (closing) return;
+    setClosing(true); setDragging(false);
+    curY.current = 1200; setY(1200);
+    setTimeout(() => onClose?.(), 280);
+  };
+  const setYY = (v) => { curY.current = v; setY(v); };
+
+  const onTouchStart = (e) => {
+    if (scRef.current && scRef.current.scrollTop > 2) return;  // let inner content scroll
+    startY.current = e.touches[0].clientY;
+    setDragging(true);
+  };
+  const onTouchMove = (e) => {
+    if (startY.current == null) return;
+    const dy = e.touches[0].clientY - startY.current;
+    setYY(dy > 0 ? dy : dy * 0.2);   // slight rubber-band upward
+  };
+  const onTouchEnd = () => {
+    if (startY.current == null) return;
+    startY.current = null;
+    setDragging(false);
+    if (curY.current > 110) close(); else setYY(0);
+  };
+
+  return (
+    <div className={`sheet-overlay ${closing ? "sheet-closing" : ""}`} onClick={close}>
+      <div ref={scRef} className="sheet-content sheet-js" onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        style={{ transform: `translateY(${y}px)`, transition: dragging ? "none" : "transform .36s cubic-bezier(0.32,0.72,0,1)" }}>
+        <div className="sheet-grab" onClick={close} />
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function PromoBanner() {
   const [current, setCurrent] = useState(0);
   const intervalRef = useRef(null);
@@ -503,7 +555,7 @@ const T = {
     wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just approve.",
     tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} GRAM from @wallet.",
     copy_address: "Copy Address", address_copied: "Address copied — send from @wallet",
-    listed_value: "Listed Value", buy_now: "Buy / View", save_gift: "Save Gift", remove_saved: "Remove Saved",
+    listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", save_gift: "Save Gift", remove_saved: "Remove Saved",
     floor: "Floor", view_on: "View on Telegram", saved_done: "Saved to your collection", link_copied: "Referral link copied",
   },
   RU: {
@@ -531,7 +583,7 @@ const T = {
     wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — просто подтвердите.",
     tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} GRAM из @wallet.",
     copy_address: "Копировать адрес", address_copied: "Адрес скопирован — отправьте из @wallet",
-    listed_value: "Цена листинга", buy_now: "Купить / Открыть", save_gift: "Сохранить", remove_saved: "Убрать",
+    listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", save_gift: "Сохранить", remove_saved: "Убрать",
     floor: "Флор", view_on: "Открыть в Telegram", saved_done: "Добавлено в коллекцию", link_copied: "Ссылка скопирована",
   },
   ZH: {
@@ -559,7 +611,7 @@ const T = {
     wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——确认即可。",
     tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} GRAM。",
     copy_address: "复制地址", address_copied: "地址已复制——请从 @wallet 发送",
-    listed_value: "挂单价", buy_now: "购买 / 查看", save_gift: "收藏", remove_saved: "取消收藏",
+    listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", save_gift: "收藏", remove_saved: "取消收藏",
     floor: "地板价", view_on: "在 Telegram 中打开", saved_done: "已加入收藏", link_copied: "推荐链接已复制",
   },
 };
@@ -1018,6 +1070,33 @@ const styles = `
 
   /* floating gifts lighter (drop blur filter for performance) */
   .void-gift { filter: none; opacity: 0.09; }
+
+  /* ── swipeable sheets ── */
+  .sheet-content.sheet-js { animation: none; transform: translateY(100%); will-change: transform; touch-action: pan-y; }
+  .sheet-overlay.sheet-closing { animation: sheetFadeOut .28s forwards; }
+  @keyframes sheetFadeOut { from { opacity: 1; } to { opacity: 0; } }
+  .sheet-grab { width: 44px; height: 5px; border-radius: 100px; background: var(--text-secondary); opacity: 0.4; margin: 2px auto 22px; cursor: grab; transition: opacity .2s; }
+  .sheet-grab:active { opacity: 0.7; }
+  .sheet-content { box-shadow: 0 -24px 70px rgba(0,0,0,0.34); }
+
+  /* ── catalog thumbnails (autocomplete + model/symbol pickers) ── */
+  .gift-tile { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(120% 120% at 30% 20%, rgba(10,132,255,0.22), rgba(10,132,255,0.06)); color: var(--accent); border: 1px solid var(--border); }
+  .gift-tile.sm { width: 34px; height: 34px; border-radius: 10px; }
+  .gift-tile svg { width: 60%; height: 60%; }
+  .suggestion-item { transition: background .15s; }
+  .suggestion-item:active { background: var(--bg-hover); }
+
+  /* ── extra polish / micro-interactions ── */
+  .result-card { animation: cardIn .5s var(--ease) both; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .badge-buy { transition: transform .16s var(--spring), box-shadow .2s; }
+  .badge-buy:active { transform: scale(0.9); }
+  .ios-row { transition: background .18s; }
+  .sheet-list-item, .sheet-model-item { transition: background .18s; }
+  .tab-btn:active svg { transform: scale(0.88); }
+  .hero-title { letter-spacing: -1px; }
+  ::selection { background: rgba(10,132,255,0.28); }
+  * { -webkit-tap-highlight-color: transparent; }
 `;
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1027,7 +1106,7 @@ export default function App() {
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
   const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" };
 
-  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "dark");
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const t = T[lang] || T.EN;
 
@@ -1387,13 +1466,13 @@ export default function App() {
   };
 
   // ── card renderer ──
-  const renderGiftCard = (item) => {
+  const renderGiftCard = (item, i = 0) => {
     const poster = item.image || giftImage(item.slug, item.num);
     const anim = giftAnimation(item.slug, item.num);
     const saved = isSavedGift(item);
     const dotHex = item.backdropHex;
     return (
-      <div key={item.id} className="result-card" onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
+      <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
           <LottieGift src={anim} poster={poster} size={132} radius={18} />
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
@@ -1413,7 +1492,7 @@ export default function App() {
         )}
         <div className="result-foot">
           <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} /> : <span className="result-view">{t.view_on}</span>}</div>
-          <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy_now || "BUY"}</div>
+          <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy}</div>
         </div>
       </div>
     );
@@ -1430,9 +1509,7 @@ export default function App() {
       const img = g.image || giftImage(g.slug, g.num);
       const dot = g.backdropHex;
       return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
+        <BottomSheet onClose={() => setActiveSheet(null)}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 18 }}>
               <LottieGift src={anim} poster={img} size={132} radius={24} />
               <div className="sheet-title" style={{ margin: 0 }}>{g.name}{g.num != null ? ` #${g.num}` : ""}</div>
@@ -1473,17 +1550,14 @@ export default function App() {
               </button>
               <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, g)}>{t.buy_now}</button>
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       );
     }
 
     if (activeSheet === "donate") {
       const isTg = donateWallet === "Tg Wallet";
       return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
+        <BottomSheet onClose={() => { setActiveSheet(null); setDonateStep(1); setDonateAmount(""); setDonateTx(""); }}>
             {donateStep === 1 && (
               <div className="fade-in-up">
                 <div className="sheet-title">{t.donate}</div>
@@ -1525,16 +1599,13 @@ export default function App() {
                 <button className="action-btn" onClick={() => { setActiveSheet(null); setDonateStep(1); setDonateAmount(""); setDonateTx(""); }}>Close</button>
               </div>
             )}
-          </div>
-        </div>
+        </BottomSheet>
       );
     }
 
     if (activeSheet === "lang") {
       return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
+        <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{t.language}</div>
             <div className="ios-group" style={{ margin: 0 }}>
               {Object.entries(LANGS).map(([k, v]) => (
@@ -1543,8 +1614,7 @@ export default function App() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       );
     }
 
@@ -1555,9 +1625,7 @@ export default function App() {
       const setSel = isModel ? setSelectedModel : setSelectedSymbol;
       const preview = selectedCollection?.preview;
       return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
+        <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
@@ -1572,7 +1640,9 @@ export default function App() {
               {list.map((m) => (
                 <div key={m.name} className="sheet-model-item" onClick={() => { haptic(); setSel(m.name); setActiveSheet(null); }}>
                   <div className="model-left">
-                    {preview && <img src={preview} alt="" className="model-thumb" onError={(e) => { e.target.style.opacity = 0.2; }} />}
+                    {preview
+                      ? <img src={preview} alt="" className="model-thumb" onError={(e) => { e.target.style.opacity = 0.2; }} />
+                      : <span className="gift-tile"><IconGiftBox /></span>}
                     <div className="model-info">
                       <span className="model-name">{m.name}</span>
                       {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}>{fmtRarity(m.rarity)} {t.rarity}</span>}
@@ -1582,17 +1652,14 @@ export default function App() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       );
     }
 
     if (activeSheet === "backdrop") {
       const list = attrs.backdrops;
       return (
-        <div className="sheet-overlay" onClick={() => setActiveSheet(null)}>
-          <div className="sheet-content" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-handle" />
+        <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{t.backdrop}</div>
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
@@ -1613,8 +1680,7 @@ export default function App() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+        </BottomSheet>
       );
     }
 
@@ -1648,7 +1714,7 @@ export default function App() {
                     onTouchEnd={(e) => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}>
                     {col?.preview
                       ? <img src={col.preview} alt={g} className="suggestion-gift-img" onError={(e) => { e.target.style.opacity = 0.2; }} />
-                      : <span className="suggestion-gift-img" />}
+                      : <span className="gift-tile sm"><IconGiftBox /></span>}
                     {g}
                   </div>
                 );
@@ -1761,7 +1827,7 @@ export default function App() {
         </div>
 
         <div className={desktop ? "results-grid desktop" : "results-grid"}>
-          {results.map((item) => renderGiftCard(item))}
+          {results.map((item, i) => renderGiftCard(item, i))}
         </div>
 
         {nextOffset && (
