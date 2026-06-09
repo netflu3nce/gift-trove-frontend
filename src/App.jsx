@@ -1006,8 +1006,8 @@ const styles = `
 
   /* ── Floating background gifts (space / void) ────────────────────────── */
   .void-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-  .void-gift { position: absolute; opacity: 0.10; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
-  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.30; filter: none; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.62; transform: scale(1.08); } }
+  .void-gift { position: absolute; opacity: 0.14; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
+  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.46; filter: none; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.78; transform: scale(1.1); } }
   @keyframes voidFloat { 0% { transform: translateY(8vh) translateX(0) rotate(0deg); } 50% { transform: translateY(-6vh) translateX(14px) rotate(8deg); } 100% { transform: translateY(8vh) translateX(0) rotate(0deg); } }
 
   /* ── Access gate ─────────────────────────────────────────────────────── */
@@ -1116,8 +1116,8 @@ const styles = `
   /* gate premium glass */
   .gate-card { border-radius: 30px; box-shadow: var(--shadow-pop), inset 0 1px 0 var(--glass-hi); }
 
-  /* floating gifts lighter (drop blur filter for performance) */
-  .void-gift { filter: none; opacity: 0.09; }
+  /* floating gifts: drop blur filter for performance (opacity set above per-viewport) */
+  .void-gift { filter: none; }
 
   /* ── swipeable sheets ── */
   .sheet-content.sheet-js { animation: none; transform: translateY(100%); will-change: transform; touch-action: pan-y; }
@@ -1202,13 +1202,13 @@ const styles = `
   .admin-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
   .admin-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-left: 8px; }
   .admin-legend .lg-o { background: #5e5ce6; } .admin-legend .lg-s { background: #ff375f; }
-  .admin-bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; height: 130px; }
-  .admin-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
-  .admin-bar-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 3px; width: 100%; }
-  .admin-bar { width: 8px; min-height: 3px; border-radius: 4px 4px 0 0; transition: height .5s var(--ease); }
+  .admin-bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; height: 130px; }
+  .admin-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .admin-bar-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 100%; }
+  .admin-bar { flex: 1 1 0; min-width: 2px; max-width: 10px; min-height: 3px; border-radius: 4px 4px 0 0; transition: height .5s var(--ease); }
   .admin-bar.o { background: linear-gradient(180deg, #7a78ff, #5e5ce6); }
   .admin-bar.s { background: linear-gradient(180deg, #ff6a85, #ff375f); }
-  .admin-bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; }
+  .admin-bar-label { font-size: 9.5px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; white-space: nowrap; }
   .admin-range { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
@@ -1224,7 +1224,7 @@ const styles = `
     .admin-screen.desk .admin-card-val { font-size: 32px; }
     .admin-screen.desk .admin-tabs { max-width: 460px; }
     .admin-screen.desk .admin-bars { height: 200px; }
-    .admin-screen.desk .admin-bar { width: 12px; }
+    .admin-screen.desk .admin-bar { max-width: 16px; }
     .admin-screen.desk .admin-2col { grid-template-columns: 1fr 1fr; }
   }
 `;
@@ -1314,15 +1314,19 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
         ))}
       </div>
       <div className="admin-bars">
-        {daily.map((d, i) => (
-          <div key={i} className="admin-bar-col">
-            <div className="admin-bar-pair">
-              <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
-              <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
+        {daily.map((d, i) => {
+          const step = daily.length > 8 ? Math.ceil(daily.length / 6) : 1;
+          const showLabel = i % step === 0 || i === daily.length - 1;
+          return (
+            <div key={i} className="admin-bar-col">
+              <div className="admin-bar-pair">
+                <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
+                <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
+              </div>
+              <span className="admin-bar-label">{showLabel ? (labels[i] || "") : ""}</span>
             </div>
-            <span className="admin-bar-label">{labels[i] || ""}</span>
-          </div>
-        ))}
+          );
+        })}
         {!daily.length && <div className="admin-empty">No activity yet.</div>}
       </div>
     </div>
