@@ -316,6 +316,7 @@ const IconTrash = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 
 // ─── LOTTIE GIFT (loads lottie-web from CDN on demand; falls back to static jpg) ─
 let _lottiePromise = null;
+const _animCache = {};   // cache fetched animation JSON by src (avoids refetch)
 function loadLottie() {
   if (typeof window === "undefined") return Promise.reject(new Error("no-window"));
   if (window.lottie) return Promise.resolve(window.lottie);
@@ -362,13 +363,21 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
     (async () => {
       try {
         const lottie = await loadLottie();
-        const res = await fetch(src);
-        if (!res.ok) throw new Error("no anim");
-        const data = await res.json();
+        let data = _animCache[src];
+        if (!data) {
+          const res = await fetch(src);
+          if (!res.ok) throw new Error("no anim");
+          data = await res.json();
+          if (Object.keys(_animCache).length < 80) _animCache[src] = data;
+        }
         if (cancelled || !wrapRef.current) return;
         const container = wrapRef.current.querySelector(".lg-anim");
         if (!container) return;
-        animRef.current = lottie.loadAnimation({ container, renderer: "svg", loop: true, autoplay: true, animationData: data });
+        animRef.current = lottie.loadAnimation({
+          container, renderer: "svg", loop: true, autoplay: true, animationData: data,
+          rendererSettings: { progressiveLoad: true, hideOnTransparent: true },
+        });
+        try { animRef.current.setSubframe(false); } catch { /* noop */ }
         setReady(true);
       } catch {
         if (!cancelled) setFailed(true);
@@ -398,8 +407,8 @@ function LaunchLoader({ onDone }) {
   useEffect(() => {
     let alive = true;
     api("/api/featured").then((d) => { if (alive && d?.gifts?.length) setGifts(d.gifts.slice(0, 3)); }).catch(() => {});
-    const t1 = setTimeout(() => setLeaving(true), 2200); // short, predictable splash
-    const t2 = setTimeout(() => onDone?.(), 2680);
+    const t1 = setTimeout(() => setLeaving(true), 1650); // short, predictable splash
+    const t2 = setTimeout(() => onDone?.(), 2050);
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
 
@@ -998,7 +1007,7 @@ const styles = `
   /* ── Floating background gifts (space / void) ────────────────────────── */
   .void-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .void-gift { position: absolute; opacity: 0.10; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
-  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.16; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.45; } }
+  @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.30; filter: none; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.62; transform: scale(1.08); } }
   @keyframes voidFloat { 0% { transform: translateY(8vh) translateX(0) rotate(0deg); } 50% { transform: translateY(-6vh) translateX(14px) rotate(8deg); } 100% { transform: translateY(8vh) translateX(0) rotate(0deg); } }
 
   /* ── Access gate ─────────────────────────────────────────────────────── */
@@ -1200,28 +1209,46 @@ const styles = `
   .admin-bar.o { background: linear-gradient(180deg, #7a78ff, #5e5ce6); }
   .admin-bar.s { background: linear-gradient(180deg, #ff6a85, #ff375f); }
   .admin-bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; }
-  @media (min-width: 768px) { .admin-screen { max-width: 760px; margin: 0 auto; padding: 36px 32px 60px; } .admin-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .admin-range { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
+  .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+  .admin-range-btn.active { background: var(--accent-grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(10,132,255,0.32); }
+  .admin-2col { display: grid; grid-template-columns: 1fr; gap: 8px 28px; }
+  @media (min-width: 768px) {
+    .admin-screen { max-width: 760px; margin: 0 auto; padding: 36px 32px 60px; }
+    .admin-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .admin-screen.desk { max-width: 1080px; padding: 44px 48px 72px; }
+    .admin-screen.desk .admin-title { font-size: 30px; }
+    .admin-screen.desk .admin-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .admin-screen.desk .admin-card { padding: 22px 20px; }
+    .admin-screen.desk .admin-card-val { font-size: 32px; }
+    .admin-screen.desk .admin-tabs { max-width: 460px; }
+    .admin-screen.desk .admin-bars { height: 200px; }
+    .admin-screen.desk .admin-bar { width: 12px; }
+    .admin-screen.desk .admin-2col { grid-template-columns: 1fr 1fr; }
+  }
 `;
 
 // ════════════════════════════════════════════════════════════════════════════
 //  MAIN APP
 // ════════════════════════════════════════════════════════════════════════════
 // ── Admin analytics dashboard (iOS-style, motion) — only for ADMIN_DASHBOARD_ID ──
-function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
+function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop = false }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(0);
   const [tab, setTab] = useState("overview");
+  const [range, setRange] = useState("7d");
 
-  const load = useCallback(() => {
+  const load = useCallback((rng) => {
     setLoading(true);
-    api(`/api/analytics?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`)
+    api(`/api/analytics?range=${rng || range}&uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`)
       .then((d) => setStats(d || {}))
       .catch(() => setStats({}))
       .finally(() => setLoading(false));
-  }, [uid, code]);
+  }, [uid, code, range]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(range); /* eslint-disable-next-line */ }, [range]);
 
   const g = (k) => (stats && stats[k]) || 0;
   const overviewCards = [
@@ -1244,8 +1271,9 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
   ];
   const top = (stats && stats.top_searches) || [];
   const daily = (stats && stats.daily) || [];
+  const labels = (stats && stats.labels) || [];
   const maxDaily = Math.max(1, ...daily.map((d) => Math.max(d.opens || 0, d.searches || 0)));
-  const dayLabels = ["6d", "5d", "4d", "3d", "2d", "1d", "now"];
+  const ranges = [["7d", "7 days"], ["12w", "12 weeks"], ["24m", "24 months"], ["all", "All time"]];
 
   const Cards = ({ list }) => (
     <div className="admin-grid">
@@ -1259,10 +1287,63 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
     </div>
   );
 
+  const TopSearches = () => (
+    <>
+      <div className="admin-section-title">Top searches</div>
+      <div className="admin-list">
+        {top.length ? top.slice(0, desktop ? 12 : 8).map((s, i) => (
+          <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
+            <span className="admin-rank">{i + 1}</span>
+            <span className="admin-gift">{s.gift}</span>
+            <span className="admin-count">{compactNum(s.count)}</span>
+          </div>
+        )) : <div className="admin-empty">No searches recorded yet.</div>}
+      </div>
+    </>
+  );
+
+  const ActivityChart = () => (
+    <div className="admin-chart-card">
+      <div className="admin-chart-head">
+        <span>Activity{stats && stats.range_start ? ` · ${stats.range_start} – ${stats.range_end}` : ""}</span>
+        <span className="admin-legend"><i className="lg-o" /> opens <i className="lg-s" /> searches</span>
+      </div>
+      <div className="admin-range">
+        {ranges.map(([id, lbl]) => (
+          <button key={id} className={`admin-range-btn ${range === id ? "active" : ""}`} onClick={() => { haptic(); setRange(id); }}>{lbl}</button>
+        ))}
+      </div>
+      <div className="admin-bars">
+        {daily.map((d, i) => (
+          <div key={i} className="admin-bar-col">
+            <div className="admin-bar-pair">
+              <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
+              <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
+            </div>
+            <span className="admin-bar-label">{labels[i] || ""}</span>
+          </div>
+        ))}
+        {!daily.length && <div className="admin-empty">No activity yet.</div>}
+      </div>
+    </div>
+  );
+
+  const Reach = () => (
+    <>
+      <div className="admin-section-title">Reach</div>
+      <div className="admin-list">
+        <div className="admin-row"><span className="admin-gift">Members total</span><span className="admin-count">{compactNum(g("members_total"))}</span></div>
+        <div className="admin-row"><span className="admin-gift">Returning members</span><span className="admin-count">{compactNum(g("returning_members"))}</span></div>
+        <div className="admin-row"><span className="admin-gift">Unique gifts searched</span><span className="admin-count">{compactNum(g("unique_gifts"))}</span></div>
+        <div className="admin-row"><span className="admin-gift">Total referrals</span><span className="admin-count">{compactNum(g("referrals_total"))}</span></div>
+      </div>
+    </>
+  );
+
   const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"]];
 
   return (
-    <div className="admin-screen">
+    <div className={`admin-screen${desktop ? " desk" : ""}`}>
       <div className="admin-head fade-in-up">
         <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>
         <div className="admin-head-text">
@@ -1270,7 +1351,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
           <div className="admin-sub">GiftTrove · live overview</div>
         </div>
         <div className="admin-head-actions">
-          <div className="icon-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(); }}><IconRefresh trigger={spin} /></div>
+          <div className="icon-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(range); }}><IconRefresh trigger={spin} /></div>
           <div className="icon-btn" onClick={onToggleTheme}><IconContrast /></div>
         </div>
       </div>
@@ -1279,7 +1360,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
         <div className="empty-state"><div className="lm-spin" style={{ margin: "0 auto" }} /></div>
       ) : stats && stats.error ? (
         <div className="empty-state"><div className="es-title">Couldn't load analytics</div><div>{stats.error === "forbidden" ? "Not authorized." : String(stats.error)}</div>
-          <button className="action-btn" style={{ marginTop: 18 }} onClick={load}>Try again</button></div>
+          <button className="action-btn" style={{ marginTop: 18 }} onClick={() => load(range)}>Try again</button></div>
       ) : (
         <>
           <div className="admin-tabs">
@@ -1295,39 +1376,13 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
                 <span>Avg searches / member</span>
                 <strong>{g("avg_searches_per_member")}</strong>
               </div>
-              <div className="admin-section-title">Top searches</div>
-              <div className="admin-list">
-                {top.length ? top.slice(0, 8).map((s, i) => (
-                  <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
-                    <span className="admin-rank">{i + 1}</span>
-                    <span className="admin-gift">{s.gift}</span>
-                    <span className="admin-count">{compactNum(s.count)}</span>
-                  </div>
-                )) : <div className="admin-empty">No searches recorded yet.</div>}
-              </div>
+              <TopSearches />
             </div>
           )}
 
           {tab === "activity" && (
             <div className="fade-in-up">
-              <div className="admin-chart-card">
-                <div className="admin-chart-head">
-                  <span>Last 7 days</span>
-                  <span className="admin-legend"><i className="lg-o" /> opens <i className="lg-s" /> searches</span>
-                </div>
-                <div className="admin-bars">
-                  {daily.map((d, i) => (
-                    <div key={i} className="admin-bar-col">
-                      <div className="admin-bar-pair">
-                        <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
-                        <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
-                      </div>
-                      <span className="admin-bar-label">{dayLabels[i] || ""}</span>
-                    </div>
-                  ))}
-                  {!daily.length && <div className="admin-empty">No activity yet.</div>}
-                </div>
-              </div>
+              <ActivityChart />
               <Cards list={[
                 { k: "opens_7d", label: "Opens · 7d", c: "#5e5ce6" },
                 { k: "searches_7d", label: "Searches · 7d", c: "#ff375f" },
@@ -1340,18 +1395,12 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
           {tab === "growth" && (
             <div className="fade-in-up">
               <Cards list={growthCards} />
-              <div className="admin-section-title">Reach</div>
-              <div className="admin-list">
-                <div className="admin-row"><span className="admin-gift">Members total</span><span className="admin-count">{compactNum(g("members_total"))}</span></div>
-                <div className="admin-row"><span className="admin-gift">Returning members</span><span className="admin-count">{compactNum(g("returning_members"))}</span></div>
-                <div className="admin-row"><span className="admin-gift">Unique gifts searched</span><span className="admin-count">{compactNum(g("unique_gifts"))}</span></div>
-                <div className="admin-row"><span className="admin-gift">Total referrals</span><span className="admin-count">{compactNum(g("referrals_total"))}</span></div>
-              </div>
+              {desktop ? <div className="admin-2col"><TopSearches /><Reach /></div> : <Reach />}
             </div>
           )}
 
           <div className="admin-actions">
-            <button className="action-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(); }}>Refresh data</button>
+            <button className="action-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(range); }}>Refresh data</button>
             <button className="admin-action-2" onClick={() => safeOpen("https://t.me/gifttrove")}>Open GiftTrove channel</button>
           </div>
           <div className="admin-foot">No personal data is collected · counts are anonymous</div>
@@ -1922,7 +1971,7 @@ export default function App() {
           </div>
         )}
         <div className="result-foot">
-          <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} /> : <span className="result-view">{t.view_on}</span>}</div>
+          <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} exact={isDesktop} /> : <span className="result-view">{t.view_on}</span>}</div>
           <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy}</div>
         </div>
       </div>
@@ -2408,7 +2457,7 @@ export default function App() {
       <>
         <style>{styles}</style>
         <GoldDefs />
-        <div className="app-container" data-theme={theme}>
+        <div className="app-container" data-theme={theme} style={{ overflowY: "auto" }}>
           {toast && <div className="toast">{toast}</div>}
           <AdminDashboard
             t={t}
@@ -2417,6 +2466,7 @@ export default function App() {
             onToggleTheme={toggleTheme}
             safeOpen={safeOpen}
             haptic={haptic}
+            desktop={isDesktop}
           />
         </div>
       </>
