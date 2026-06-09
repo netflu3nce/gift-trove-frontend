@@ -38,19 +38,19 @@ const MARKETPLACES = ["All", "Telegram", "GetGems", "Portals", "MRKT", "Tonnel",
 const LIVE_MARKETS = new Set(["Telegram", "GetGems"]);
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
-// ─── API CLIENT ─────────────────────────────────────────────────────────────
+// ─── API CLIENT (Fixed Template Literals for esbuild) ──────────────────────
 async function api(path, { method = "GET", body, timeout = 10000 } = {}) {
   if (!BACKEND_CONFIGURED) throw new Error("backend-not-configured");
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), timeout);
   try {
-    const res = await fetch(`${BACKEND_URL}${path}`, {
+    const res = await fetch(BACKEND_URL + path, {
       method,
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });
-    if (!res.ok) throw new Error(`http-${res.status}`);
+    if (!res.ok) throw new Error("http-" + res.status);
     return await res.json();
   } finally {
     clearTimeout(tid);
@@ -59,12 +59,18 @@ async function api(path, { method = "GET", body, timeout = 10000 } = {}) {
 
 // ─── UTILS ──────────────────────────────────────────────────────────────────
 const nano = (ton) => Math.round((parseFloat(ton) || 0) * 1e9);
-function giftImage(slug, num) { return slug && num != null ? `${FRAGMENT_CDN}/${slug}-${num}.large.jpg` : null; }
-function giftAnimation(slug, num) { return slug && num != null ? `${FRAGMENT_CDN}/${slug}-${num}.lottie.json` : null; }
+
+function giftImage(slug, num) { 
+  return slug && num != null ? FRAGMENT_CDN + "/" + slug + "-" + num + ".large.jpg" : null; 
+}
+
+function giftAnimation(slug, num) { 
+  return slug && num != null ? FRAGMENT_CDN + "/" + slug + "-" + num + ".lottie.json" : null; 
+}
 
 function marketplaceUrl(item) {
   if (item?.url && /^https?:\/\//.test(item.url)) return item.url;
-  if (item?.slug && item?.num != null) return `https://t.me/nft/${item.slug}-${item.num}`;
+  if (item?.slug && item?.num != null) return "https://t.me/nft/" + item.slug + "-" + item.num;
   return null;
 }
 
@@ -73,16 +79,16 @@ function fmtPrice(item) {
   const cur = item.currency || "GRAM";
   if (cur === "Stars") {
     const n = Number(item.price);
-    return `⭐ ${Number.isFinite(n) ? n.toLocaleString("en-US") : item.price}`;
+    return "⭐ " + (Number.isFinite(n) ? n.toLocaleString("en-US") : item.price);
   }
-  return `${item.price} ${cur}`;
+  return item.price + " " + cur;
 }
 
 function walletUrl(wallet, address, amountTON, comment) {
   const amt = nano(amountTON);
   const text = encodeURIComponent(comment || "");
-  if (wallet === "TonKeeper") return `https://app.tonkeeper.com/transfer/${address}?amount=${amt}&text=${text}`;
-  if (wallet === "MyTonWallet") return `https://my.tt/transfer/${address}?amount=${amt}&text=${text}`;
+  if (wallet === "TonKeeper") return "https://app.tonkeeper.com/transfer/" + address + "?amount=" + amt + "&text=" + text;
+  if (wallet === "MyTonWallet") return "https://my.tt/transfer/" + address + "?amount=" + amt + "&text=" + text;
   return null;
 }
 
@@ -122,7 +128,7 @@ const fmtRarity = (r) => {
   let v = typeof r === "number" ? r : parseFloat(r);
   if (Number.isNaN(v)) return "";
   if (v > 100) v = v / 10;
-  return `${v}%`;
+  return v + "%";
 };
 
 function preloadImages(urls) { urls.filter(Boolean).forEach((url) => { const img = new Image(); img.src = url; }); }
@@ -536,7 +542,7 @@ export default function App() {
     let alive = true;
     const uid = tgUser?.id || "";
     const savedCode = localStorage.getItem("gt_code") || "";
-    api(`/api/access?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(savedCode)}`)
+    api("/api/access?uid=" + encodeURIComponent(uid) + "&code=" + encodeURIComponent(savedCode))
       .then((d) => { if (alive) setAccess(d?.ok ? "granted" : "locked"); })
       .catch(() => { if (alive) setAccess("locked"); });
     return () => { alive = false; };
@@ -547,7 +553,7 @@ export default function App() {
     if (!code) return;
     haptic("medium");
     try {
-      const d = await api(`/api/access?uid=${encodeURIComponent(tgUser?.id || "")}&code=${encodeURIComponent(code)}`);
+      const d = await api("/api/access?uid=" + encodeURIComponent(tgUser?.id || "") + "&code=" + encodeURIComponent(code));
       if (d?.ok) {
         localStorage.setItem("gt_code", code);
         setCodeError(false); setAccess("granted");
@@ -564,14 +570,14 @@ export default function App() {
     const col = collections.find((c) => c.name === giftQuery);
     if (!col) { setAttrs({ models: [], symbols: [], backdrops: [] }); return; }
     let alive = true;
-    api(`/api/attributes?gift_id=${encodeURIComponent(col.gift_id)}`)
+    api("/api/attributes?gift_id=" + encodeURIComponent(col.gift_id))
       .then((d) => { if (alive && d) setAttrs({ models: d.models || [], symbols: d.symbols || [], backdrops: d.backdrops || [] }); })
       .catch(() => setAttrs({ models: [], symbols: [], backdrops: [] }));
     return () => { alive = false; };
   }, [giftQuery, collections]);
 
   useEffect(() => {
-    api(`/api/referrals?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
+    api("/api/referrals?uid=" + encodeURIComponent(tgUser?.id || "guest"))
       .then((d) => { if (typeof d?.count === "number") { setReferralCount(d.count); localStorage.setItem(refKey, String(d.count)); } })
       .catch(() => {});
 
@@ -659,7 +665,7 @@ export default function App() {
     const started = Date.now();
     try {
       const p = buildSearchParams(sortBy, ""); lastSearch.current = { sort: sortBy };
-      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      const d = await api("/api/search?" + p.toString(), { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []); setNextOffset(d?.next_offset || "");
     } catch { setScoutError("offline"); setResults([]); }
     const elapsed = Date.now() - started;
@@ -671,7 +677,7 @@ export default function App() {
     setLoadingMore(true); haptic();
     try {
       const p = buildSearchParams(sortBy, nextOffset);
-      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      const d = await api("/api/search?" + p.toString(), { timeout: 20000 });
       const more = Array.isArray(d?.results) ? d.results : [];
       setResults((prev) => {
         const seen = new Set(prev.map((x) => x.id));
@@ -688,7 +694,7 @@ export default function App() {
     haptic(); setIsScouting(true); setResults([]); setNextOffset("");
     try {
       const p = buildSearchParams(sort, "");
-      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      const d = await api("/api/search?" + p.toString(), { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []); setNextOffset(d?.next_offset || "");
     } catch { setScoutError("offline"); }
     setIsScouting(false);
@@ -702,7 +708,7 @@ export default function App() {
   };
 
   const handleBuy = (e, item) => { e?.stopPropagation?.(); haptic(); const url = marketplaceUrl(item); if (!url) { showToast(t.no_results); return; } safeOpen(url); };
-  const copyReferral = () => { const link = `${REF_BOT_LINK}${tgUser?.id || "demo"}`; if (copyText(link)) showToast(t.copy_ref + " ✓"); };
+  const copyReferral = () => { const link = REF_BOT_LINK + (tgUser?.id || "demo"); if (copyText(link)) showToast(t.copy_ref + " ✓"); };
 
   const executeDonate = () => {
     haptic("medium");
@@ -1045,7 +1051,7 @@ export default function App() {
               {donateStep === 2 && (
                 <>
                   <div className="text-2xl font-black text-slate-900 dark:text-white text-center tracking-tight mb-2">{t.verify_tx}</div>
-                  <div className="text-slate-500 dark:text-zinc-400 text-center font-medium mb-6 px-4">{donateWallet === "Tg Wallet" ? `${t.tg_copy_note.replace("{amt}", donateAmount || "—")}` : "Paste your transaction hash to verify your transfer."}</div>
+                  <div className="text-slate-500 dark:text-zinc-400 text-center font-medium mb-6 px-4">{donateWallet === "Tg Wallet" ? t.tg_copy_note.replace("{amt}", donateAmount || "—") : "Paste your transaction hash to verify your transfer."}</div>
                   <input type="text" className="w-full px-5 py-4 mb-6 rounded-[20px] glass-input text-lg font-bold text-slate-900 dark:text-white outline-none placeholder:text-slate-400" placeholder={t.tx_id} value={donateTx} onChange={(e) => setDonateTx(e.target.value)} />
                   <button className="w-full py-4 rounded-[20px] font-bold text-lg bg-blue-500 text-white shadow-[0_8px_20px_rgba(59,130,246,0.3)] active-scale transition-all disabled:opacity-50" onClick={() => setDonateStep(3)} disabled={!donateTx}>{t.verify_tx}</button>
                 </>
@@ -1239,5 +1245,6 @@ export default function App() {
     </div>
   );
 }
+
 
 ```
