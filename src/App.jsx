@@ -40,7 +40,28 @@ const SPLASH_LOTTIE_URL = "";
 
 const DONATE_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
 const DONATE_COMMENT = "GiftTrove Donation";
-const REF_BOT_LINK = "https://t.me/gifttrovebot/app?startapp="; // + uid
+const REF_BOT_LINK = "https://t.me/gifttrovebot/app?startapp="; // + payload
+
+// This user sees an analytics dashboard instead of the normal search UI.
+const ADMIN_DASHBOARD_ID = "8124847664";
+
+// Referral codes are a reversible base36 of the Telegram user id — unique per
+// user, derivable from the id alone (no database needed), short & alphanumeric.
+function refCodeFor(uid) {
+  const n = Number(uid);
+  return Number.isFinite(n) && n > 0 ? n.toString(36) : "";
+}
+function decodeRef(code) {
+  if (!code) return null;
+  const n = parseInt(String(code), 36);
+  return Number.isFinite(n) && n > 0 ? String(n) : null;
+}
+// Short deep-link to a specific gift, with the sharer's referral code attached.
+function giftDeepLink(item, myRef) {
+  const slug = (item?.slug || "").trim();
+  if (!slug) return REF_BOT_LINK + (myRef || "");
+  return `${REF_BOT_LINK}g_${slug}_${myRef || ""}`;
+}
 
 // Profile -> Community links
 const COMMUNITY = {
@@ -266,11 +287,15 @@ const TGStar = ({ size = 16 }) => (
 );
 
 // Price with the right currency mark + compact number.
-const PriceTag = ({ item, size = 16 }) => {
+const PriceTag = ({ item, size = 16, exact = false }) => {
   const cur = item?.currency || "GRAM";
-  if (cur === "Stars") return <span className="price-tag"><TGStar size={size} />{compactNum(item.price)}</span>;
-  return <span className="price-tag">{compactNum(item.price)} <span className="price-cur">GRAM</span></span>;
+  const n = Number(item?.price);
+  const txt = exact && Number.isFinite(n) ? n.toLocaleString("en-US") : compactNum(item?.price);
+  if (cur === "Stars") return <span className="price-tag"><TGStar size={size} />{txt}</span>;
+  return <span className="price-tag">{txt} <span className="price-cur">GRAM</span></span>;
 };
+
+const IconShare = ({ size = 19 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>;
 
 const IconMinimize = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>;
 const IconExpand = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>;
@@ -372,9 +397,10 @@ function LaunchLoader({ onDone }) {
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
 
-  const hero = gifts[0];   // Plush Pepe
-  const left = gifts[1];
-  const right = gifts[2];
+  const pick = (i) => (gifts.length ? gifts[i % gifts.length] : null);
+  const hero = pick(0);
+  const left = pick(1);
+  const right = pick(2);
 
   return (
     <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
@@ -532,7 +558,7 @@ function PromoBanner() {
 const T = {
   EN: {
     scout_tab: "Scout", results_tab: "Results", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
-    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_admin: "Admins are let in automatically.",
+    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
     fastest_way: "The fastest way to find any Telegram Gift",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
@@ -555,12 +581,12 @@ const T = {
     wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just approve.",
     tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} GRAM from @wallet.",
     copy_address: "Copy Address", address_copied: "Address copied — send from @wallet",
-    listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", save_gift: "Save Gift", remove_saved: "Remove Saved",
+    listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", save_gift: "Save Gift", remove_saved: "Remove Saved", share_gift: "Share gift",
     floor: "Floor", view_on: "View on Telegram", saved_done: "Saved to your collection", link_copied: "Referral link copied",
   },
   RU: {
     scout_tab: "Поиск", results_tab: "Итоги", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
-    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_admin: "Админы входят автоматически.",
+    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
     fastest_way: "Самый быстрый способ найти любой Telegram подарок",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
@@ -583,12 +609,12 @@ const T = {
     wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — просто подтвердите.",
     tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} GRAM из @wallet.",
     copy_address: "Копировать адрес", address_copied: "Адрес скопирован — отправьте из @wallet",
-    listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", save_gift: "Сохранить", remove_saved: "Убрать",
+    listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", save_gift: "Сохранить", remove_saved: "Убрать", share_gift: "Поделиться",
     floor: "Флор", view_on: "Открыть в Telegram", saved_done: "Добавлено в коллекцию", link_copied: "Ссылка скопирована",
   },
   ZH: {
     scout_tab: "侦测", results_tab: "结果", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
-    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_admin: "管理员自动进入。",
+    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
     fastest_way: "查找任何 Telegram 礼物的最快方法",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
@@ -611,7 +637,7 @@ const T = {
     wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——确认即可。",
     tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} GRAM。",
     copy_address: "复制地址", address_copied: "地址已复制——请从 @wallet 发送",
-    listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", save_gift: "收藏", remove_saved: "取消收藏",
+    listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", save_gift: "收藏", remove_saved: "取消收藏", share_gift: "分享",
     floor: "地板价", view_on: "在 Telegram 中打开", saved_done: "已加入收藏", link_copied: "推荐链接已复制",
   },
 };
@@ -968,7 +994,7 @@ const styles = `
   .gate-logo { width: 76px; height: 76px; border-radius: 22px; margin: 0 auto 18px; display: block; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
   .gate-title { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; letter-spacing: -0.5px; }
   .gate-sub { font-size: 15px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 22px; }
-  .gate-sub a { color: var(--tg-blue); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .gate-sub a, .gate-note a { color: var(--tg-blue); font-weight: 700; text-decoration: none; cursor: pointer; }
   .gate-input { width: 100%; padding: 16px 18px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 17px; text-align: center; letter-spacing: 3px; font-weight: 700; font-family: var(--font); outline: none; transition: border-color .2s; margin-bottom: 14px; }
   .gate-input:focus { border-color: var(--tg-blue); }
   .gate-input.err { border-color: #ff453a; animation: shake 0.4s; }
@@ -1097,11 +1123,140 @@ const styles = `
   .hero-title { letter-spacing: -1px; }
   ::selection { background: rgba(10,132,255,0.28); }
   * { -webkit-tap-highlight-color: transparent; }
+
+  /* ── logo tile (rounded-square morphism, replaces wordmark) ── */
+  .logo-tile { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+    border: 1px solid var(--glass-hi); box-shadow: 0 8px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.4);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); overflow: hidden; }
+  .logo-tile img { width: 78%; height: 78%; object-fit: contain; }
+  .logo-tile.lg { width: 58px; height: 58px; border-radius: 18px; }
+
+  /* ── marketplace chips back to black & white when active ── */
+  .chip.active { background: var(--text-primary); color: var(--bg-base); border-color: var(--text-primary); box-shadow: 0 6px 16px rgba(0,0,0,0.22); }
+
+  /* ── picker thumbnails (real gift / model / symbol art) ── */
+  .opt-thumb { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; object-fit: cover; background: var(--bg-input); border: 1px solid var(--border); image-rendering: auto; }
+  .backdrop-swatch { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; border: 1px solid var(--glass-hi); box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); }
+
+  /* ── share button in gift detail ── */
+  .share-btn { width: 46px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; transition: transform .16s var(--spring), background .2s, border-color .2s; }
+  .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .share-btn:active { transform: scale(0.92); }
+
+  /* ── admin analytics dashboard ── */
+  .admin-screen { height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(20px + var(--safe-top)) 18px calc(40px + var(--safe-bottom)); position: relative; z-index: 1; }
+  .admin-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .admin-head-text { flex: 1; min-width: 0; }
+  .admin-title { font-size: 28px; font-weight: 800; letter-spacing: -0.6px; color: var(--text-primary); line-height: 1.1; }
+  .admin-sub { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .admin-head-actions { display: flex; gap: 8px; }
+  .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 26px; }
+  .admin-card { position: relative; background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px; box-shadow: var(--shadow-card); overflow: hidden; animation: cardIn .5s var(--ease) both; }
+  .admin-card::after { content: ""; position: absolute; top: 0; left: 16px; right: 16px; height: 1px; background: linear-gradient(90deg, transparent, var(--glass-hi), transparent); }
+  .admin-dot { position: absolute; top: 16px; right: 16px; width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
+  .admin-card-val { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1; }
+  .admin-card-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-top: 7px; }
+  .admin-section-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin: 4px 4px 12px; }
+  .admin-list { background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); margin-bottom: 24px; }
+  .admin-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); animation: fadeInUp .4s var(--ease) both; }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-rank { width: 24px; height: 24px; border-radius: 8px; background: var(--bg-input); color: var(--text-secondary); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .admin-gift { flex: 1; font-size: 15px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-count { font-size: 15px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .admin-empty { padding: 22px 16px; text-align: center; color: var(--text-secondary); font-size: 14px; }
+  .admin-actions { display: flex; flex-direction: column; gap: 10px; }
+  .admin-action-2 { width: 100%; padding: 15px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font); transition: transform .16s var(--spring), border-color .2s; }
+  .admin-action-2:hover { border-color: var(--accent); }
+  .admin-action-2:active { transform: scale(0.98); }
+  .admin-foot { text-align: center; font-size: 11.5px; color: var(--text-secondary); opacity: 0.65; margin-top: 18px; }
+  @media (min-width: 768px) { .admin-screen { max-width: 760px; margin: 0 auto; padding: 36px 32px 60px; } .admin-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 `;
 
 // ════════════════════════════════════════════════════════════════════════════
 //  MAIN APP
 // ════════════════════════════════════════════════════════════════════════════
+// ── Admin analytics dashboard (iOS-style, motion) — only for ADMIN_DASHBOARD_ID ──
+function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [spin, setSpin] = useState(0);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api(`/api/analytics?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`)
+      .then((d) => setStats(d || {}))
+      .catch(() => setStats({}))
+      .finally(() => setLoading(false));
+  }, [uid, code]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const cards = [
+    { k: "members_total", label: "Members", c: "#0a84ff" },
+    { k: "returning_members", label: "Returning", c: "#30d158" },
+    { k: "active_24h", label: "Active · 24h", c: "#ff9f0a" },
+    { k: "active_7d", label: "Active · 7d", c: "#bf5af2" },
+    { k: "new_members_24h", label: "New · 24h", c: "#64d2ff" },
+    { k: "opens_24h", label: "Opens · 24h", c: "#5e5ce6" },
+    { k: "searches_total", label: "Searches", c: "#ff375f" },
+    { k: "searches_24h", label: "Searches · 24h", c: "#ffd60a" },
+  ];
+  const top = (stats && stats.top_searches) || [];
+
+  return (
+    <div className="admin-screen">
+      <div className="admin-head fade-in-up">
+        <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>
+        <div className="admin-head-text">
+          <div className="admin-title">Analytics</div>
+          <div className="admin-sub">GiftTrove · live overview</div>
+        </div>
+        <div className="admin-head-actions">
+          <div className="icon-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(); }}><IconRefresh trigger={spin} /></div>
+          <div className="icon-btn" onClick={onToggleTheme}><IconContrast /></div>
+        </div>
+      </div>
+
+      {loading && !stats ? (
+        <div className="empty-state"><div className="lm-spin" style={{ margin: "0 auto" }} /></div>
+      ) : stats && stats.error ? (
+        <div className="empty-state"><div className="es-title">Couldn't load analytics</div><div>{String(stats.error)}</div>
+          <button className="action-btn" style={{ marginTop: 18 }} onClick={load}>Try again</button></div>
+      ) : (
+        <>
+          <div className="admin-grid">
+            {cards.map((c, i) => (
+              <div key={c.k} className="admin-card" style={{ animationDelay: `${i * 0.04}s` }}>
+                <span className="admin-dot" style={{ background: c.c }} />
+                <div className="admin-card-val">{compactNum((stats && stats[c.k]) || 0)}</div>
+                <div className="admin-card-label">{c.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="admin-section-title">Top searches</div>
+          <div className="admin-list">
+            {top.length ? top.map((s, i) => (
+              <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
+                <span className="admin-rank">{i + 1}</span>
+                <span className="admin-gift">{s.gift}</span>
+                <span className="admin-count">{compactNum(s.count)}</span>
+              </div>
+            )) : <div className="admin-empty">No searches recorded yet.</div>}
+          </div>
+
+          <div className="admin-actions">
+            <button className="action-btn" onClick={() => { haptic(); setSpin((s) => s + 1); load(); }}>Refresh data</button>
+            <button className="admin-action-2" onClick={() => safeOpen("https://t.me/gifttrove")}>Open GiftTrove channel</button>
+          </div>
+          <div className="admin-foot">No personal data is collected · counts are anonymous</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
   const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" };
@@ -1119,7 +1274,13 @@ export default function App() {
   const refKey = `gt_ref_count_${tgUser?.id || "guest"}`;
   const [referralCount, setReferralCount] = useState(() => parseInt(localStorage.getItem(refKey) || "0", 10));
 
-  const [activeTab, setActiveTab] = useState("scout");
+  // Persisted search (survives a full reload; only replaced by a new search).
+  const savedSearch = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("gt_search") || "null") || {}; }
+    catch { return {}; }
+  }, []);
+
+  const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [toast, setToast] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
@@ -1127,13 +1288,13 @@ export default function App() {
   const [selectedGift, setSelectedGift] = useState(null);
 
   // results / sorting / pagination
-  const [sortBy, setSortBy] = useState("price_asc");      // price_asc | price_desc
-  const [nextOffset, setNextOffset] = useState("");
+  const [sortBy, setSortBy] = useState(savedSearch.sortBy || "price_asc");      // price_asc | price_desc
+  const [nextOffset, setNextOffset] = useState(savedSearch.nextOffset || "");
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const lastSearch = useRef(null);   // remembers params for load-more / re-sort
+  const [hasSearched, setHasSearched] = useState(!!savedSearch.hasSearched);
+  const [minPrice, setMinPrice] = useState(savedSearch.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(savedSearch.maxPrice || "");
+  const lastSearch = useRef(savedSearch.lastSearch || null);   // remembers params for load-more / re-sort
 
   // access gate (admins auto-pass; everyone else needs the code)
   const [access, setAccess] = useState("checking");        // checking | locked | granted
@@ -1150,17 +1311,30 @@ export default function App() {
   const [attrs, setAttrs] = useState({ models: [], symbols: [], backdrops: [] });
 
   // search inputs
-  const [giftQuery, setGiftQuery] = useState("");
+  const [giftQuery, setGiftQuery] = useState(savedSearch.giftQuery || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [giftId, setGiftId] = useState("");
-  const [selectedMarkets, setSelectedMarkets] = useState(["All"]);
-  const [selectedModel, setSelectedModel] = useState("Any");
-  const [selectedBackdrop, setSelectedBackdrop] = useState("Any");
-  const [selectedSymbol, setSelectedSymbol] = useState("Any");
+  const [giftId, setGiftId] = useState(savedSearch.giftId || "");
+  const [selectedMarkets, setSelectedMarkets] = useState(savedSearch.selectedMarkets || ["All"]);
+  const [selectedModel, setSelectedModel] = useState(savedSearch.selectedModel || "Any");
+  const [selectedBackdrop, setSelectedBackdrop] = useState(savedSearch.selectedBackdrop || "Any");
+  const [selectedSymbol, setSelectedSymbol] = useState(savedSearch.selectedSymbol || "Any");
 
   // results
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(Array.isArray(savedSearch.results) ? savedSearch.results : []);
   const [scoutError, setScoutError] = useState(null);
+
+  // Save the current search so it survives a full page reload.
+  useEffect(() => {
+    try {
+      if (hasSearched) {
+        localStorage.setItem("gt_search", JSON.stringify({
+          hasSearched: true, results: results.slice(0, 300), nextOffset, sortBy,
+          giftQuery, giftId, selectedMarkets, selectedModel, selectedBackdrop, selectedSymbol,
+          minPrice, maxPrice, lastSearch: lastSearch.current,
+        }));
+      }
+    } catch { /* storage full — ignore */ }
+  }, [results, hasSearched, nextOffset, sortBy, giftQuery, giftId, selectedMarkets, selectedModel, selectedBackdrop, selectedSymbol, minPrice, maxPrice]);
 
   // donate
   const [donateStep, setDonateStep] = useState(1);
@@ -1257,15 +1431,29 @@ export default function App() {
     return () => { alive = false; };
   }, [giftQuery, collections]);
 
-  // ── referral: read true count from backend, attribute on start_param ──
+  // ── referral + deep-link handling on launch ──
   useEffect(() => {
     api(`/api/referrals?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
       .then((d) => { if (typeof d?.count === "number") { setReferralCount(d.count); localStorage.setItem(refKey, String(d.count)); } })
       .catch(() => { /* keep local cache */ });
 
-    const ref = tg?.initDataUnsafe?.start_param;
-    if (ref && /^\d+$/.test(ref) && String(ref) !== String(tgUser?.id)) {
-      api("/api/referral", { method: "POST", body: { uid: ref, by: tgUser?.id } }).catch(() => {});
+    const param = tg?.initDataUnsafe?.start_param || "";
+    let refCode = param;
+    // Gift deep-link: g_<slug>_<refcode>  ->  open that gift + read the ref code
+    if (param.startsWith("g_")) {
+      const rest = param.slice(2);
+      const u = rest.lastIndexOf("_");
+      const slug = u >= 0 ? rest.slice(0, u) : rest;
+      refCode = u >= 0 ? rest.slice(u + 1) : "";
+      if (slug) {
+        api(`/api/gift?slug=${encodeURIComponent(slug)}`)
+          .then((g) => { if (g && (g.slug || g.name)) { setSelectedGift(g); setActiveSheet("gift_details"); } })
+          .catch(() => {});
+      }
+    }
+    const referrer = decodeRef(refCode);
+    if (referrer && referrer !== String(tgUser?.id)) {
+      api("/api/referral", { method: "POST", body: { uid: referrer, by: tgUser?.id } }).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1379,7 +1567,9 @@ export default function App() {
     const started = Date.now();
     try {
       const p = buildSearchParams(sortBy, "");
-      lastSearch.current = { sort: sortBy };
+      const q = giftQuery.trim();
+      const known = collectionNames.some((n) => n.toLowerCase() === q.toLowerCase());
+      lastSearch.current = { sort: sortBy, query: q, known };
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
       setNextOffset(d?.next_offset || "");
@@ -1446,10 +1636,17 @@ export default function App() {
     safeOpen(url);
   };
 
-  // ── referral copy ──
+  // ── referral + share ──
+  const myRef = refCodeFor(tgUser?.id) || "demo";
   const copyReferral = () => {
-    const link = `${REF_BOT_LINK}${tgUser?.id || "demo"}`;
+    const link = `${REF_BOT_LINK}${myRef}`;
     if (copyText(link)) showToast(t.link_copied);
+  };
+  const shareGift = (item) => {
+    haptic();
+    const link = giftDeepLink(item, myRef);
+    const text = `${item?.name || "Telegram gift"}${item?.num != null ? ` #${item.num}` : ""} on GiftTrove`;
+    safeOpen(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
   };
 
   // ── donate ──
@@ -1540,7 +1737,7 @@ export default function App() {
               <div className="ios-row" style={{ cursor: "default" }}>
                 <span style={{ color: "var(--text-secondary)" }}>{t.listed_value}</span>
                 <span style={{ color: "var(--tg-blue)", fontWeight: 800 }}>
-                  {g.price != null ? <PriceTag item={g} size={17} /> : "—"}
+                  {g.price != null ? <PriceTag item={g} size={17} exact /> : "—"}
                 </span>
               </div>
             </div>
@@ -1549,6 +1746,7 @@ export default function App() {
                 {saved ? t.remove_saved : t.save_gift}
               </button>
               <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, g)}>{t.buy_now}</button>
+              <button className="share-btn" onClick={() => shareGift(g)} title={t.share_gift}><IconShare /></button>
             </div>
         </BottomSheet>
       );
@@ -1623,7 +1821,6 @@ export default function App() {
       const list = isModel ? attrs.models : attrs.symbols;
       const sel = isModel ? selectedModel : selectedSymbol;
       const setSel = isModel ? setSelectedModel : setSelectedSymbol;
-      const preview = selectedCollection?.preview;
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
@@ -1640,8 +1837,8 @@ export default function App() {
               {list.map((m) => (
                 <div key={m.name} className="sheet-model-item" onClick={() => { haptic(); setSel(m.name); setActiveSheet(null); }}>
                   <div className="model-left">
-                    {preview
-                      ? <img src={preview} alt="" className="model-thumb" onError={(e) => { e.target.style.opacity = 0.2; }} />
+                    {m.img
+                      ? <img src={m.img} alt="" className="opt-thumb" onError={(e) => { e.target.style.display = "none"; }} />
                       : <span className="gift-tile"><IconGiftBox /></span>}
                     <div className="model-info">
                       <span className="model-name">{m.name}</span>
@@ -1673,7 +1870,7 @@ export default function App() {
               {list.map((c) => (
                 <div key={c.name} className="sheet-list-item" onClick={() => { haptic(); setSelectedBackdrop(c.name); setActiveSheet(null); }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {c.hex && <span className="color-dot" style={{ background: c.hex }} />}{c.name}
+                    {c.hex && <span className="backdrop-swatch" style={{ background: c.edge ? `radial-gradient(circle at 50% 35%, ${c.hex}, ${c.edge})` : c.hex }} />}{c.name}
                     {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}>{fmtRarity(c.rarity)}</span>}
                   </span>
                   {selectedBackdrop === c.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
@@ -1692,7 +1889,6 @@ export default function App() {
   const renderScout = (desktop = false) => {
     return (
       <div className="fade-in-up">
-        <PromoBanner />
         <div className={desktop ? "hero-title desktop" : "hero-title"}>
           {t.fastest_way}
           <img src={LOGO_URL} alt="" className="hero-title-img" />
@@ -1793,13 +1989,17 @@ export default function App() {
       );
     }
     if (!hasSearched || (results.length === 0)) {
+      const ls = lastSearch.current || {};
+      const unknown = hasSearched && ls.query && ls.known === false;
+      const title = !hasSearched ? t.results_empty_title : (unknown ? t.unknown_gift_title : t.no_results);
+      const sub = !hasSearched ? t.results_empty_sub : (unknown ? t.unknown_gift_sub.replace("{q}", ls.query) : t.no_listings_sub);
       return (
         <div className="fade-in-up">
           <div className={desktop ? "page-header desktop" : "page-header"}>{t.results_tab}</div>
           <div className="empty-state">
             <IconClipboard trigger={activeTab === "results"} size={30} />
-            <div className="es-title">{hasSearched ? t.no_results : t.results_empty_title}</div>
-            <div>{hasSearched ? "" : t.results_empty_sub}</div>
+            <div className="es-title">{title}</div>
+            <div>{sub}</div>
             <button className="action-btn" style={{ marginTop: 20 }} onClick={() => { haptic(); setActiveTab("scout"); }}>{t.scout_tab}</button>
           </div>
         </div>
@@ -1958,11 +2158,32 @@ export default function App() {
                     autoCapitalize="none" autoCorrect="off" spellCheck="false"
                   />
                   <button className="action-btn" style={{ marginTop: 0 }} onClick={submitCode}>{t.gate_unlock}</button>
-                  <div className="gate-note">{t.gate_admin}</div>
+                  <div className="gate-note"><a onClick={() => safeOpen("https://t.me/gifttrove")}>{t.gate_join}</a></div>
                 </>
               )}
             </div>
           </div>
+        </div>
+      </>
+    );
+  }
+
+  // ── ADMIN ANALYTICS DASHBOARD (replaces the normal UI for this id) ──
+  if (String(tgUser?.id) === ADMIN_DASHBOARD_ID) {
+    return (
+      <>
+        <style>{styles}</style>
+        <GoldDefs />
+        <div className="app-container" data-theme={theme}>
+          {toast && <div className="toast">{toast}</div>}
+          <AdminDashboard
+            t={t}
+            uid={tgUser.id}
+            code={(typeof localStorage !== "undefined" && localStorage.getItem("gt_code")) || ""}
+            onToggleTheme={toggleTheme}
+            safeOpen={safeOpen}
+            haptic={haptic}
+          />
         </div>
       </>
     );
@@ -1980,7 +2201,7 @@ export default function App() {
           <VoidGifts images={voidImgs} onPick={(u) => safeOpen(u)} />
           <div className="desktop-sidebar">
             <div className="desktop-logo">
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>GIFT<GiftTroveLogo size={26} />TROVE</span>
+              <span className="logo-tile lg"><img src={LOGO_URL} alt="GiftTrove" /></span>
             </div>
             {tabs.map((tab) => (
               <button key={tab.id} className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
@@ -2014,9 +2235,7 @@ export default function App() {
         {toast && <div className="toast">{toast}</div>}
 
         <div className="top-nav">
-          <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 2, lineHeight: 1 }}>
-            GIFT<span style={{ display: "flex", alignItems: "center", margin: "0 2px" }}><GiftTroveLogo size={22} /></span>TROVE
-          </div>
+          <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>
           <div className="top-icons">
             <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
             <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
