@@ -470,19 +470,19 @@ function LaunchLoader({ onDone }) {
 // ─── LEGAL / FAQ CONTENT (English by design; legal text stays canonical) ─────
 const LEGAL = {
   faq: [
-    ["What is GiftTrove?", "GiftTrove is a Telegram Mini App that lets you scout, compare, and track collectible Telegram gifts listed across marketplaces. We show you listings — we do not buy, sell, hold, or custody any gifts or funds on your behalf."],
+    ["What is GiftTrove?", "GiftTrove is a Telegram Mini App that lets you scout, compare, and track collectible Telegram gifts listed across marketplaces. We show you listings, we do not buy, sell, hold, or custody any gifts or funds on your behalf."],
     ["Is GiftTrove free to use?", "Yes. Scouting and browsing are completely free. If you choose to purchase a gift through a marketplace, that transaction happens directly between you and that marketplace."],
-    ["Does buying through GiftTrove earn GiftTrove anything?", "No. GiftTrove receives no commission, fee, or credit from any purchase you make. Tapping through to a marketplace is a plain redirect — the full amount of your purchase goes through that marketplace as if you had visited it directly."],
+    ["Does buying through GiftTrove earn GiftTrove anything?", "No. GiftTrove receives no commission, fee, or credit from any purchase you make. Tapping through to a marketplace is a plain redirect, the full amount of your purchase goes through that marketplace as if you had visited it directly."],
     ["Do you store my personal data?", "We store an anonymised identifier (not your name, username, or phone number) purely to count unique visitors and keep your saved gifts in sync across devices. We never sell or share this data. See the Privacy Policy for the full picture."],
-    ["Why do some gifts show no listings?", "A gift collection may simply have no active resale listings at the moment you search. Listings update in near real-time — if nothing shows, nothing is listed right now."],
-    ["Are the prices shown accurate?", "Prices reflect active marketplace listings at the time of your search. They are informational only — not advice, valuations, or guarantees — and can change before you complete a purchase."],
+    ["Why do some gifts show no listings?", "A gift collection may simply have no active resale listings at the moment you search. Listings update in near real-time, if nothing shows, nothing is listed right now."],
+    ["Are the prices shown accurate?", "Prices reflect active marketplace listings at the time of your search. They are informational only, not advice, valuations, or guarantees, and can change before you complete a purchase."],
     ["Can I buy a gift directly inside GiftTrove?", "No. GiftTrove is a scouting tool. All purchases happen on the relevant marketplace after you tap through, and we have no control over those transactions."],
-    ["What is the referral system?", "When someone opens GiftTrove through your link, we record the referral. This is currently for tracking only — no financial rewards are offered or implied."],
+    ["What is the referral system?", "When someone opens GiftTrove through your link, we record the referral. This is currently for tracking only, no financial rewards are offered or implied."],
     ["What currencies does GiftTrove display?", "Prices are shown in Telegram Stars and GRAM (TON network). GiftTrove does not process or interact with any currency itself."],
     ["How do I contact support?", "Use the Support row in this Profile tab, or message the builder directly."],
   ],
   terms: [
-    ["Informational service only", "Everything shown in GiftTrove — prices, rarity, supply, trends — is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
+    ["Informational service only", "Everything shown in GiftTrove, prices, rarity, supply, trends, is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
     ["Data accuracy", "Listing data is retrieved live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and we accept no liability for decisions made based on displayed data."],
     ["Third-party transactions", "Purchases made after tapping through to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, earns nothing from them, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
     ["No custody", "GiftTrove never holds, transfers, or controls your gifts, TON, Stars, or any digital assets."],
@@ -819,7 +819,7 @@ const T = {
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", about_legal: "О приложении и право", about_legal: "About and legal",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", data_cleared: "您的数据已清除", about_legal: "О приложении и право", data_cleared: "Ваши данные удалены", about_legal: "About and legal", data_cleared: "Your data was cleared",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
     amount_ton: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
@@ -1459,7 +1459,7 @@ const styles = `
   .admin-showall { display: block; width: 100%; border: 1px dashed var(--border); background: transparent; color: var(--accent); font-weight: 700; font-size: 12.5px; padding: 10px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); margin-top: 8px; transition: all .2s var(--spring); }
   .admin-showall:hover { border-color: var(--accent); background: var(--bg-hover); }
   /* legal sheets */
-  .legal-body { max-height: 58vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; }
+  .legal-body { max-height: 58vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; overscroll-behavior: contain; touch-action: pan-y; }
   .legal-item { margin-bottom: 16px; }
   .legal-q { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
   .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
@@ -1471,6 +1471,12 @@ const styles = `
   .consent-text { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 14px; }
   .consent-link { color: var(--tg-blue); font-weight: 700; cursor: pointer; }
   .consent-btn { width: 100%; }
+  /* desktop launch page: bigger, brand-forward */
+  @media (min-width: 768px) {
+    .splash-card { transform: scale(1.22); }
+    .splash-leaving .splash-card { transform: scale(1.12); }
+    .splash-glow { opacity: 0.9; }
+  }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
   .admin-range-btn.active { background: var(--accent-grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(10,132,255,0.32); }
@@ -1675,10 +1681,6 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
             <div className="fade-in-up">
               <Cards list={overviewCards} />
               <div className="admin-strip">
-                <span>Avg searches / member</span>
-                <strong>{g("avg_searches_per_member")}</strong>
-              </div>
-              <div className="admin-strip">
                 <span>Total shares</span>
                 <strong>{compactNum(g("shares_total"))}</strong>
               </div>
@@ -1752,6 +1754,25 @@ export default function App() {
   const [legalOk, setLegalOk] = useState(() => {
     try { return localStorage.getItem("gt_legal_ok") === "1"; } catch { return true; }
   });
+  const [clearArmed, setClearArmed] = useState(false);
+  const clearTimerRef = useRef(null);
+  const clearMyData = async () => {
+    haptic();
+    if (!clearArmed) {
+      setClearArmed(true);
+      clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = setTimeout(() => setClearArmed(false), 4000);
+      return;
+    }
+    clearTimeout(clearTimerRef.current);
+    setClearArmed(false);
+    try { await api("/api/userdata/clear", { method: "POST" }); } catch { /* still clear locally */ }
+    try {
+      ["gt_saved", "gt_recent", "gt_search", "gt_featured", "gt_collections"].forEach((k) => localStorage.removeItem(k));
+    } catch { /* noop */ }
+    setSavedGifts([]); setRecentSearches([]);
+    showToast(t.data_cleared);
+  };
   const acceptLegal = () => {
     haptic();
     try { localStorage.setItem("gt_legal_ok", "1"); } catch { /* noop */ }
@@ -1790,7 +1811,11 @@ export default function App() {
   const [compact, setCompact] = useState(() => localStorage.getItem("gt_compact") === "1");
 
   // live collection data
-  const [collections, setCollections] = useState([]); // [{name,slug,gift_id,supply,preview}]
+  const [collections, setCollections] = useState(() => {
+    // Instant catalog from the last session — suggestions + floating gifts
+    // paint immediately even if the backend was just redeployed.
+    try { return JSON.parse(localStorage.getItem("gt_collections") || "[]"); } catch { return []; }
+  }); // [{name,slug,gift_id,supply,preview}]
 
   // attributes for the selected collection
   const [attrs, setAttrs] = useState({ models: [], symbols: [], backdrops: [] });
@@ -1940,8 +1965,18 @@ export default function App() {
   // ── load live collections (dynamic; no hardcoding) ──
   useEffect(() => {
     let alive = true;
-    api("/api/collections")
-      .then((d) => { if (alive && d?.collections?.length) setCollections(d.collections); })
+    api("/api/collections", { timeout: 25000 })
+      .then((d) => {
+        if (alive && d?.collections?.length) {
+          setCollections(d.collections);
+          try {
+            const blob = JSON.stringify(d.collections);
+            if (blob.length < 3500000) localStorage.setItem("gt_collections", blob);
+          } catch { /* storage full: skip */ }
+        } else if (alive) {
+          setTimeout(() => { if (alive) api("/api/collections", { timeout: 25000 }).then((d2) => { if (alive && d2?.collections?.length) setCollections(d2.collections); }).catch(() => {}); }, 5000);
+        }
+      })
       .catch(() => { /* falls back to FALLBACK_COLLECTIONS */ });
     return () => { alive = false; };
   }, []);
@@ -2339,7 +2374,7 @@ export default function App() {
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{title}</div>
-            <div className="legal-body">
+            <div className="legal-body" onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
               {rows.map(([h, p], i) => (
                 <div key={i} className="legal-item">
                   <div className="legal-q">{h}</div>
@@ -2763,6 +2798,12 @@ export default function App() {
         </div>
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("privacy"); }}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>Privacy Policy</div>
+          <IconChevronRight />
+        </div>
+        <div className="ios-row" onClick={clearMyData}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#ff3b30" }}><IconTrash /></div>
+            <span style={clearArmed ? { color: "#ff3b30", fontWeight: 700 } : undefined}>{clearArmed ? "Tap again to confirm" : "Clear my data"}</span>
+          </div>
           <IconChevronRight />
         </div>
       </div>
