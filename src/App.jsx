@@ -70,7 +70,7 @@ const COMMUNITY = {
   channel: "https://t.me/gifttrove",
   insideMajek: "https://t.me/insidemajek",
   otc: "https://t.me/troveotc",
-  support: "https://t.me/insidemajek?direct",
+  support: "https://t.me/GiftTrove?direct",
 };
 
 // Tiny offline fallback so search/autocomplete still works before the backend answers.
@@ -467,6 +467,42 @@ function LaunchLoader({ onDone }) {
   );
 }
 
+// ─── LEGAL / FAQ CONTENT (English by design; legal text stays canonical) ─────
+const LEGAL = {
+  faq: [
+    ["What is GiftTrove?", "GiftTrove is a Telegram Mini App that lets you scout, compare, and track collectible Telegram gifts listed across marketplaces. We show you listings — we do not buy, sell, hold, or custody any gifts or funds on your behalf."],
+    ["Is GiftTrove free to use?", "Yes. Scouting and browsing are completely free. If you choose to purchase a gift through a marketplace, that transaction happens directly between you and that marketplace."],
+    ["Does buying through GiftTrove earn GiftTrove anything?", "No. GiftTrove receives no commission, fee, or credit from any purchase you make. Tapping through to a marketplace is a plain redirect — the full amount of your purchase goes through that marketplace as if you had visited it directly."],
+    ["Do you store my personal data?", "We store an anonymised identifier (not your name, username, or phone number) purely to count unique visitors and keep your saved gifts in sync across devices. We never sell or share this data. See the Privacy Policy for the full picture."],
+    ["Why do some gifts show no listings?", "A gift collection may simply have no active resale listings at the moment you search. Listings update in near real-time — if nothing shows, nothing is listed right now."],
+    ["Are the prices shown accurate?", "Prices reflect active marketplace listings at the time of your search. They are informational only — not advice, valuations, or guarantees — and can change before you complete a purchase."],
+    ["Can I buy a gift directly inside GiftTrove?", "No. GiftTrove is a scouting tool. All purchases happen on the relevant marketplace after you tap through, and we have no control over those transactions."],
+    ["What is the referral system?", "When someone opens GiftTrove through your link, we record the referral. This is currently for tracking only — no financial rewards are offered or implied."],
+    ["What currencies does GiftTrove display?", "Prices are shown in Telegram Stars and GRAM (TON network). GiftTrove does not process or interact with any currency itself."],
+    ["How do I contact support?", "Use the Support row in this Profile tab, or message the builder directly."],
+  ],
+  terms: [
+    ["Informational service only", "Everything shown in GiftTrove — prices, rarity, supply, trends — is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
+    ["Data accuracy", "Listing data is retrieved live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and we accept no liability for decisions made based on displayed data."],
+    ["Third-party transactions", "Purchases made after tapping through to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, earns nothing from them, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
+    ["No custody", "GiftTrove never holds, transfers, or controls your gifts, TON, Stars, or any digital assets."],
+    ["Donations", "Donations made through the app are voluntary, non-refundable, and carry no expectation of service, reward, or anything in return."],
+    ["Acceptable use", "You agree not to scrape data, disrupt or overload the service, or use GiftTrove for any unlawful purpose."],
+    ["Availability", "GiftTrove is provided as-is. We may modify, suspend, or discontinue any part of the service at any time without notice."],
+    ["Eligibility", "By using GiftTrove you confirm you are permitted to use Telegram under Telegram's own Terms of Service in your jurisdiction."],
+    ["Disputes", "Any dispute arising from the use of GiftTrove shall first be resolved through good-faith negotiation with the operator before any other process."],
+    ["Acceptance", "By using GiftTrove you agree to these Terms of Service and the Privacy Policy. If you do not agree, please discontinue use."],
+  ],
+  privacy: [
+    ["What we collect", "An anonymised identifier derived from your Telegram ID (for visit counting, saved-gifts sync, and referral tracking), your saved gift list, your recent search terms, and aggregate usage counts (opens, searches, shares) that are never linked to identifiable individuals."],
+    ["What we never collect", "Your name, username, phone number, message content, payment information, location, or any data from your Telegram account beyond the technical launch parameters Telegram provides to every Mini App."],
+    ["How data is processed", "Data is processed on reputable third-party hosting and database infrastructure under industry-standard protections. Marketplace links open third-party platforms governed by their own privacy policies."],
+    ["Retention", "Aggregate, anonymised analytics are retained to improve the product. Your saved gifts and searches persist so they can follow you across devices."],
+    ["Your rights", "You can request deletion of your data at any time via the Support contact in the Profile tab."],
+    ["Changes", "We may update this policy as the product evolves; continued use after an update constitutes acceptance."],
+  ],
+};
+
 // ─── PROMO BANNER ─────────────────────────────────────────────────────────────
 const PROMO_SLIDES = [
   { img: "https://i.ibb.co/d08zfZmg/Inria-Serif-2.png", url: "https://t.me/gifttrove" },
@@ -559,14 +595,29 @@ function VoidGifts({ gifts, onPick, count = 12, portal = false, drift = false })
       if (document.hidden) return;
       const W = window.innerWidth, H = window.innerHeight;
 
-      // black hole lifecycle: rare spawn (~ every 30-50s), lives ~7s
+      // black hole lifecycle: rare spawn (~ every 2 min avg), lives ~7s
       const h = holeRef.current;
-      if (!h && Math.random() < dt / 38) {
+      if (!h && Math.random() < dt / 120) {
         holeRef.current = { x: rand(W * 0.2, W * 0.8), y: rand(H * 0.25, H * 0.75), born: now, ttl: 7000 };
         setHole({ x: holeRef.current.x, y: holeRef.current.y });
       } else if (h && now - h.born > h.ttl) {
         holeRef.current = null;
         setHole(null);
+      }
+
+      // comet event: rare (~ every 70s avg) — one gift streaks across the void
+      if (Math.random() < dt / 70) {
+        const cands = ents.current.filter((e) => e.phase === "drift");
+        if (cands.length) {
+          const c = cands[Math.floor(rand(0, cands.length))];
+          const ang = Math.atan2(c.vy, c.vx);
+          const sp = rand(360, 520);
+          c.vx = Math.cos(ang) * sp;
+          c.vy = Math.sin(ang) * sp;
+          c.vr = rand(-220, 220);
+          c.bright = 1.9;
+          c.phase = "comet";   // exits fast; respawns fresh off-screen
+        }
       }
 
       let respawned = false;
@@ -610,7 +661,9 @@ function VoidGifts({ gifts, onPick, count = 12, portal = false, drift = false })
         const el = elsRef.current[e.id];
         if (el) {
           el.style.transform = `translate3d(${e.x}px, ${e.y}px, 0) rotate(${e.rot}deg) scale(${e.scale})`;
-          el.style.filter = e.bright > 1.01 ? `brightness(${e.bright})` : "";
+          el.style.filter = e.phase === "comet"
+            ? "brightness(1.9) drop-shadow(0 0 14px rgba(120,180,255,0.85))"
+            : (e.bright > 1.01 ? `brightness(${e.bright})` : "");
         }
       }
       if (respawned) setSlots(ents.current.map(syncSlot));
@@ -766,7 +819,7 @@ const T = {
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", about_legal: "О приложении и право", about_legal: "About and legal",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
     amount_ton: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
@@ -1390,16 +1443,34 @@ const styles = `
   .admin-legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; }
   .admin-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-left: 8px; }
   .admin-legend .lg-o { background: #5e5ce6; } .admin-legend .lg-s { background: #ff375f; }
-  .admin-bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; height: 130px; }
-  .admin-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .admin-bars-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .admin-bars { display: flex; align-items: flex-end; gap: 4px; height: 150px; min-width: max-content; }
+  .admin-bar-col { flex: none; display: flex; flex-direction: column; align-items: center; height: 100%; }
   .admin-bar-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 100%; }
-  .admin-bar { flex: 1 1 0; min-width: 2px; max-width: 10px; min-height: 3px; border-radius: 4px 4px 0 0; transition: height .5s var(--ease); }
+  .admin-bar { min-height: 3px; border-radius: 4px 4px 0 0; transition: height .5s var(--ease); }
+  .admin-zoom { display: inline-flex; gap: 6px; }
+  .admin-zoom-btn { width: 28px; height: 28px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 16px; font-weight: 800; cursor: pointer; line-height: 1; }
+  .admin-zoom-btn:hover { border-color: var(--accent); }
+  .admin-legend-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); margin: 2px 0 10px; }
   .admin-bar.o { background: linear-gradient(180deg, #7a78ff, #5e5ce6); }
   .admin-bar.s { background: linear-gradient(180deg, #ff6a85, #ff375f); }
   .admin-bar-label { font-size: 9.5px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; white-space: nowrap; }
   .admin-range { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
   .admin-showall { display: block; width: 100%; border: 1px dashed var(--border); background: transparent; color: var(--accent); font-weight: 700; font-size: 12.5px; padding: 10px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); margin-top: 8px; transition: all .2s var(--spring); }
   .admin-showall:hover { border-color: var(--accent); background: var(--bg-hover); }
+  /* legal sheets */
+  .legal-body { max-height: 58vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; }
+  .legal-item { margin-bottom: 16px; }
+  .legal-q { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
+  .legal-foot { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 10px 0 4px; }
+  /* first-launch consent */
+  .consent-wrap { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; padding: 0 14px calc(var(--safe-bottom, 16px) + 14px); }
+  .consent-card { width: 100%; max-width: 430px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; padding: 20px 18px; box-shadow: 0 18px 60px rgba(0,0,0,0.5); animation: fadeInUp .45s var(--bounce) both; }
+  .consent-title { font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+  .consent-text { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 14px; }
+  .consent-link { color: var(--tg-blue); font-weight: 700; cursor: pointer; }
+  .consent-btn { width: 100%; }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
   .admin-range-btn.active { background: var(--accent-grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(10,132,255,0.32); }
@@ -1414,7 +1485,6 @@ const styles = `
     .admin-screen.desk .admin-card-val { font-size: 32px; }
     .admin-screen.desk .admin-tabs { max-width: 460px; }
     .admin-screen.desk .admin-bars { height: 200px; }
-    .admin-screen.desk .admin-bar { max-width: 16px; }
     .admin-screen.desk .admin-2col { grid-template-columns: 1fr 1fr; }
   }
 `;
@@ -1423,12 +1493,57 @@ const styles = `
 //  MAIN APP
 // ════════════════════════════════════════════════════════════════════════════
 // ── Admin analytics dashboard (iOS-style, motion) — only for ADMIN_DASHBOARD_ID ──
+
+// Stable, hook-safe chart (module-level so it never remounts on parent renders)
+function AdminActivityChart({ stats, daily, labels, maxDaily, ranges, range, setRange, barW, setBarW, haptic }) {
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+  }, [stats, barW]);
+  const labelStep = barW >= 22 ? 1 : (daily.length > 8 ? Math.ceil(daily.length / 6) : 1);
+  return (
+    <div className="admin-chart-card">
+      <div className="admin-chart-head">
+        <span>Activity{stats && stats.range_start ? ` \u00b7 ${stats.range_start} \u2013 ${stats.range_end}` : ""}</span>
+        <span className="admin-zoom">
+          <button className="admin-zoom-btn" onClick={() => { haptic(); setBarW((w) => Math.max(8, w - 4)); }}>&minus;</button>
+          <button className="admin-zoom-btn" onClick={() => { haptic(); setBarW((w) => Math.min(34, w + 4)); }}>+</button>
+        </span>
+      </div>
+      <div className="admin-legend-row"><i className="lg-o" /> opens <i className="lg-s" /> searches</div>
+      <div className="admin-range">
+        {ranges.map(([id, lbl]) => (
+          <button key={id} className={`admin-range-btn ${range === id ? "active" : ""}`} onClick={() => { haptic(); setRange(id); }}>{lbl}</button>
+        ))}
+      </div>
+      <div className="admin-bars-scroll" ref={scrollRef}>
+        <div className="admin-bars">
+          {daily.map((d, i) => {
+            const showLabel = i % labelStep === 0 || i === daily.length - 1;
+            return (
+              <div key={i} className="admin-bar-col" style={{ width: barW * 2 + 4 }}>
+                <div className="admin-bar-pair">
+                  <span className="admin-bar o" style={{ width: barW - 2, height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
+                  <span className="admin-bar s" style={{ width: barW - 2, height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
+                </div>
+                <span className="admin-bar-label">{showLabel ? (labels[i] || "") : ""}</span>
+              </div>
+            );
+          })}
+          {!daily.length && <div className="admin-empty">No activity yet.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop = false }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(0);
   const [tab, setTab] = useState("overview");
   const [range, setRange] = useState("7d");
+  const [barW, setBarW] = useState(14);
 
   const load = useCallback((rng) => {
     setLoading(true);
@@ -1467,6 +1582,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const labels = (stats && stats.labels) || [];
   const maxDaily = Math.max(1, ...daily.map((d) => Math.max(d.opens || 0, d.searches || 0)));
   const ranges = [["7d", "7 days"], ["12w", "12 weeks"], ["24m", "24 months"], ["all", "All time"]];
+  const rangeLabel = (ranges.find(([id]) => id === range) || [null, "7 days"])[1];
 
   const Cards = ({ list }) => (
     <div className="admin-grid">
@@ -1513,35 +1629,6 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     </>
   );
 
-  const ActivityChart = () => (
-    <div className="admin-chart-card">
-      <div className="admin-chart-head">
-        <span>Activity{stats && stats.range_start ? ` · ${stats.range_start} – ${stats.range_end}` : ""}</span>
-        <span className="admin-legend"><i className="lg-o" /> opens <i className="lg-s" /> searches</span>
-      </div>
-      <div className="admin-range">
-        {ranges.map(([id, lbl]) => (
-          <button key={id} className={`admin-range-btn ${range === id ? "active" : ""}`} onClick={() => { haptic(); setRange(id); }}>{lbl}</button>
-        ))}
-      </div>
-      <div className="admin-bars">
-        {daily.map((d, i) => {
-          const step = daily.length > 8 ? Math.ceil(daily.length / 6) : 1;
-          const showLabel = i % step === 0 || i === daily.length - 1;
-          return (
-            <div key={i} className="admin-bar-col">
-              <div className="admin-bar-pair">
-                <span className="admin-bar o" style={{ height: `${Math.round(((d.opens || 0) / maxDaily) * 100)}%` }} title={`${d.opens} opens`} />
-                <span className="admin-bar s" style={{ height: `${Math.round(((d.searches || 0) / maxDaily) * 100)}%` }} title={`${d.searches} searches`} />
-              </div>
-              <span className="admin-bar-label">{showLabel ? (labels[i] || "") : ""}</span>
-            </div>
-          );
-        })}
-        {!daily.length && <div className="admin-empty">No activity yet.</div>}
-      </div>
-    </div>
-  );
 
   const Reach = () => (
     <>
@@ -1602,12 +1689,12 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
 
           {tab === "activity" && (
             <div className="fade-in-up">
-              <ActivityChart />
+              <AdminActivityChart stats={stats} daily={daily} labels={labels} maxDaily={maxDaily} ranges={ranges} range={range} setRange={setRange} barW={barW} setBarW={setBarW} haptic={haptic} />
               <Cards list={[
-                { k: "opens_7d", label: "Opens · 7d", c: "#5e5ce6" },
-                { k: "searches_7d", label: "Searches · 7d", c: "#ff375f" },
-                { k: "active_7d", label: "Active · 7d", c: "#bf5af2" },
-                { k: "new_members_7d", label: "New · 7d", c: "#0a84ff" },
+                { k: "opens_range", label: `Opens · ${rangeLabel}`, c: "#5e5ce6" },
+                { k: "searches_range", label: `Searches · ${rangeLabel}`, c: "#ff375f" },
+                { k: "active_range", label: `Active · ${rangeLabel}`, c: "#bf5af2" },
+                { k: "new_range", label: `New · ${rangeLabel}`, c: "#0a84ff" },
               ]} />
             </div>
           )}
@@ -1662,6 +1749,27 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
   const [activeSheet, setActiveSheet] = useState(null);
+  const [legalOk, setLegalOk] = useState(() => {
+    try { return localStorage.getItem("gt_legal_ok") === "1"; } catch { return true; }
+  });
+  const acceptLegal = () => {
+    haptic();
+    try { localStorage.setItem("gt_legal_ok", "1"); } catch { /* noop */ }
+    setLegalOk(true);
+  };
+  const consentOverlay = !legalOk ? (
+    <div className="consent-wrap" role="dialog" aria-label="Terms notice">
+      <div className="consent-card">
+        <div className="consent-title">Welcome to GiftTrove</div>
+        <div className="consent-text">
+          By using this mini app you agree to our{" "}
+          <span className="consent-link" onClick={() => setActiveSheet("terms")}>Terms of Service</span> and{" "}
+          <span className="consent-link" onClick={() => setActiveSheet("privacy")}>Privacy Policy</span>.
+        </div>
+        <button className="action-btn consent-btn" onClick={acceptLegal}>Agree and continue</button>
+      </div>
+    </div>
+  ) : null;
   const [selectedGift, setSelectedGift] = useState(null);
 
   // results / sorting / pagination
@@ -1877,9 +1985,18 @@ export default function App() {
     const col = collections.find((c) => c.name === giftQuery);
     if (!col) { setAttrs({ models: [], symbols: [], backdrops: [] }); return; }
     let alive = true;
-    api(`/api/attributes?gift_id=${encodeURIComponent(col.gift_id)}`)
-      .then((d) => { if (alive && d) setAttrs({ models: d.models || [], symbols: d.symbols || [], backdrops: d.backdrops || [] }); })
-      .catch(() => setAttrs({ models: [], symbols: [], backdrops: [] }));
+    const load = (attempt) => api(`/api/attributes?gift_id=${encodeURIComponent(col.gift_id)}`)
+      .then((d) => {
+        if (!alive) return;
+        const got = d && ((d.models || []).length + (d.symbols || []).length + (d.backdrops || []).length > 0);
+        if (got) {
+          setAttrs({ models: d.models || [], symbols: d.symbols || [], backdrops: d.backdrops || [] });
+        } else if (attempt < 2) {
+          setTimeout(() => { if (alive) load(attempt + 1); }, 900 * attempt);  // transient hiccup: retry
+        }
+      })
+      .catch(() => { if (alive && attempt < 2) setTimeout(() => { if (alive) load(attempt + 1); }, 900 * attempt); });
+    load(1);
     return () => { alive = false; };
   }, [giftQuery, collections]);
 
@@ -2147,8 +2264,10 @@ export default function App() {
     }
     // Preferred: a prepared message carrying the marketplace's PREMIUM custom
     // emoji (only possible through savePreparedInlineMessage + shareMessage).
+    let attempted = false;
     try {
       if (tg?.shareMessage && window.Telegram?.WebApp?.initData) {
+        attempted = true;   // backend counts the share on this call
         const r = await api("/api/share", { method: "POST", body: {
           name: item?.name, num: item?.num != null ? String(item.num) : "", market: mkt, price, link,
         } });
@@ -2156,9 +2275,9 @@ export default function App() {
       }
     } catch { /* fall back to the plain share sheet */ }
     // Fallback: plain share sheet — clean text, no emojis (branding rule).
-    // Count it server-side so analytics still sees fallback shares.
+    // Only count here if the prepared path never ran (avoids double-counting).
     try {
-      if (window.Telegram?.WebApp?.initData) {
+      if (!attempted && window.Telegram?.WebApp?.initData) {
         api("/api/share/track", { method: "POST", body: { name: item?.name } }).catch(() => {});
       }
     } catch { /* noop */ }
@@ -2214,6 +2333,24 @@ export default function App() {
 
   // ── SHEETS ──
   const renderSheet = () => {
+    if (activeSheet === "faq" || activeSheet === "terms" || activeSheet === "privacy") {
+      const title = activeSheet === "faq" ? "FAQ" : activeSheet === "terms" ? "Terms of Service" : "Privacy Policy";
+      const rows = LEGAL[activeSheet] || [];
+      return (
+        <BottomSheet onClose={() => setActiveSheet(null)}>
+            <div className="sheet-title">{title}</div>
+            <div className="legal-body">
+              {rows.map(([h, p], i) => (
+                <div key={i} className="legal-item">
+                  <div className="legal-q">{h}</div>
+                  <div className="legal-a">{p}</div>
+                </div>
+              ))}
+              <div className="legal-foot">Last updated June 2026</div>
+            </div>
+        </BottomSheet>
+      );
+    }
     if (!activeSheet) return null;
 
     if (activeSheet === "gift_details" && selectedGift) {
@@ -2614,8 +2751,24 @@ export default function App() {
         </div>
       </div>
 
+      <div className="section-label">{t.about_legal}</div>
+      <div className="ios-group">
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("faq"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconGlobe /></div>FAQ</div>
+          <IconChevronRight />
+        </div>
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("terms"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#8e8e93" }}><IconCopy /></div>Terms of Service</div>
+          <IconChevronRight />
+        </div>
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("privacy"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>Privacy Policy</div>
+          <IconChevronRight />
+        </div>
+      </div>
+
       <div style={{ textAlign: "center", marginTop: 40, color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>
-        Built by @insidemajek
+        Built by <span onClick={() => safeOpen("https://t.me/insidemajek")} style={{ color: "var(--tg-blue)", cursor: "pointer" }}>@insidemajek</span>
       </div>
     </div>
   );
@@ -2715,6 +2868,7 @@ export default function App() {
         <style>{styles}</style>
         <GoldDefs />
         {toast && <div className="toast">{toast}</div>}
+        {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
           <VoidGifts gifts={voidGifts} count={8} onPick={scoutGift} portal drift />
           <div className="desktop-sidebar">
@@ -2749,6 +2903,7 @@ export default function App() {
         <GoldDefs />
       <div className="app-container" data-theme={theme}>
         {toast && <div className="toast">{toast}</div>}
+        {consentOverlay}
 
         <div className="top-nav">
           <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>
