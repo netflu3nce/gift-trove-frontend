@@ -318,6 +318,11 @@ const IconTrash = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 // ─── LOTTIE GIFT (loads lottie-web from CDN on demand; falls back to static jpg) ─
 let _lottiePromise = null;
 const _animCache = {};   // cache fetched animation JSON by src (avoids refetch)
+// Warm the lottie-web library the moment the app boots, so the splash's
+// animations don't wait on the CDN round-trip.
+if (typeof window !== "undefined") {
+  setTimeout(() => { try { loadLottie(); } catch { /* noop */ } }, 0);
+}
 function loadLottie() {
   if (typeof window === "undefined") return Promise.reject(new Error("no-window"));
   if (window.lottie) return Promise.resolve(window.lottie);
@@ -403,11 +408,20 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
 // ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
 function LaunchLoader({ onDone }) {
   const [leaving, setLeaving] = useState(false);
-  const [gifts, setGifts] = useState([]);
+  // Instant brand moment: hydrate from the last session's featured gifts so
+  // returning users see animated gifts immediately, then revalidate.
+  const [gifts, setGifts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("gt_featured") || "[]").slice(0, 3); } catch { return []; }
+  });
 
   useEffect(() => {
     let alive = true;
-    api("/api/featured").then((d) => { if (alive && d?.gifts?.length) setGifts(d.gifts.slice(0, 3)); }).catch(() => {});
+    api("/api/featured").then((d) => {
+      if (alive && d?.gifts?.length) {
+        setGifts(d.gifts.slice(0, 3));
+        try { localStorage.setItem("gt_featured", JSON.stringify(d.gifts.slice(0, 6))); } catch { /* noop */ }
+      }
+    }).catch(() => {});
     const t1 = setTimeout(() => setLeaving(true), 1650); // short, predictable splash
     const t2 = setTimeout(() => onDone?.(), 2050);
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
@@ -464,8 +478,10 @@ const PROMO_SLIDES = [
 
 // Few slow, faint gifts drifting in the background like they're in a void.
 // On desktop they're clickable (redirect); on mobile they're purely decorative.
-function VoidGifts({ gifts, onPick, count = 12, portal = false }) {
-  const items = useMemo(() => {
+function VoidGifts({ gifts, onPick, count = 12, portal = false, drift = false }) {
+  // ── legacy gentle-bob layer (used on the access gate) ──
+  const legacyItems = useMemo(() => {
+    if (drift) return [];
     const pics = (gifts || []).filter((g) => g && g.preview).slice(0, count);
     const lefts = [6, 78, 30, 60, 14, 86, 44, 70, 22, 52, 90, 38, 4, 66, 82, 48];
     const tops = [15, 26, 64, 73, 44, 9, 84, 36, 54, 18, 60, 90, 48, 70, 30, 80];
@@ -477,7 +493,161 @@ function VoidGifts({ gifts, onPick, count = 12, portal = false }) {
       dur: 20 + ((i * 7) % 18),
       delay: -(i * 4),
     }));
-  }, [gifts, count]);
+  }, [gifts, count, drift]);
+
+  // ── drift engine (desktop tabs): free motion, spins, black hole ──
+  const pool = useMemo(() => (gifts || []).filter((g) => g && g.preview), [gifts]);
+  const N = Math.min(8, count, pool.length);
+  const reduced = useMemo(() => {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
+  }, []);
+  const engineOn = drift && !reduced && N > 0;
+
+  const [slots, setSlots] = useState([]);            // [{id, src, size, op}]
+  const [hole, setHole] = useState(null);            // {x, y} | null
+  const ents = useRef([]);                           // physics entities by slot id
+  const elsRef = useRef({});                         // id -> DOM node
+  const holeRef = useRef(null);                      // {x, y, born, ttl}
+  const rafRef = useRef(0);
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pickGift = useCallback(() => pool[Math.floor(Math.random() * pool.length)], [pool]);
+
+  const spawnEnt = useCallback((id, onEdge) => {
+    const W = window.innerWidth, H = window.innerHeight;
+    const size = Math.round(rand(56, 122));
+    const speed = rand(14, 46);                      // px/s
+    let x, y, ang;
+    if (onEdge) {
+      const edge = Math.floor(rand(0, 4));           // 0 top 1 right 2 bottom 3 left
+      if (edge === 0) { x = rand(0, W); y = -size - 20; ang = rand(0.35, Math.PI - 0.35); }
+      else if (edge === 1) { x = W + 20; y = rand(0, H); ang = rand(Math.PI * 0.6, Math.PI * 1.4); }
+      else if (edge === 2) { x = rand(0, W); y = H + 20; ang = rand(Math.PI + 0.35, 2 * Math.PI - 0.35); }
+      else { x = -size - 20; y = rand(0, H); ang = rand(-Math.PI * 0.4, Math.PI * 0.4); }
+    } else {
+      x = rand(0, W - size); y = rand(0, H - size); ang = rand(0, Math.PI * 2);
+    }
+    const lost = Math.random() < 0.3;                // some tumble like they're lost in the void
+    return {
+      id, g: pickGift(), size,
+      x, y,
+      vx: Math.cos(ang) * speed,
+      vy: Math.sin(ang) * speed,
+      rot: rand(0, 360),
+      vr: lost ? rand(-70, 70) : rand(-16, 16),      // deg/s
+      op: rand(0.34, 0.55),
+      scale: 1, bright: 1,
+      phase: "drift", suckT: 0,
+    };
+  }, [pickGift]);
+
+  const syncSlot = useCallback((e) => ({ id: e.id, src: e.g.preview, size: e.size, op: e.op }), []);
+
+  // boot / teardown
+  useEffect(() => {
+    if (!engineOn) { setSlots([]); setHole(null); ents.current = []; return undefined; }
+    const list = [];
+    for (let i = 0; i < N; i++) list.push(spawnEnt(i, false));
+    ents.current = list;
+    setSlots(list.map(syncSlot));
+
+    let last = performance.now();
+    const tick = (now) => {
+      rafRef.current = requestAnimationFrame(tick);
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (document.hidden) return;
+      const W = window.innerWidth, H = window.innerHeight;
+
+      // black hole lifecycle: rare spawn (~ every 30-50s), lives ~7s
+      const h = holeRef.current;
+      if (!h && Math.random() < dt / 38) {
+        holeRef.current = { x: rand(W * 0.2, W * 0.8), y: rand(H * 0.25, H * 0.75), born: now, ttl: 7000 };
+        setHole({ x: holeRef.current.x, y: holeRef.current.y });
+      } else if (h && now - h.born > h.ttl) {
+        holeRef.current = null;
+        setHole(null);
+      }
+
+      let respawned = false;
+      for (const e of ents.current) {
+        if (e.phase === "sucked") {
+          e.suckT += dt / 0.7;                       // 0.7s collapse
+          const hh = holeRef.current;
+          if (hh) {
+            e.x += (hh.x - e.x - e.size / 2) * Math.min(1, dt * 9);
+            e.y += (hh.y - e.y - e.size / 2) * Math.min(1, dt * 9);
+          }
+          e.rot += 720 * dt;
+          e.scale = Math.max(0, 1 - e.suckT);
+          e.bright = 1 + e.suckT * 2.4;              // star-flash as it collapses
+          if (e.suckT >= 1) {
+            Object.assign(e, spawnEnt(e.id, true));
+            respawned = true;
+          }
+        } else {
+          const hh = holeRef.current;
+          if (hh) {
+            const dx = hh.x - (e.x + e.size / 2), dy = hh.y - (e.y + e.size / 2);
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < 300) {
+              const pull = 5200 / (d + 40);          // stronger as it nears
+              e.vx += (dx / d) * pull * dt;
+              e.vy += (dy / d) * pull * dt;
+              e.vr += 80 * dt * (e.vr >= 0 ? 1 : -1);
+              if (d < 42) { e.phase = "sucked"; e.suckT = 0; }
+            }
+          }
+          e.x += e.vx * dt;
+          e.y += e.vy * dt;
+          e.rot += e.vr * dt;
+          // fully off-screen → fresh gift from a random edge
+          if (e.x < -e.size - 60 || e.x > W + 60 || e.y < -e.size - 60 || e.y > H + 60) {
+            Object.assign(e, spawnEnt(e.id, true));
+            respawned = true;
+          }
+        }
+        const el = elsRef.current[e.id];
+        if (el) {
+          el.style.transform = `translate3d(${e.x}px, ${e.y}px, 0) rotate(${e.rot}deg) scale(${e.scale})`;
+          el.style.filter = e.bright > 1.01 ? `brightness(${e.bright})` : "";
+        }
+      }
+      if (respawned) setSlots(ents.current.map(syncSlot));
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [engineOn, N, spawnEnt, syncSlot]);
+
+  if (engineOn) {
+    const layer = (
+      <div className="void-layer" aria-hidden="true">
+        {hole && (
+          <div className="void-hole" style={{ left: hole.x, top: hole.y }}>
+            <span className="vh-ring" /><span className="vh-core" />
+          </div>
+        )}
+        {slots.map((s) => {
+          const ent = ents.current.find((e) => e.id === s.id);
+          return (
+            <img key={s.id} src={s.src} alt="" className="void-gift drift"
+              ref={(el) => { elsRef.current[s.id] = el; }}
+              onClick={() => { if (ent && ent.phase === "drift") onPick?.(ent.g); }}
+              style={{ width: s.size, height: s.size, left: 0, top: 0, opacity: s.op }}
+              onError={(e) => { e.target.style.display = "none"; }} />
+          );
+        })}
+      </div>
+    );
+    return typeof document !== "undefined" ? createPortal(layer, document.body) : layer;
+  }
+
+  // legacy layer (gate) / static fallback (drift requested but reduced motion)
+  const items = legacyItems.length ? legacyItems : (drift && reduced ? pool.slice(0, Math.min(8, count)).map((g, i) => ({
+    g, src: g.preview, size: 64 + ((i * 23) % 76),
+    left: [6, 78, 30, 60, 14, 86, 44, 70][i % 8], top: [15, 26, 64, 73, 44, 9, 84, 36][i % 8],
+    dur: 26, delay: -(i * 4),
+  })) : []);
   if (!items.length) return null;
   const layer = (
     <div className="void-layer" aria-hidden="true">
@@ -603,7 +773,7 @@ const T = {
     thank_you: "Thank you for your generous support!",
     referrals: "Referrals", copy_ref: "Copy Referral Link", ref_count: "Referral Count",
     any: "Any", rarity: "Rarity", language: "Language",
-    wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just approve.",
+    wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just kindly approve.",
     tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} GRAM from @wallet.",
     copy_address: "Copy Address", address_copied: "Address copied — send from @wallet",
     listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", save_gift: "Save Gift", remove_saved: "Remove Saved", share_gift: "Share gift",
@@ -631,7 +801,7 @@ const T = {
     thank_you: "Спасибо за вашу щедрую поддержку!",
     referrals: "Рефералы", copy_ref: "Копировать ссылку", ref_count: "Кол-во рефералов",
     any: "Любой", rarity: "Редкость", language: "Язык",
-    wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — просто подтвердите.",
+    wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — пожалуйста, подтвердите.",
     tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} GRAM из @wallet.",
     copy_address: "Копировать адрес", address_copied: "Адрес скопирован — отправьте из @wallet",
     listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", save_gift: "Сохранить", remove_saved: "Убрать", share_gift: "Поделиться",
@@ -659,7 +829,7 @@ const T = {
     thank_you: "感谢您的慷慨支持！",
     referrals: "推荐", copy_ref: "复制推荐链接", ref_count: "推荐人数",
     any: "任何", rarity: "稀有度", language: "语言",
-    wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——确认即可。",
+    wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——请确认即可。",
     tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} GRAM。",
     copy_address: "复制地址", address_copied: "地址已复制——请从 @wallet 发送",
     listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", save_gift: "收藏", remove_saved: "取消收藏", share_gift: "分享",
@@ -1014,6 +1184,16 @@ const styles = `
   .void-gift { position: absolute; opacity: 0.14; filter: blur(0.3px); border-radius: 16px; object-fit: cover; will-change: transform; pointer-events: none; animation: voidFloat linear infinite; }
   @media (min-width: 768px) { .void-gift { pointer-events: auto; cursor: pointer; opacity: 0.46; filter: none; transition: opacity .3s, transform .3s; } .void-gift:hover { opacity: 0.78; transform: scale(1.1); } }
   @keyframes voidFloat { 0% { transform: translateY(8vh) translateX(0) rotate(0deg); } 50% { transform: translateY(-6vh) translateX(14px) rotate(8deg); } 100% { transform: translateY(8vh) translateX(0) rotate(0deg); } }
+  /* drift-engine gifts: transforms are driven by JS each frame */
+  .void-gift.drift { animation: none; transition: opacity .3s; will-change: transform, filter; }
+  @media (min-width: 768px) { .void-gift.drift:hover { opacity: 0.85 !important; } }
+  /* the void's black hole */
+  .void-hole { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; pointer-events: none; animation: holeIn .6s var(--ease) both; }
+  .void-hole .vh-ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(10,132,255,0.0), rgba(10,132,255,0.55), rgba(191,90,242,0.45), rgba(10,132,255,0.0)); animation: holeSpin 1.6s linear infinite; filter: blur(6px); }
+  .void-hole .vh-core { position: absolute; inset: 22px; border-radius: 50%; background: radial-gradient(circle, #000 58%, rgba(0,0,0,0.85) 72%, transparent 100%); box-shadow: 0 0 34px rgba(10,132,255,0.35), inset 0 0 18px rgba(0,0,0,0.95); animation: holePulse 2.2s ease-in-out infinite; }
+  @keyframes holeSpin { to { transform: rotate(360deg); } }
+  @keyframes holePulse { 0%,100% { transform: scale(0.94); } 50% { transform: scale(1.06); } }
+  @keyframes holeIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
   /* ── Access gate ─────────────────────────────────────────────────────── */
   .gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 26px; text-align: center; position: relative; z-index: 2; }
@@ -1164,6 +1344,9 @@ const styles = `
 
   /* ── picker thumbnails (real gift / model / symbol art) ── */
   .opt-thumb { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; object-fit: cover; background: var(--bg-input); border: 1px solid var(--border); image-rendering: auto; }
+  /* Symbols are black glyphs on transparent — give them a light tile so they read in dark mode */
+  .opt-thumb.sym { object-fit: contain; padding: 5px; background: rgba(255,255,255,0.92); }
+  [data-theme="dark"] .opt-thumb.sym { background: #ffffff; border-color: rgba(255,255,255,0.25); }
   .backdrop-swatch { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; border: 1px solid var(--glass-hi); box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); }
 
   /* ── share button in gift detail ── */
@@ -1566,6 +1749,14 @@ export default function App() {
   useEffect(() => {
     if (!tg) return;
     try { tg.ready?.(); tg.expand?.(); } catch { /* noop */ }
+    // True full-screen on every entry point (chat list, bot chat, inline link).
+    // Bot API 8.0+: requestFullscreen. Mobile only — desktop stays windowed.
+    try {
+      const plat = String(tg.platform || "").toLowerCase();
+      if (typeof tg.requestFullscreen === "function" && (plat === "android" || plat === "ios")) {
+        tg.requestFullscreen();
+      }
+    } catch { /* older clients: expand() above already applied */ }
     // Full-screen mode: offset the UI below Telegram's header controls so the
     // language / theme buttons aren't hidden under the close/collapse buttons.
     const applyInsets = () => {
@@ -1964,8 +2155,14 @@ export default function App() {
         if (r?.ok && r.id) { tg.shareMessage(r.id); return; }
       }
     } catch { /* fall back to the plain share sheet */ }
-    const emoji = { Telegram: "\u2708\ufe0f", GetGems: "\u{1f6d2}", Portals: "\u{1f6d2}", MRKT: "\u{1f6d2}", Tonnel: "\u{1f6d2}", Fragment: "\u{1f3f4}\u200d\u2620\ufe0f" }[mkt] || "\u{1f6cd}\ufe0f";
-    const text = [name, `${emoji} ${mkt}${price ? ` \u00b7 ${price}` : ""}`, "Scout it on GiftTrove"].join("\n");
+    // Fallback: plain share sheet — clean text, no emojis (branding rule).
+    // Count it server-side so analytics still sees fallback shares.
+    try {
+      if (window.Telegram?.WebApp?.initData) {
+        api("/api/share/track", { method: "POST", body: { name: item?.name } }).catch(() => {});
+      }
+    } catch { /* noop */ }
+    const text = [name, `${mkt}${price ? ` \u00b7 ${price}` : ""}`, "Scout it on GiftTrove"].join("\n");
     safeOpen(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
   };
 
@@ -2158,7 +2355,7 @@ export default function App() {
                 <div key={m.name} className="sheet-model-item" onClick={() => { haptic(); setSel(m.name); setActiveSheet(null); }}>
                   <div className="model-left">
                     {m.img
-                      ? <img src={m.img} alt="" className="opt-thumb" onError={(e) => { e.target.style.display = "none"; }} />
+                      ? <img src={m.img} alt="" className={isModel ? "opt-thumb" : "opt-thumb sym"} onError={(e) => { e.target.style.display = "none"; }} />
                       : <span className="gift-tile"><IconGiftBox /></span>}
                     <div className="model-info">
                       <span className="model-name">{m.name}</span>
@@ -2519,7 +2716,7 @@ export default function App() {
         <GoldDefs />
         {toast && <div className="toast">{toast}</div>}
         <div className="desktop-layout" data-theme={theme}>
-          <VoidGifts gifts={voidGifts} count={16} onPick={scoutGift} portal />
+          <VoidGifts gifts={voidGifts} count={8} onPick={scoutGift} portal drift />
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span className="logo-tile lg"><img src={LOGO_URL} alt="GiftTrove" /></span>
