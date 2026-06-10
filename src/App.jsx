@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 
 /* ════════════════════════════════════════════════════════════════════════
    GiftTrove — Telegram Gift Scouting Mini App
@@ -69,7 +70,7 @@ const COMMUNITY = {
   channel: "https://t.me/gifttrove",
   insideMajek: "https://t.me/insidemajek",
   otc: "https://t.me/troveotc",
-  support: "https://t.me/insidemajek",
+  support: "https://t.me/insidemajek?direct",
 };
 
 // Tiny offline fallback so search/autocomplete still works before the backend answers.
@@ -463,14 +464,14 @@ const PROMO_SLIDES = [
 
 // Few slow, faint gifts drifting in the background like they're in a void.
 // On desktop they're clickable (redirect); on mobile they're purely decorative.
-function VoidGifts({ gifts, onPick, count = 12 }) {
+function VoidGifts({ gifts, onPick, count = 12, portal = false }) {
   const items = useMemo(() => {
     const pics = (gifts || []).filter((g) => g && g.preview).slice(0, count);
-    const lefts = [6, 78, 30, 60, 14, 86, 44, 70, 22, 52, 90, 38, 4, 66];
-    const tops = [15, 26, 64, 73, 44, 9, 84, 36, 54, 18, 60, 90, 48, 70];
+    const lefts = [6, 78, 30, 60, 14, 86, 44, 70, 22, 52, 90, 38, 4, 66, 82, 48];
+    const tops = [15, 26, 64, 73, 44, 9, 84, 36, 54, 18, 60, 90, 48, 70, 30, 80];
     return pics.map((g, i) => ({
       g, src: g.preview,
-      size: 54 + ((i * 19) % 50),
+      size: 64 + ((i * 23) % 76),
       left: lefts[i % lefts.length],
       top: tops[i % tops.length],
       dur: 20 + ((i * 7) % 18),
@@ -478,7 +479,7 @@ function VoidGifts({ gifts, onPick, count = 12 }) {
     }));
   }, [gifts, count]);
   if (!items.length) return null;
-  return (
+  const layer = (
     <div className="void-layer" aria-hidden="true">
       {items.map((it, i) => (
         <img key={i} src={it.src} alt="" className="void-gift"
@@ -488,6 +489,8 @@ function VoidGifts({ gifts, onPick, count = 12 }) {
       ))}
     </div>
   );
+  if (portal && typeof document !== "undefined") return createPortal(layer, document.body);
+  return layer;
 }
 
 // Reusable bottom sheet with swipe-down-to-dismiss + spring open/close.
@@ -943,7 +946,9 @@ const styles = `
   @keyframes shimmer { 100% { transform: translateX(100%); } }
   .sk-line { height: 12px; border-radius: 6px; margin-top: 8px; }
 
-  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-secondary); }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 46vh; padding: 32px 20px; color: var(--text-secondary); }
+  .empty-state > svg, .empty-state > div:first-child { margin: 0 auto; }
+  .desktop-content .empty-state { min-height: 56vh; }
   .empty-state .es-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 14px 0 6px; }
 
   .page-header { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
@@ -1210,6 +1215,8 @@ const styles = `
   .admin-bar.s { background: linear-gradient(180deg, #ff6a85, #ff375f); }
   .admin-bar-label { font-size: 9.5px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; white-space: nowrap; }
   .admin-range { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .admin-showall { display: block; width: 100%; border: 1px dashed var(--border); background: transparent; color: var(--accent); font-weight: 700; font-size: 12.5px; padding: 10px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); margin-top: 8px; transition: all .2s var(--spring); }
+  .admin-showall:hover { border-color: var(--accent); background: var(--bg-hover); }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
   .admin-range-btn.active { background: var(--accent-grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(10,132,255,0.32); }
@@ -1270,6 +1277,9 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     { k: "avg_searches_per_member", label: "Avg / member", c: "#ff9f0a", raw: true },
   ];
   const top = (stats && stats.top_searches) || [];
+  const shares = (stats && stats.top_shares) || [];
+  const [allSearches, setAllSearches] = useState(false);
+  const [allShares, setAllShares] = useState(false);
   const daily = (stats && stats.daily) || [];
   const labels = (stats && stats.labels) || [];
   const maxDaily = Math.max(1, ...daily.map((d) => Math.max(d.opens || 0, d.searches || 0)));
@@ -1287,18 +1297,36 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     </div>
   );
 
+  const RankList = ({ rows, expanded, onToggle, emptyText, defaultN }) => (
+    <div className="admin-list">
+      {rows.length ? (expanded ? rows : rows.slice(0, defaultN)).map((s, i) => (
+        <div key={i} className="admin-row" style={{ animationDelay: `${Math.min(i, 12) * 0.03}s` }}>
+          <span className="admin-rank">{i + 1}</span>
+          <span className="admin-gift">{s.gift}</span>
+          <span className="admin-count">{compactNum(s.count)}</span>
+        </div>
+      )) : <div className="admin-empty">{emptyText}</div>}
+      {rows.length > defaultN && (
+        <button className="admin-showall" onClick={onToggle}>
+          {expanded ? "Show less" : `Show all (${rows.length})`}
+        </button>
+      )}
+    </div>
+  );
+
   const TopSearches = () => (
     <>
-      <div className="admin-section-title">Top searches</div>
-      <div className="admin-list">
-        {top.length ? top.slice(0, desktop ? 12 : 8).map((s, i) => (
-          <div key={i} className="admin-row" style={{ animationDelay: `${i * 0.03}s` }}>
-            <span className="admin-rank">{i + 1}</span>
-            <span className="admin-gift">{s.gift}</span>
-            <span className="admin-count">{compactNum(s.count)}</span>
-          </div>
-        )) : <div className="admin-empty">No searches recorded yet.</div>}
-      </div>
+      <div className="admin-section-title">Scouted gifts — all, by times scouted</div>
+      <RankList rows={top} expanded={allSearches} onToggle={() => setAllSearches((v) => !v)}
+        emptyText="No searches recorded yet." defaultN={desktop ? 12 : 8} />
+    </>
+  );
+
+  const TopShares = () => (
+    <>
+      <div className="admin-section-title">Shared gifts — all, by times shared</div>
+      <RankList rows={shares} expanded={allShares} onToggle={() => setAllShares((v) => !v)}
+        emptyText="No shares recorded yet." defaultN={desktop ? 12 : 8} />
     </>
   );
 
@@ -1380,7 +1408,12 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
                 <span>Avg searches / member</span>
                 <strong>{g("avg_searches_per_member")}</strong>
               </div>
+              <div className="admin-strip">
+                <span>Total shares</span>
+                <strong>{compactNum(g("shares_total"))}</strong>
+              </div>
               <TopSearches />
+              <TopShares />
             </div>
           )}
 
@@ -1399,7 +1432,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
           {tab === "growth" && (
             <div className="fade-in-up">
               <Cards list={growthCards} />
-              {desktop ? <div className="admin-2col"><TopSearches /><Reach /></div> : <Reach />}
+              {desktop ? <div className="admin-2col"><TopShares /><Reach /></div> : <><TopShares /><Reach /></>}
             </div>
           )}
 
@@ -2486,7 +2519,7 @@ export default function App() {
         <GoldDefs />
         {toast && <div className="toast">{toast}</div>}
         <div className="desktop-layout" data-theme={theme}>
-          <VoidGifts gifts={voidGifts} count={14} onPick={scoutGift} />
+          <VoidGifts gifts={voidGifts} count={16} onPick={scoutGift} portal />
           <div className="desktop-sidebar">
             <div className="desktop-logo">
               <span className="logo-tile lg"><img src={LOGO_URL} alt="GiftTrove" /></span>
