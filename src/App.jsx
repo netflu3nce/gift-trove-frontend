@@ -253,12 +253,12 @@ const IconGlobe = ({ trigger, size = 20 }) => {
 };
 const IconRefresh = ({ trigger, spinning = false, size = 22 }) => {
   const on = useIconPlay(trigger);
-  const cls = spinning ? "ai-spin" : on ? "ai-refresh" : "";
+  const cls = spinning ? "ai-loader ai-spin" : on ? "ai-loader ai-refresh" : "ai-loader";
   return <svg className={`ai ${cls}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><g className="ai-refresh-g"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></g></svg>;
 };
 const IconContrast = ({ trigger, size = 20 }) => {
   const on = useIconPlay(trigger);
-  return <svg className={`ai${on ? " ai-contrast" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path className="ai-contrast-half" d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor" stroke="none"/></svg>;
+  return <svg className={`ai${on ? " ai-contrast" : ""}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><g className="ai-contrast-rot"><path className="ai-contrast-half" d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor" stroke="none"/></g></svg>;
 };
 const IconSearchAnim = ({ trigger, size = 22 }) => {
   const on = useIconPlay(trigger);
@@ -498,7 +498,7 @@ const LEGAL = {
     ["What we never collect", "Your name, username, phone number, message content, payment information, location, or any data from your Telegram account beyond the technical launch parameters Telegram provides to every Mini App."],
     ["How data is processed", "Data is processed on reputable third-party hosting and database infrastructure under industry-standard protections. Marketplace links open third-party platforms governed by their own privacy policies."],
     ["Retention", "Aggregate, anonymised analytics are retained to improve the product. Your saved gifts and searches persist so they can follow you across devices."],
-    ["Your rights", "You can request deletion of your data at any time via the Support contact in the Profile tab."],
+    ["Your rights", "You are in control. You can delete your data yourself at any time with the Clear my data option at the bottom of the Profile tab, which removes your synced data instantly. You can also reach Support for anything else."],
     ["Changes", "We may update this policy as the product evolves; continued use after an update constitutes acceptance."],
   ],
 };
@@ -739,7 +739,6 @@ function BottomSheet({ onClose, children }) {
   const setYY = (v) => { curY.current = v; setY(v); };
 
   const onTouchStart = (e) => {
-    if (scRef.current && scRef.current.scrollTop > 2) return;  // let inner content scroll
     startY.current = e.touches[0].clientY;
     setDragging(true);
   };
@@ -758,9 +757,12 @@ function BottomSheet({ onClose, children }) {
   return (
     <div className={`sheet-overlay ${closing ? "sheet-closing" : ""}`} onClick={close}>
       <div ref={scRef} className="sheet-content sheet-js" onClick={(e) => e.stopPropagation()}
-        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         style={{ transform: `translateY(${y}px)`, transition: dragging ? "none" : "transform .36s cubic-bezier(0.32,0.72,0,1)" }}>
-        <div className="sheet-grab" onClick={close} />
+        {/* Drag-to-dismiss lives ONLY on the grab zone — content scrolls freely */}
+        <div className="sheet-drag" onClick={close}
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+          <div className="sheet-grab" />
+        </div>
         {children}
       </div>
     </div>
@@ -1009,8 +1011,13 @@ const styles = `
   @keyframes aiGlobe { from { transform: rotate(0); } to { transform: rotate(360deg); } }
   .ai-refresh .ai-refresh-g { animation: aiSpin .8s ease-in-out; transform-origin: 12px 12px; transform-box: fill-box; }
   .ai-spin .ai-refresh-g { animation: aiSpin .8s linear infinite; transform-origin: 12px 12px; transform-box: fill-box; }
+  .ai-loader .ai-refresh-g { transform-origin: 12px 12px; transform-box: fill-box; }
+  .icon-btn:hover .ai-loader:not(.ai-spin) .ai-refresh-g,
+  .ai-loader:not(.ai-spin):hover .ai-refresh-g { animation: aiSpin 1s linear infinite; }
   @keyframes aiSpin { to { transform: rotate(360deg); } }
   .ai-contrast .ai-contrast-half { animation: aiContrast .6s ease; transform-origin: 12px 12px; transform-box: fill-box; }
+  .ai-contrast-rot { transform-origin: 12px 12px; transform-box: fill-box; transition: transform .55s cubic-bezier(.34,1.56,.64,1); }
+  .icon-btn:hover .ai-contrast-rot, svg.ai:hover .ai-contrast-rot, .ai-contrast .ai-contrast-rot { transform: rotate(180deg); }
   @keyframes aiContrast { from { transform: rotate(0); } to { transform: rotate(180deg); } }
 
   /* ─── DESKTOP ─── */
@@ -1358,10 +1365,12 @@ const styles = `
   .void-gift { filter: none; }
 
   /* ── swipeable sheets ── */
-  .sheet-content.sheet-js { animation: none; transform: translateY(100%); will-change: transform; touch-action: pan-y; }
+  .sheet-content.sheet-js { animation: none; transform: translateY(100%); will-change: transform; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .sheet-overlay.sheet-closing { animation: sheetFadeOut .28s forwards; }
   @keyframes sheetFadeOut { from { opacity: 1; } to { opacity: 0; } }
   .sheet-grab { width: 44px; height: 5px; border-radius: 100px; background: var(--text-secondary); opacity: 0.4; margin: 2px auto 22px; cursor: grab; transition: opacity .2s; }
+  .sheet-drag { padding: 8px 0 4px; margin: -8px 0 0; touch-action: none; cursor: grab; }
+  .sheet-drag:active { cursor: grabbing; }
   .sheet-grab:active { opacity: 0.7; }
   .sheet-content { box-shadow: 0 -24px 70px rgba(0,0,0,0.34); }
 
@@ -1771,6 +1780,8 @@ export default function App() {
       ["gt_saved", "gt_recent", "gt_search", "gt_featured", "gt_collections"].forEach((k) => localStorage.removeItem(k));
     } catch { /* noop */ }
     setSavedGifts([]); setRecentSearches([]);
+    setReferralCount(0);
+    try { localStorage.removeItem(refKey); } catch { /* noop */ }
     showToast(t.data_cleared);
   };
   const acceptLegal = () => {
