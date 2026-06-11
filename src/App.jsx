@@ -1475,13 +1475,13 @@ const styles = `
   .legal-foot { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 10px 0 4px; }
   /* first-launch consent */
   .consent-wrap { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; padding: 0 14px calc(var(--safe-bottom, 16px) + 14px); }
-  .consent-card { width: 100%; max-width: 430px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; padding: 20px 18px; box-shadow: 0 18px 60px rgba(0,0,0,0.5); animation: fadeInUp .45s var(--bounce) both; }
+  .consent-card { width: 100%; max-width: 430px; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; padding: 20px 18px; box-shadow: 0 18px 60px rgba(0,0,0,0.5); animation: fadeInUp .45s var(--bounce) both; }
   .consent-title { font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
   .consent-text { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 14px; }
   .consent-link { color: var(--tg-blue); font-weight: 700; cursor: pointer; }
   .consent-btn { width: 100%; }
-  /* desktop launch page: bigger, brand-forward */
-  @media (min-width: 768px) {
+  /* desktop launch page: bigger, brand-forward (only when there's room) */
+  @media (min-width: 768px) and (min-height: 700px) {
     .splash-card { transform: scale(1.22); }
     .splash-leaving .splash-card { transform: scale(1.12); }
     .splash-glow { opacity: 0.9; }
@@ -1777,12 +1777,14 @@ export default function App() {
     setClearArmed(false);
     try { await api("/api/userdata/clear", { method: "POST" }); } catch { /* still clear locally */ }
     try {
-      ["gt_saved", "gt_recent", "gt_search", "gt_featured", "gt_collections"].forEach((k) => localStorage.removeItem(k));
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      keys.filter((k) => k && k.startsWith("gt_")).forEach((k) => localStorage.removeItem(k));
     } catch { /* noop */ }
-    setSavedGifts([]); setRecentSearches([]);
-    setReferralCount(0);
-    try { localStorage.removeItem(refKey); } catch { /* noop */ }
+    setSavedGifts([]); setRecentSearches([]); setReferralCount(0);
     showToast(t.data_cleared);
+    // Full reset: relaunch fresh (access gate + consent will show again).
+    setTimeout(() => { try { window.location.reload(); } catch { /* noop */ } }, 1000);
   };
   const acceptLegal = () => {
     haptic();
@@ -1901,6 +1903,9 @@ export default function App() {
         tg.requestFullscreen();
       }
     } catch { /* older clients: expand() above already applied */ }
+    // Stop Telegram from hijacking vertical swipes (sheet drag, pull-to-refresh).
+    // Users minimize via the header chevron instead. Bot API 7.7+.
+    try { tg.disableVerticalSwipes?.(); } catch { /* noop */ }
     // Full-screen mode: offset the UI below Telegram's header controls so the
     // language / theme buttons aren't hidden under the close/collapse buttons.
     const applyInsets = () => {
