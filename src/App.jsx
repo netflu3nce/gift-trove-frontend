@@ -816,7 +816,7 @@ const T = {
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
-    select_gift_first: "Select a gift collection first to see its",
+    select_gift_first: "Select a gift collection first to see its", frag_attr_note: "Attribute selection is not available for Fragment. Proceed to scout.",
     no_alerts: "No alerts yet", alerts_hint: "Add a gift to your watchlist and get pinged when it lists below your price.",
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
@@ -844,7 +844,7 @@ const T = {
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
-    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть",
+    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть", frag_attr_note: "Выбор атрибутов недоступен для Fragment. Продолжайте поиск.",
     no_alerts: "Пока нет алертов", alerts_hint: "Добавьте подарок в список наблюдения и получайте уведомление о выгодной цене.",
     add_alert: "Добавить алерт", watchlist: "Список наблюдения",
     no_saved: "Пока нет сохранённых подарков.",
@@ -872,7 +872,7 @@ const T = {
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
-    select_gift_first: "请先选择礼物系列以查看其",
+    select_gift_first: "请先选择礼物系列以查看其", frag_attr_note: "Fragment 不支持属性筛选。直接开始搜索即可。",
     no_alerts: "暂无提醒", alerts_hint: "将礼物加入关注列表，当价格低于你的设定时获得提醒。",
     add_alert: "添加提醒", watchlist: "关注列表",
     no_saved: "暂无收藏的礼物。",
@@ -1689,10 +1689,6 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
           {tab === "overview" && (
             <div className="fade-in-up">
               <Cards list={overviewCards} />
-              <div className="admin-strip">
-                <span>Total shares</span>
-                <strong>{compactNum(g("shares_total"))}</strong>
-              </div>
               <TopSearches />
               <TopShares />
             </div>
@@ -1732,7 +1728,13 @@ export default function App() {
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
   const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" };
 
-  const [theme, setTheme] = useState(() => localStorage.getItem("gt_theme") || "dark");
+  const [theme, setTheme] = useState(() => {
+    try {
+      // One-time migration: light is now the default for everyone.
+      if (!localStorage.getItem("gt_theme_v2")) { localStorage.setItem("gt_theme_v2", "1"); return "light"; }
+      return localStorage.getItem("gt_theme") || "light";
+    } catch { return "light"; }
+  });
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const t = T[lang] || T.EN;
 
@@ -2523,6 +2525,17 @@ export default function App() {
 
     if (activeSheet === "model" || activeSheet === "symbol") {
       const isModel = activeSheet === "model";
+      const fragmentOnly = selectedMarkets.length === 1 && selectedMarkets[0] === "Fragment";
+      if (fragmentOnly) {
+        return (
+          <BottomSheet onClose={() => setActiveSheet(null)}>
+              <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
+              <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
+                {t.frag_attr_note}
+              </p>
+          </BottomSheet>
+        );
+      }
       const list = isModel ? attrs.models : attrs.symbols;
       const sel = isModel ? selectedModel : selectedSymbol;
       const setSel = isModel ? setSelectedModel : setSelectedSymbol;
@@ -2559,6 +2572,17 @@ export default function App() {
     }
 
     if (activeSheet === "backdrop") {
+      const fragmentOnlyB = selectedMarkets.length === 1 && selectedMarkets[0] === "Fragment";
+      if (fragmentOnlyB) {
+        return (
+          <BottomSheet onClose={() => setActiveSheet(null)}>
+              <div className="sheet-title">{t.backdrop}</div>
+              <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
+                {t.frag_attr_note}
+              </p>
+          </BottomSheet>
+        );
+      }
       const list = attrs.backdrops;
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
