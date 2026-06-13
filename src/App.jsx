@@ -808,7 +808,7 @@ function PromoBanner() {
 const T = {
   EN: {
     scout_tab: "Scout", results_tab: "Results", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
-    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
+    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_connecting: "Connecting…", gate_neterr: "Couldn't reach the server (it may be waking up). Try again in a moment.", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
     fastest_way: "The fastest way to find any Telegram Gift",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
@@ -836,7 +836,7 @@ const T = {
   },
   RU: {
     scout_tab: "Поиск", results_tab: "Итоги", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
-    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
+    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_connecting: "Подключение…", gate_neterr: "Не удалось связаться с сервером (возможно, он просыпается). Повторите попытку.", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
     fastest_way: "Самый быстрый способ найти любой Telegram подарок",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
@@ -864,7 +864,7 @@ const T = {
   },
   ZH: {
     scout_tab: "侦测", results_tab: "结果", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
-    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
+    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_connecting: "连接中…", gate_neterr: "无法连接服务器（可能正在唤醒）。请稍后重试。", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
     fastest_way: "查找任何 Telegram 礼物的最快方法",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
@@ -1267,6 +1267,7 @@ const styles = `
   .gate-input.err { border-color: #ff453a; animation: shake 0.4s; }
   @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
   .gate-note { font-size: 12px; color: var(--text-secondary); margin-top: 16px; opacity: 0.7; }
+  .gate-neterr { color: #ff9f0a; font-size: 12.5px; font-weight: 600; margin-top: 12px; line-height: 1.4; }
 
   /* ── Desktop compact mode ────────────────────────────────────────────── */
   .desktop-content.compact { max-width: 680px; margin: 0 auto; transform: scale(0.93); transform-origin: top center; }
@@ -1821,6 +1822,8 @@ export default function App() {
   const [access, setAccess] = useState("checking");        // checking | locked | granted
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState(false);
+  const [codeChecking, setCodeChecking] = useState(false);
+  const [netError, setNetError] = useState(false);
 
   // desktop compact mode
   const [compact, setCompact] = useState(() => localStorage.getItem("gt_compact") === "1");
@@ -1838,6 +1841,7 @@ export default function App() {
   // search inputs
   const [giftQuery, setGiftQuery] = useState(savedSearch.giftQuery || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestTouch = useRef({ y: 0, moved: false });
   const [giftId, setGiftId] = useState(savedSearch.giftId || "");
   const [selectedMarkets, setSelectedMarkets] = useState(savedSearch.selectedMarkets || ["All"]);
   const [selectedModel, setSelectedModel] = useState(savedSearch.selectedModel || "Any");
@@ -2000,11 +2004,27 @@ export default function App() {
   }, []);
 
   // ── ACCESS GATE: admins auto-pass; others need the code (verified server-side) ──
+  // Render's free tier sleeps after idle and can take 30–60s to wake. We retry
+  // through that window with long timeouts and ONLY lock when the server is
+  // actually reachable and says no — a timeout must never read as "wrong code".
+  const askAccess = async (uid, code, tries = 4) => {
+    let lastErr = null;
+    for (let i = 0; i < tries; i++) {
+      try {
+        return await api(`/api/access?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code)}`, { timeout: 22000 });
+      } catch (e) {
+        lastErr = e;
+        await new Promise((r) => setTimeout(r, 1200 * (i + 1)));
+      }
+    }
+    throw lastErr || new Error("unreachable");
+  };
+
   useEffect(() => {
     let alive = true;
     const uid = tgUser?.id || "";
     const savedCode = localStorage.getItem("gt_code") || "";
-    api(`/api/access?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(savedCode)}`)
+    askAccess(uid, savedCode)
       .then((d) => { if (alive) setAccess(d?.ok ? "granted" : "locked"); })
       .catch(() => { if (alive) setAccess("locked"); });
     return () => { alive = false; };
@@ -2013,45 +2033,54 @@ export default function App() {
 
   const submitCode = async () => {
     const code = codeInput.trim();
-    if (!code) return;
+    if (!code || codeChecking) return;
     haptic("medium");
+    setCodeError(false);
+    setCodeChecking(true);
     try {
-      const d = await api(`/api/access?uid=${encodeURIComponent(tgUser?.id || "")}&code=${encodeURIComponent(code)}`);
+      const d = await askAccess(tgUser?.id || "", code);
       if (d?.ok) {
         localStorage.setItem("gt_code", code);
         setCodeError(false);
         setAccess("granted");
       } else {
+        // Server reachable and rejected → genuinely wrong code.
         setCodeError(true);
         haptic("heavy");
-        setTimeout(() => setCodeError(false), 600);
+        setTimeout(() => setCodeError(false), 1500);
       }
     } catch {
-      setCodeError(true);
-      setTimeout(() => setCodeError(false), 600);
+      // Couldn't reach the server (cold start / network) — not a wrong code.
+      setNetError(true);
+      setTimeout(() => setNetError(false), 2600);
+    } finally {
+      setCodeChecking(false);
     }
   };
 
   // ── load attributes when a known collection is picked ──
+  // Keyed on the RESOLVED gift_id (not the whole collections array) so a
+  // background catalog refresh can't wipe the user's in-progress selection or
+  // cancel an in-flight load. Retries patiently to ride out cold starts.
+  const activeGiftId = selectedCollection?.gift_id || "";
   useEffect(() => {
     setSelectedModel("Any"); setSelectedSymbol("Any"); setSelectedBackdrop("Any");
-    const col = collections.find((c) => c.name === giftQuery);
-    if (!col) { setAttrs({ models: [], symbols: [], backdrops: [] }); return; }
+    if (!activeGiftId) { setAttrs({ models: [], symbols: [], backdrops: [] }); return; }
     let alive = true;
-    const load = (attempt) => api(`/api/attributes?gift_id=${encodeURIComponent(col.gift_id)}`)
+    const load = (attempt) => api(`/api/attributes?gift_id=${encodeURIComponent(activeGiftId)}`, { timeout: 20000 })
       .then((d) => {
         if (!alive) return;
         const got = d && ((d.models || []).length + (d.symbols || []).length + (d.backdrops || []).length > 0);
         if (got) {
           setAttrs({ models: d.models || [], symbols: d.symbols || [], backdrops: d.backdrops || [] });
-        } else if (attempt < 2) {
-          setTimeout(() => { if (alive) load(attempt + 1); }, 900 * attempt);  // transient hiccup: retry
+        } else if (attempt < 5) {
+          setTimeout(() => { if (alive) load(attempt + 1); }, 800 * attempt);   // 0.8s,1.6s,2.4s,3.2s
         }
       })
-      .catch(() => { if (alive && attempt < 2) setTimeout(() => { if (alive) load(attempt + 1); }, 900 * attempt); });
+      .catch(() => { if (alive && attempt < 5) setTimeout(() => { if (alive) load(attempt + 1); }, 800 * attempt); });
     load(1);
     return () => { alive = false; };
-  }, [giftQuery, collections]);
+  }, [activeGiftId]);
 
   // ── referral + deep-link handling on launch ──
   useEffect(() => {
@@ -2628,15 +2657,18 @@ export default function App() {
           <input className="ios-input" placeholder="e.g. Plush Pepe" value={giftQuery}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            onChange={(e) => setGiftQuery(e.target.value)} />
+            onChange={(e) => { setGiftQuery(e.target.value); setShowSuggestions(true); }} />
           {showSuggestions && giftQuery && filteredGifts.length > 0 && (
-            <div className="suggestions-dropdown">
+            <div className="suggestions-dropdown"
+              onTouchStart={(e) => { suggestTouch.current = { y: e.touches[0].clientY, moved: false }; }}
+              onTouchMove={(e) => { if (Math.abs(e.touches[0].clientY - suggestTouch.current.y) > 8) suggestTouch.current.moved = true; }}>
               {filteredGifts.slice(0, 12).map((g) => {
                 const col = collections.find((c) => c.name === g);
+                const pick = () => { setGiftQuery(g); setShowSuggestions(false); };
                 return (
                   <div key={g} className="suggestion-item"
-                    onMouseDown={(e) => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}
-                    onTouchEnd={(e) => { e.preventDefault(); setGiftQuery(g); setShowSuggestions(false); }}>
+                    onMouseDown={(e) => { e.preventDefault(); pick(); }}
+                    onTouchEnd={(e) => { if (suggestTouch.current.moved) return; e.preventDefault(); pick(); }}>
                     {col?.preview
                       ? <img src={col.preview} alt={g} className="suggestion-gift-img" onError={(e) => { e.target.style.opacity = 0.2; }} />
                       : <span className="gift-tile sm"><IconGiftBox /></span>}
@@ -2908,7 +2940,10 @@ export default function App() {
                     onKeyDown={(e) => { if (e.key === "Enter") submitCode(); }}
                     autoCapitalize="none" autoCorrect="off" spellCheck="false"
                   />
-                  <button className="action-btn" style={{ marginTop: 0 }} onClick={submitCode}>{t.gate_unlock}</button>
+                  <button className="action-btn" style={{ marginTop: 0 }} onClick={submitCode} disabled={codeChecking}>
+                    {codeChecking ? t.gate_connecting : t.gate_unlock}
+                  </button>
+                  {netError && <div className="gate-neterr">{t.gate_neterr}</div>}
                   <div className="gate-note"><a onClick={() => safeOpen("https://t.me/gifttrove")}>{t.gate_join}</a></div>
                 </>
               )}
