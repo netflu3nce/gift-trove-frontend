@@ -294,13 +294,27 @@ const TGStar = ({ size = 16 }) => (
   </svg>
 );
 
+// The GRAM mark — a faceted gem (inline SVG so it renders instantly, no image load).
+const GramMark = ({ size = 15 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.13em", flexShrink: 0, filter: "drop-shadow(0 1px 1.5px rgba(90,80,210,0.35))" }}>
+    <path d="M3 9 L8 4 H16 L21 9 L12 21 Z" fill="#7e7cf0" />
+    <path d="M3 9 L8 4 H16 L21 9 Z" fill="#a6a4f9" />
+    <path d="M8 4 L12 9 L16 4 Z" fill="#cfcffd" />
+    <path d="M3 9 L12 9 L12 21 Z" fill="#6f6ddb" />
+    <g stroke="rgba(255,255,255,0.45)" strokeWidth="0.5" fill="none" strokeLinejoin="round">
+      <path d="M3 9 H21 M8 4 L12 9 L16 4 M12 9 V21" />
+    </g>
+  </svg>
+);
+
 // Price with the right currency mark + compact number.
 const PriceTag = ({ item, size = 16, exact = false }) => {
   const cur = item?.currency || "GRAM";
   const n = Number(item?.price);
   const txt = exact && Number.isFinite(n) ? n.toLocaleString("en-US") : compactNum(item?.price);
   if (cur === "Stars") return <span className="price-tag"><TGStar size={size} />{txt}</span>;
-  return <span className="price-tag">{txt} <span className="price-cur">GRAM</span></span>;
+  return <span className="price-tag">{txt} <GramMark size={size} /></span>;
 };
 
 const IconShare = ({ size = 19 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>;
@@ -312,6 +326,7 @@ const IconArrowDown = ({ size = 14 }) => <svg width={size} height={size} viewBox
 const IconGiftBox = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8"/><path d="M2 8h20v4H2z"/><path d="M12 8v13"/><path d="M12 8S10.5 3.5 7.5 4.2C5.7 4.6 5.6 7 7.2 7.6 9 8.2 12 8 12 8z"/><path d="M12 8s1.5-4.5 4.5-3.8C18.3 4.6 18.4 7 16.8 7.6 15 8.2 12 8 12 8z"/></svg>;
 const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
 const IconXLogo = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>;
+const IconInfo = ({ size = 15 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
@@ -484,6 +499,7 @@ const LEGAL = {
     ["How do I contact support?", "Use the Support row in this Profile tab, or message the builder directly."],
   ],
   terms: [
+    ["No affiliation", "GiftTrove is an independent, third-party tool. It is not affiliated with, endorsed by, sponsored by, or officially connected to Telegram, the TON Foundation, Fragment, GetGems, or any other marketplace. All product names, trademarks, gift artwork, and collectible designs belong to their respective owners and are referenced for identification only."],
     ["Informational service only", "Everything shown in GiftTrove, prices, rarity, supply, trends, is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
     ["Data accuracy", "Listing data is retrieved live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and we accept no liability for decisions made based on displayed data."],
     ["Third-party transactions", "Purchases made after tapping through to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, earns nothing from them, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
@@ -818,7 +834,7 @@ const T = {
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
-    select_gift_first: "Select a gift collection first to see its", attrs_loading: "Fetching this gift\u2019s attributes \u2014 just a few seconds\u2026", soon: "soon", x_account: "X (Twitter)", frag_attr_note: "Attribute selection is not available for Fragment. Proceed to scout.",
+    select_gift_first: "Select a gift collection first to see its", attrs_loading: "Fetching this gift\u2019s attributes \u2014 just a few seconds\u2026", soon: "soon", soon_title: "Coming soon", soon_note: "This marketplace isn\u2019t live in GiftTrove yet. It\u2019s being worked on \u2014 but it isn\u2019t guaranteed, and there\u2019s no set date.", got_it: "Got it", x_account: "X (Twitter)", frag_attr_note: "Attribute selection is not available for Fragment. Proceed to scout.",
     no_alerts: "No alerts yet", alerts_hint: "Add a gift to your watchlist and get pinged when it lists below your price.",
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
@@ -846,7 +862,7 @@ const T = {
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
-    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть", attrs_loading: "Загружаем параметры подарка — пара секунд…", soon: "скоро", x_account: "X (Twitter)", frag_attr_note: "Выбор атрибутов недоступен для Fragment. Продолжайте поиск.",
+    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть", attrs_loading: "Загружаем параметры подарка — пара секунд…", soon: "скоро", soon_title: "Скоро", soon_note: "Этот маркетплейс пока недоступен в GiftTrove. Мы работаем над этим — но это не гарантировано, и точной даты нет.", got_it: "Понятно", x_account: "X (Twitter)", frag_attr_note: "Выбор атрибутов недоступен для Fragment. Продолжайте поиск.",
     no_alerts: "Пока нет алертов", alerts_hint: "Добавьте подарок в список наблюдения и получайте уведомление о выгодной цене.",
     add_alert: "Добавить алерт", watchlist: "Список наблюдения",
     no_saved: "Пока нет сохранённых подарков.",
@@ -874,7 +890,7 @@ const T = {
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
-    select_gift_first: "请先选择礼物系列以查看其", attrs_loading: "正在获取该礼物的属性，请稍候几秒…", soon: "即将推出", x_account: "X (Twitter)", frag_attr_note: "Fragment 不支持属性筛选。直接开始搜索即可。",
+    select_gift_first: "请先选择礼物系列以查看其", attrs_loading: "正在获取该礼物的属性，请稍候几秒…", soon: "即将推出", soon_title: "敬请期待", soon_note: "该市场尚未在 GiftTrove 上线。正在开发中——但不保证上线，也没有确定日期。", got_it: "知道了", x_account: "X (Twitter)", frag_attr_note: "Fragment 不支持属性筛选。直接开始搜索即可。",
     no_alerts: "暂无提醒", alerts_hint: "将礼物加入关注列表，当价格低于你的设定时获得提醒。",
     add_alert: "添加提醒", watchlist: "关注列表",
     no_saved: "暂无收藏的礼物。",
@@ -1112,8 +1128,15 @@ const styles = `
   .select-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 20px; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); font-size: 17px; font-weight: 500; cursor: pointer; color: var(--text-primary); transition: transform 0.2s var(--bounce), background 0.2s; }
   .select-btn:active { transform: scale(0.98); background: var(--bg-hover); }
   .select-btn:disabled { opacity: 0.5; }
-  .chip-soon { opacity: 0.45; cursor: default; pointer-events: none; position: relative; }
+  .chip-soon { opacity: 0.5; cursor: default; position: relative; }
   .chip-soon-tag { margin-left: 6px; font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.8; vertical-align: middle; }
+  .chip-info { display: inline-flex; align-items: center; margin-left: 5px; opacity: 0.85; cursor: pointer; vertical-align: middle; }
+  .chip-info:active { opacity: 0.5; }
+  .note-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(3px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 32px; animation: fadeIn .2s ease; }
+  .note-pop { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 20px; padding: 20px 22px; max-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: toastIn .3s var(--bounce); }
+  .note-pop-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+  .note-pop-body { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+  .note-pop-btn { margin-top: 16px; width: 100%; border: none; background: var(--accent-grad); color: #fff; font-weight: 700; font-size: 14px; padding: 11px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); }
   .select-val { color: var(--tg-blue); font-weight: 600; display: flex; align-items: center; gap: 4px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .chips-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
@@ -1188,7 +1211,7 @@ const styles = `
   .page-header { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
   .page-header.desktop { font-size: 40px; }
 
-  .toast { position: fixed; top: calc(20px + var(--safe-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; z-index: 9998; backdrop-filter: blur(10px); animation: toastIn 0.3s var(--bounce); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .toast { position: fixed; top: calc(20px + var(--safe-top)); left: 50%; transform: translateX(-50%); white-space: nowrap; max-width: calc(100vw - 32px); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; z-index: 9998; backdrop-filter: blur(10px); animation: toastIn 0.3s var(--bounce); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
 
   @keyframes fadeIn { to { opacity: 1; } }
   @keyframes slideUp { to { transform: translateY(0); } }
@@ -1447,6 +1470,18 @@ const styles = `
   .admin-action-2:hover { border-color: var(--accent); }
   .admin-action-2:active { transform: scale(0.98); }
   .admin-foot { text-align: center; font-size: 11.5px; color: var(--text-secondary); opacity: 0.65; margin-top: 18px; }
+  .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
+  .bc-text:focus, .bc-img:focus { outline: none; border-color: var(--accent); }
+  .bc-result { font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 12px; }
+  .bc-result.ok { background: rgba(48,209,88,0.14); color: #1f9d4d; }
+  .bc-result.err { background: rgba(255,55,95,0.14); color: #d12d4d; }
+  .bc-confirm { background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .bc-confirm-q { font-size: 14px; font-weight: 700; margin-bottom: 10px; text-align: center; }
+  .bc-confirm-row { display: flex; gap: 10px; }
+  .bc-cancel { flex: 1; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 700; font-size: 14px; padding: 11px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); }
+  .bc-note { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
   .admin-tabs { display: flex; gap: 6px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
   .admin-tab { flex: 1; border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13.5px; padding: 9px 0; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .25s var(--spring); }
   .admin-tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
@@ -1564,6 +1599,11 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const [tab, setTab] = useState("overview");
   const [range, setRange] = useState("7d");
   const [barW, setBarW] = useState(14);
+  const [bcMsg, setBcMsg] = useState("");
+  const [bcImg, setBcImg] = useState("");
+  const [bcSending, setBcSending] = useState(false);
+  const [bcResult, setBcResult] = useState(null);
+  const [bcConfirm, setBcConfirm] = useState(false);
 
   const load = useCallback((rng) => {
     setLoading(true);
@@ -1595,14 +1635,24 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     { k: "avg_searches_per_member", label: "Avg / member", c: "#ff9f0a", raw: true },
   ];
   const top = (stats && stats.top_searches) || [];
-  const shares = (stats && stats.top_shares) || [];
   const [allSearches, setAllSearches] = useState(false);
-  const [allShares, setAllShares] = useState(false);
   const daily = (stats && stats.daily) || [];
   const labels = (stats && stats.labels) || [];
   const maxDaily = Math.max(1, ...daily.map((d) => Math.max(d.opens || 0, d.searches || 0)));
   const ranges = [["7d", "7 days"], ["12w", "12 weeks"], ["24m", "24 months"], ["all", "All time"]];
   const rangeLabel = (ranges.find(([id]) => id === range) || [null, "7 days"])[1];
+
+  const sendBroadcast = () => {
+    if (!bcMsg.trim() && !bcImg.trim()) return;
+    setBcSending(true); setBcResult(null);
+    api("/api/broadcast", { method: "POST", body: { text: bcMsg, image_url: bcImg.trim() || undefined }, timeout: 20000 })
+      .then((r) => {
+        if (r?.ok) { setBcResult({ ok: true, n: r.recipients }); setBcMsg(""); setBcImg(""); }
+        else setBcResult({ ok: false, err: r?.error || "failed" });
+      })
+      .catch(() => setBcResult({ ok: false, err: "network" }))
+      .finally(() => { setBcSending(false); setBcConfirm(false); });
+  };
 
   const Cards = ({ list }) => (
     <div className="admin-grid">
@@ -1641,15 +1691,6 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     </>
   );
 
-  const TopShares = () => (
-    <>
-      <div className="admin-section-title">Shared gifts — all, by times shared</div>
-      <RankList rows={shares} expanded={allShares} onToggle={() => setAllShares((v) => !v)}
-        emptyText="No shares recorded yet." defaultN={desktop ? 12 : 8} />
-    </>
-  );
-
-
   const Reach = () => (
     <>
       <div className="admin-section-title">Reach</div>
@@ -1662,7 +1703,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
     </>
   );
 
-  const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"]];
+  const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"], ["broadcast", "Broadcast"]];
 
   return (
     <div className={`admin-screen${desktop ? " desk" : ""}`}>
@@ -1695,7 +1736,6 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
             <div className="fade-in-up">
               <Cards list={overviewCards} />
               <TopSearches />
-              <TopShares />
             </div>
           )}
 
@@ -1714,7 +1754,42 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
           {tab === "growth" && (
             <div className="fade-in-up">
               <Cards list={growthCards} />
-              {desktop ? <div className="admin-2col"><TopShares /><Reach /></div> : <><TopShares /><Reach /></>}
+              <Reach />
+            </div>
+          )}
+
+          {tab === "broadcast" && (
+            <div className="fade-in-up">
+              <div className="admin-section-title">Broadcast to all users</div>
+              <div className="bc-wrap">
+                <div className="bc-count">{compactNum(g("bcast_count"))} recipients</div>
+                <textarea className="bc-text" rows={5} maxLength={4000}
+                  placeholder="Your message to all GiftTrove users…"
+                  value={bcMsg} onChange={(e) => setBcMsg(e.target.value)} />
+                <input className="bc-img" placeholder="Image URL (optional, https://…)"
+                  value={bcImg} onChange={(e) => setBcImg(e.target.value)} />
+                {bcResult && (
+                  <div className={`bc-result ${bcResult.ok ? "ok" : "err"}`}>
+                    {bcResult.ok
+                      ? `Sending to ${compactNum(bcResult.n)} users — you'll get a delivery summary by DM.`
+                      : `Couldn't send: ${bcResult.err}`}
+                  </div>
+                )}
+                {!bcConfirm ? (
+                  <button className="action-btn" disabled={bcSending || (!bcMsg.trim() && !bcImg.trim())}
+                    onClick={() => { haptic(); setBcConfirm(true); }}>Send broadcast</button>
+                ) : (
+                  <div className="bc-confirm">
+                    <div className="bc-confirm-q">Send to {compactNum(g("bcast_count"))} users now?</div>
+                    <div className="bc-confirm-row">
+                      <button className="bc-cancel" onClick={() => setBcConfirm(false)}>Cancel</button>
+                      <button className="action-btn" disabled={bcSending}
+                        onClick={() => { haptic(); sendBroadcast(); }}>{bcSending ? "Sending…" : "Confirm send"}</button>
+                    </div>
+                  </div>
+                )}
+                <div className="bc-note">Sends a Telegram DM from the bot to everyone who has opened the mini app and not cleared their data. Delivery is throttled automatically, and anyone who blocked the bot is skipped and dropped from the list.</div>
+              </div>
             </div>
           )}
 
@@ -1764,6 +1839,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [toast, setToast] = useState(null);
+  const [soonNote, setSoonNote] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
   const [activeSheet, setActiveSheet] = useState(null);
@@ -2707,6 +2783,7 @@ export default function App() {
                   className={`chip ${selectedMarkets.includes(m) ? "active" : ""} ${live ? "" : "chip-soon"}`}
                   onClick={live ? () => handleMarketToggle(m) : undefined}>
                   {m}{!live && <span className="chip-soon-tag">{t.soon}</span>}
+                  {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setSoonNote(true); }}><IconInfo /></span>}
                 </div>
               );
             })}
@@ -3007,6 +3084,15 @@ export default function App() {
         <style>{styles}</style>
         <GoldDefs />
         {toast && <div className="toast">{toast}</div>}
+        {soonNote && (
+          <div className="note-overlay" onClick={() => setSoonNote(false)}>
+            <div className="note-pop" onClick={(e) => e.stopPropagation()}>
+              <div className="note-pop-title">{t.soon_title}</div>
+              <div className="note-pop-body">{t.soon_note}</div>
+              <button className="note-pop-btn" onClick={() => setSoonNote(false)}>{t.got_it}</button>
+            </div>
+          </div>
+        )}
         {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
           <VoidGifts gifts={voidGifts} count={8} onPick={scoutGift} portal drift />
@@ -3042,6 +3128,15 @@ export default function App() {
         <GoldDefs />
       <div className="app-container" data-theme={theme}>
         {toast && <div className="toast">{toast}</div>}
+        {soonNote && (
+          <div className="note-overlay" onClick={() => setSoonNote(false)}>
+            <div className="note-pop" onClick={(e) => e.stopPropagation()}>
+              <div className="note-pop-title">{t.soon_title}</div>
+              <div className="note-pop-body">{t.soon_note}</div>
+              <button className="note-pop-btn" onClick={() => setSoonNote(false)}>{t.got_it}</button>
+            </div>
+          </div>
+        )}
         {consentOverlay}
 
         <div className="top-nav">
@@ -3053,11 +3148,15 @@ export default function App() {
         </div>
 
         <div className="content ptr-container" ref={contentRef}
-          onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-          style={{ paddingTop: pullY > 0 ? pullY : 0, transition: pullY === 0 ? "padding-top 0.3s" : "none" }}>
-          <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`} style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
-            <div className="ptr-spinner-wrap"><IconRefresh spinning={isRefreshing} trigger={pullY > 50 ? 1 : 0} size={26} /></div>
-          </div>
+          onTouchStart={ptrOff() ? undefined : handleTouchStart}
+          onTouchMove={ptrOff() ? undefined : handleTouchMove}
+          onTouchEnd={ptrOff() ? undefined : handleTouchEnd}
+          style={{ paddingTop: !ptrOff() && pullY > 0 ? pullY : 0, transition: pullY === 0 ? "padding-top 0.3s" : "none" }}>
+          {!ptrOff() && (
+            <div className={`ptr-indicator ${isRefreshing || pullY > 40 ? "visible" : ""}`} style={{ top: isRefreshing ? 8 : pullY > 50 ? 8 : -60 }}>
+              <div className="ptr-spinner-wrap"><IconRefresh spinning={isRefreshing} trigger={pullY > 50 ? 1 : 0} size={26} /></div>
+            </div>
+          )}
           {renderActiveTab(false)}
         </div>
 
