@@ -294,17 +294,13 @@ const TGStar = ({ size = 16 }) => (
   </svg>
 );
 
-// The GRAM mark — a faceted gem (inline SVG so it renders instantly, no image load).
-const GramMark = ({ size = 15 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
-    style={{ display: "inline-block", verticalAlign: "-0.13em", flexShrink: 0, filter: "drop-shadow(0 1px 1.5px rgba(90,80,210,0.35))" }}>
-    <path d="M3 9 L8 4 H16 L21 9 L12 21 Z" fill="#7e7cf0" />
-    <path d="M3 9 L8 4 H16 L21 9 Z" fill="#a6a4f9" />
-    <path d="M8 4 L12 9 L16 4 Z" fill="#cfcffd" />
-    <path d="M3 9 L12 9 L12 21 Z" fill="#6f6ddb" />
-    <g stroke="rgba(255,255,255,0.45)" strokeWidth="0.5" fill="none" strokeLinejoin="round">
-      <path d="M3 9 H21 M8 4 L12 9 L16 4 M12 9 V21" />
-    </g>
+// The GRAM mark — the official Telegram GRAM gem, traced exactly from Telegram’s own
+// emoji (blue diamond + white sparkle). Inline SVG so it stays crisp at any size, no image load.
+const GramMark = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 4 101 89" aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.18em", flexShrink: 0 }}>
+    <path d="M66.71 9C66.71 9 34.57 9 34.57 9C30.29 9 28.14 9 26.21 9.6C24.49 10.13 22.9 11 21.53 12.15C19.98 13.45 18.82 15.25 16.51 18.85C16.51 18.85 6.29 34.73 6.29 34.73C4.76 37.11 3.99 38.3 3.79 39.55C3.6 40.66 3.73 41.79 4.14 42.83C4.61 44.01 5.61 45 7.61 47C7.61 47 45.58 84.94 45.58 84.94C47.35 86.71 48.24 87.6 49.26 87.93C50.16 88.22 51.12 88.22 52.02 87.93C53.04 87.6 53.93 86.71 55.7 84.94C55.7 84.94 93.67 47 93.67 47C95.67 45 96.67 44.01 97.14 42.83C97.56 41.79 97.68 40.66 97.49 39.55C97.29 38.3 96.52 37.11 94.99 34.73C94.99 34.73 84.77 18.85 84.77 18.85C82.46 15.25 81.3 13.45 79.75 12.15C78.38 11 76.79 10.13 75.07 9.6C73.14 9 70.99 9 66.71 9Z" fill="#30A1F5" />
+    <path d="M60.63 21.53C61.15 20.12 63.15 20.12 63.67 21.53C63.67 21.53 67.28 31.28 67.28 31.28C67.5 31.86 67.96 32.32 68.54 32.54C68.54 32.54 78.3 36.15 78.3 36.15C79.71 36.67 79.71 38.66 78.3 39.18C78.3 39.18 68.54 42.79 68.54 42.79C67.96 43.01 67.5 43.47 67.28 44.05C67.28 44.05 63.67 53.8 63.67 53.8C63.15 55.21 61.15 55.21 60.63 53.8C60.63 53.8 57.02 44.05 57.02 44.05C56.8 43.47 56.34 43.01 55.75 42.79C55.75 42.79 46 39.18 46 39.18C44.59 38.66 44.59 36.67 46 36.15C46 36.15 55.75 32.54 55.75 32.54C56.34 32.32 56.8 31.86 57.02 31.28C57.02 31.28 60.63 21.53 60.63 21.53Z" fill="#fff" />
   </svg>
 );
 
@@ -1645,7 +1641,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const sendBroadcast = () => {
     if (!bcMsg.trim() && !bcImg.trim()) return;
     setBcSending(true); setBcResult(null);
-    api("/api/broadcast", { method: "POST", body: { text: bcMsg, image_url: bcImg.trim() || undefined }, timeout: 20000 })
+    api(`/api/broadcast?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`, { method: "POST", body: { text: bcMsg, image_url: bcImg.trim() || undefined }, timeout: 20000 })
       .then((r) => {
         if (r?.ok) { setBcResult({ ok: true, n: r.recipients }); setBcMsg(""); setBcImg(""); }
         else setBcResult({ ok: false, err: r?.error || "failed" });
