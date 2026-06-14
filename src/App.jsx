@@ -70,6 +70,7 @@ const COMMUNITY = {
   channel: "https://t.me/gifttrove",
   insideMajek: "https://t.me/insidemajek",
   otc: "https://t.me/troveotc",
+  x: "https://x.com/gifttrove",
   support: "https://t.me/GiftTrove?direct",
 };
 
@@ -86,7 +87,7 @@ const FALLBACK_COLLECTIONS = [
 const MARKETPLACES = ["All", "Telegram", "GetGems", "Portals", "MRKT", "Tonnel", "Fragment"];
 // Markets we have real listing data for (you have a GetGems key; Telegram-native via MTProto).
 // The others get a "view" link only — never a fake price.
-const LIVE_MARKETS = new Set(["Telegram", "GetGems"]);
+const LIVE_MARKETS = new Set(["Telegram", "Fragment"]);  // live & clickable; others show "soon"
 
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
@@ -310,6 +311,7 @@ const IconArrowUp = ({ size = 14 }) => <svg width={size} height={size} viewBox="
 const IconArrowDown = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>;
 const IconGiftBox = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8"/><path d="M2 8h20v4H2z"/><path d="M12 8v13"/><path d="M12 8S10.5 3.5 7.5 4.2C5.7 4.6 5.6 7 7.2 7.6 9 8.2 12 8 12 8z"/><path d="M12 8s1.5-4.5 4.5-3.8C18.3 4.6 18.4 7 16.8 7.6 15 8.2 12 8 12 8z"/></svg>;
 const IconHeart = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+const IconXLogo = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
 const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
@@ -816,7 +818,7 @@ const T = {
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
-    select_gift_first: "Select a gift collection first to see its", frag_attr_note: "Attribute selection is not available for Fragment. Proceed to scout.",
+    select_gift_first: "Select a gift collection first to see its", attrs_loading: "Fetching this gift\u2019s attributes \u2014 just a few seconds\u2026", soon: "soon", x_account: "X (Twitter)", frag_attr_note: "Attribute selection is not available for Fragment. Proceed to scout.",
     no_alerts: "No alerts yet", alerts_hint: "Add a gift to your watchlist and get pinged when it lists below your price.",
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
@@ -844,7 +846,7 @@ const T = {
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
-    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть", frag_attr_note: "Выбор атрибутов недоступен для Fragment. Продолжайте поиск.",
+    select_gift_first: "Сначала выберите коллекцию, чтобы увидеть", attrs_loading: "Загружаем параметры подарка — пара секунд…", soon: "скоро", x_account: "X (Twitter)", frag_attr_note: "Выбор атрибутов недоступен для Fragment. Продолжайте поиск.",
     no_alerts: "Пока нет алертов", alerts_hint: "Добавьте подарок в список наблюдения и получайте уведомление о выгодной цене.",
     add_alert: "Добавить алерт", watchlist: "Список наблюдения",
     no_saved: "Пока нет сохранённых подарков.",
@@ -872,7 +874,7 @@ const T = {
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
-    select_gift_first: "请先选择礼物系列以查看其", frag_attr_note: "Fragment 不支持属性筛选。直接开始搜索即可。",
+    select_gift_first: "请先选择礼物系列以查看其", attrs_loading: "正在获取该礼物的属性，请稍候几秒…", soon: "即将推出", x_account: "X (Twitter)", frag_attr_note: "Fragment 不支持属性筛选。直接开始搜索即可。",
     no_alerts: "暂无提醒", alerts_hint: "将礼物加入关注列表，当价格低于你的设定时获得提醒。",
     add_alert: "添加提醒", watchlist: "关注列表",
     no_saved: "暂无收藏的礼物。",
@@ -1110,6 +1112,8 @@ const styles = `
   .select-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 20px; border-radius: var(--radius-lg); background: var(--bg-card); border: 1px solid var(--border); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); font-size: 17px; font-weight: 500; cursor: pointer; color: var(--text-primary); transition: transform 0.2s var(--bounce), background 0.2s; }
   .select-btn:active { transform: scale(0.98); background: var(--bg-hover); }
   .select-btn:disabled { opacity: 0.5; }
+  .chip-soon { opacity: 0.45; cursor: default; pointer-events: none; position: relative; }
+  .chip-soon-tag { margin-left: 6px; font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.8; vertical-align: middle; }
   .select-val { color: var(--tg-blue); font-weight: 600; display: flex; align-items: center; gap: 4px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .chips-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
@@ -1985,21 +1989,26 @@ export default function App() {
   }, [savedGifts]);
 
   // ── load live collections (dynamic; no hardcoding) ──
+  // New users have no cached catalog, so the floating gifts depend entirely on
+  // this fetch. Render's free tier can be cold (30–60s), so retry persistently
+  // instead of giving up — otherwise a first-time visitor sees an empty stage.
   useEffect(() => {
     let alive = true;
-    api("/api/collections", { timeout: 25000 })
+    const tryFetch = (attempt) => api("/api/collections", { timeout: 25000 })
       .then((d) => {
-        if (alive && d?.collections?.length) {
+        if (!alive) return;
+        if (d?.collections?.length) {
           setCollections(d.collections);
           try {
             const blob = JSON.stringify(d.collections);
             if (blob.length < 3500000) localStorage.setItem("gt_collections", blob);
           } catch { /* storage full: skip */ }
-        } else if (alive) {
-          setTimeout(() => { if (alive) api("/api/collections", { timeout: 25000 }).then((d2) => { if (alive && d2?.collections?.length) setCollections(d2.collections); }).catch(() => {}); }, 5000);
+        } else if (attempt < 6) {
+          setTimeout(() => { if (alive) tryFetch(attempt + 1); }, 4000);
         }
       })
-      .catch(() => { /* falls back to FALLBACK_COLLECTIONS */ });
+      .catch(() => { if (alive && attempt < 6) setTimeout(() => { if (alive) tryFetch(attempt + 1); }, 4000); });
+    tryFetch(1);
     return () => { alive = false; };
   }, []);
 
@@ -2159,15 +2168,18 @@ export default function App() {
     return () => { cancelAnimationFrame(raf); clearTimeout(t1); ro?.disconnect(); window.removeEventListener("resize", measure); };
   }, [activeTab, lang, keyboardOpen, booting]);
 
-  // ── pull to refresh ──
-  const handleTouchStart = (e) => { if (contentRef.current?.scrollTop === 0) touchStartY.current = e.touches[0].clientY; };
+  // ── pull to refresh (disabled on Scout & Saved — they scroll natively) ──
+  const ptrOff = () => activeTab === "scout" || activeTab === "saved";
+  const handleTouchStart = (e) => { if (ptrOff()) return; if (contentRef.current?.scrollTop === 0) touchStartY.current = e.touches[0].clientY; };
   const handleTouchMove = (e) => {
+    if (ptrOff()) return;
     if (contentRef.current?.scrollTop === 0) {
       const dy = e.touches[0].clientY - touchStartY.current;
       if (dy > 0) setPullY(Math.min(dy, 80));
     }
   };
   const handleTouchEnd = () => {
+    if (ptrOff()) { if (pullY) setPullY(0); return; }
     if (pullY > 50) {
       setIsRefreshing(true); haptic();
       // re-pull live collections on refresh
@@ -2573,7 +2585,7 @@ export default function App() {
             <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
-                {t.select_gift_first} {isModel ? t.model.toLowerCase() : t.symbol.toLowerCase()}
+                {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${isModel ? t.model.toLowerCase() : t.symbol.toLowerCase()}`}
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
@@ -2618,7 +2630,7 @@ export default function App() {
             <div className="sheet-title">{t.backdrop}</div>
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
-                {t.select_gift_first} {t.backdrop.toLowerCase()}
+                {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${t.backdrop.toLowerCase()}`}
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
@@ -2688,9 +2700,16 @@ export default function App() {
         <div className="input-group">
           <div className="section-label">{t.marketplaces}</div>
           <div className="chips-grid">
-            {MARKETPLACES.map((m) => (
-              <div key={m} className={`chip ${selectedMarkets.includes(m) ? "active" : ""}`} onClick={() => handleMarketToggle(m)}>{m}</div>
-            ))}
+            {MARKETPLACES.map((m) => {
+              const live = m === "All" || LIVE_MARKETS.has(m);
+              return (
+                <div key={m}
+                  className={`chip ${selectedMarkets.includes(m) ? "active" : ""} ${live ? "" : "chip-soon"}`}
+                  onClick={live ? () => handleMarketToggle(m) : undefined}>
+                  {m}{!live && <span className="chip-soon-tag">{t.soon}</span>}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -2834,6 +2853,10 @@ export default function App() {
       <div className="ios-group">
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.channel)}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconGlobe /></div>{t.comm_channel}</div>
+          <IconChevronRight />
+        </div>
+        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.x)}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#000" }}><IconXLogo /></div>{t.x_account}</div>
           <IconChevronRight />
         </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
