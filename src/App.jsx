@@ -487,6 +487,7 @@ const LEGAL = {
     ["What is GiftTrove?", "GiftTrove is a Telegram Mini App that lets you scout, compare, and track collectible Telegram gifts listed across marketplaces. We show you listings, we do not buy, sell, hold, or custody any gifts or funds on your behalf."],
     ["Is GiftTrove free to use?", "Yes. Scouting and browsing are completely free. If you choose to purchase a gift through a marketplace, that transaction happens directly between you and that marketplace."],
     ["Does buying through GiftTrove earn GiftTrove anything?", "No. GiftTrove receives no commission, fee, or credit from any purchase you make. Tapping through to a marketplace is a plain redirect, the full amount of your purchase goes through that marketplace as if you had visited it directly."],
+    ["Are the promoted apps in GiftTrove ads?", "The banners and promoted apps shown in the Profile area are promotional, and some are affiliate links where the operator may earn a referral reward if you sign up or interact with them. They are kept clearly separate from gift scouting, and tapping a gift through to a marketplace stays a plain, commission-free redirect."],
     ["Do you store my personal data?", "We store an anonymised identifier (not your name, username, or phone number) purely to count unique visitors and keep your saved gifts in sync across devices. We never sell or share this data. See the Privacy Policy for the full picture."],
     ["Why do some gifts show no listings?", "A gift collection may simply have no active resale listings at the moment you search. Listings update in near real-time, if nothing shows, nothing is listed right now."],
     ["Are the prices shown accurate?", "Prices reflect active marketplace listings at the time of your search. They are informational only, not advice, valuations, or guarantees, and can change before you complete a purchase."],
@@ -500,6 +501,9 @@ const LEGAL = {
     ["Informational service only", "Everything shown in GiftTrove, prices, rarity, supply, trends, is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
     ["Data accuracy", "Listing data is retrieved live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and we accept no liability for decisions made based on displayed data."],
     ["Third-party transactions", "Purchases made after tapping through to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, earns nothing from them, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
+    ["Affiliate and promotional links", "Some areas of GiftTrove feature third-party apps and services through promotional or affiliate links. When you open one, the operator may receive a referral reward or commission from that third party. These placements are separate from gift-marketplace redirects, which remain commission-free as described above. Promotional placement is not an endorsement, and any dealings you have with those third parties are at your own risk and governed by their own terms."],
+    ["Referral program", "You may be given a personal referral link and code. Referrals are recorded for tracking. Any rewards, if introduced, are discretionary and may be changed or withdrawn at any time. Generating referrals through fake, automated, or otherwise abusive accounts is not permitted and may result in removal."],
+    ["Notifications", "GiftTrove may occasionally send you messages through the bot, such as product updates or announcements. You can opt out at any time using Clear my data in the Profile tab, which also stops these messages."],
     ["No custody", "GiftTrove never holds, transfers, or controls your gifts, TON, Stars, or any digital assets."],
     ["Donations", "Donations made through the app are voluntary, non-refundable, and carry no expectation of service, reward, or anything in return."],
     ["Acceptable use", "You agree not to scrape data, disrupt or overload the service, or use GiftTrove for any unlawful purpose."],
@@ -514,6 +518,7 @@ const LEGAL = {
     ["How data is processed", "Data is processed on reputable third-party hosting and database infrastructure under industry-standard protections. Marketplace links open third-party platforms governed by their own privacy policies."],
     ["Retention", "Aggregate, anonymised analytics are retained to improve the product. Your saved gifts and searches persist so they can follow you across devices."],
     ["Your rights", "You are in control. You can delete your data yourself at any time with the Clear my data option at the bottom of the Profile tab, which removes your synced data instantly. You can also reach Support for anything else."],
+    ["Messaging and opt-out", "If you have interacted with the GiftTrove bot, we may occasionally send you announcements or product updates through it. Using Clear my data removes your synced data and opts you out of any further messages."],
     ["Changes", "We may update this policy as the product evolves; continued use after an update constitutes acceptance."],
   ],
 };
@@ -1620,7 +1625,8 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
 
   useEffect(() => { if (adminCode) load(range); /* eslint-disable-next-line */ }, [range, adminCode]);
 
-  const forbidden = !!(stats && stats.error === "forbidden");
+  const forbidden = !!(stats && stats.error);
+  const authed = !!(stats && !stats.error);   // only true once the server returns real data
   const unlock = () => { if (!codeInput.trim()) return; haptic(); setStats(null); setAdminCode(codeInput.trim()); };
 
   const g = (k) => (stats && stats[k]) || 0;
@@ -1713,7 +1719,8 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
 
   const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"], ["broadcast", "Broadcast"]];
 
-  if (!adminCode || forbidden) {
+  if (!authed) {
+    const checking = loading && !!adminCode;
     return (
       <div className={`admin-screen${desktop ? " desk" : ""}`}>
         <div className="admin-gate-wrap">
@@ -1723,8 +1730,8 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
           <input className="ios-input" type="password" inputMode="text" autoComplete="off"
             value={codeInput} onChange={(e) => setCodeInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") unlock(); }} placeholder="Admin code" />
-          {forbidden && <div className="admin-gate-err">That code wasn\u2019t accepted. Try again.</div>}
-          <button className="action-btn" onClick={unlock}>Unlock</button>
+          {forbidden && !checking && <div className="admin-gate-err">That code wasn’t accepted. Try again.</div>}
+          <button className="action-btn" onClick={unlock} disabled={checking}>{checking ? "Checking…" : "Unlock"}</button>
         </div>
       </div>
     );
@@ -2350,12 +2357,14 @@ export default function App() {
     setNextOffset("");
     setIsScouting(true);
     setActiveTab("results");   // results pop up in the next tab
+    const newSort = "default"; // a brand-new search always starts in General
+    setSortBy(newSort);
     const started = Date.now();
     try {
-      const p = buildSearchParams(sortBy, "");
+      const p = buildSearchParams(newSort, "");
       const q = giftQuery.trim();
       const known = collectionNames.some((n) => n.toLowerCase() === q.toLowerCase());
-      lastSearch.current = { sort: sortBy, query: q, known };
+      lastSearch.current = { sort: newSort, query: q, known };
       if (known) recordSearch(q);
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
@@ -2379,14 +2388,16 @@ export default function App() {
     setScoutError(null); setHasSearched(true); setResults([]); setNextOffset("");
     setIsScouting(true); setActiveTab("results");
     recordSearch(col.name);
+    const newSort = "default"; // a brand-new search always starts in General
+    setSortBy(newSort);
     try {
       const p = new URLSearchParams();
       p.set("gift", col.name);
       if (col.gift_id) p.set("gift_id", col.gift_id);
       if (col.slug) p.set("slug", col.slug);
       if (tgUser?.id) p.set("uid", tgUser.id);
-      p.set("sort", sortBy); p.set("limit", "100");
-      lastSearch.current = { sort: sortBy, query: col.name, known: true };
+      p.set("sort", newSort); p.set("limit", "100");
+      lastSearch.current = { sort: newSort, query: col.name, known: true };
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
       setNextOffset(d?.next_offset || "");
@@ -2976,10 +2987,6 @@ export default function App() {
         </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
-          <IconChevronRight />
-        </div>
-        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.otc)}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconSearch /></div>{t.gifttrove_otc}</div>
           <IconChevronRight />
         </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.support)}>
