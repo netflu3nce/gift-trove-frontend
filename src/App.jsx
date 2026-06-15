@@ -284,13 +284,14 @@ const GoldDefs = () => (
 );
 
 // The Telegram Star mark — a faceted gold star (no emoji).
+// The Telegram Star — traced exactly from Telegram’s own Star emoji (orange
+// outline + cream highlight + gold body with the signature crease). Inline SVG.
 const TGStar = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
-    style={{ display: "inline-block", verticalAlign: "-0.16em", flexShrink: 0, filter: "drop-shadow(0 1px 1.5px rgba(180,110,0,0.45))" }}>
-    <g transform="rotate(-6 12 12)">
-      <path d="M12 1.6l2.62 6.38 6.88.52-5.25 4.47 1.66 6.7L12 16.9 6.09 20.17l1.66-6.7L2.5 8.5l6.88-.52z" fill="url(#tgStarGold)" />
-      <path d="M12 1.6l2.62 6.38L12 8.2 9.38 7.98z" fill="#FFF4CE" opacity="0.65" />
-    </g>
+  <svg width={size} height={size} viewBox="6 6 60 60" aria-hidden="true"
+    style={{ display: "inline-block", verticalAlign: "-0.16em", flexShrink: 0, filter: "drop-shadow(0 1px 1.5px rgba(180,110,0,0.4))" }}>
+    <path d="M37.47 8.99C35.31 7.9 32.69 8.77 31.61 10.93C31.61 10.93 25.2 23.69 25.2 23.69C25.04 24.01 24.73 24.23 24.38 24.27C24.38 24.27 11.68 25.91 11.68 25.91C10.48 26.06 9.38 26.68 8.62 27.62C6.99 29.64 7.3 32.6 9.31 34.24C9.31 34.24 14.27 38.29 14.27 38.29C16.36 39.99 19.05 40.74 21.71 40.36C21.71 40.36 32.22 38.85 32.22 38.85C32.22 38.85 23.98 43.06 23.98 43.06C20.89 44.64 18.77 47.62 18.28 51.06C18.28 51.06 17.4 57.18 17.4 57.18C17.27 58.11 17.42 59.05 17.85 59.89C18.98 62.12 21.72 63.01 23.95 61.87C23.95 61.87 34.9 56.25 34.9 56.25C35.26 56.06 35.69 56.07 36.05 56.27C36.05 56.27 46.62 62.04 46.62 62.04C47.51 62.53 48.54 62.73 49.55 62.6C52.22 62.26 54.1 59.81 53.77 57.15C53.77 57.15 52.11 43.82 52.11 43.82C52.09 43.69 52.14 43.55 52.23 43.46C52.23 43.46 62.24 33.59 62.24 33.59C62.97 32.86 63.44 31.91 63.56 30.89C63.85 28.4 62.09 26.14 59.6 25.84C59.6 25.84 46.94 24.32 46.94 24.32C46.31 24.25 45.75 23.85 45.46 23.27C45.46 23.27 39.42 10.96 39.42 10.96C39 10.11 38.31 9.42 37.47 8.99Z" fill="#E5880D" />
+    <path d="M26.45 24.31C26.45 24.31 32.85 11.56 32.85 11.56C33.59 10.09 35.38 9.5 36.84 10.24C37.41 10.53 37.87 11 38.16 11.58C38.16 11.58 44.21 23.88 44.21 23.88C44.7 24.89 45.67 25.57 46.78 25.7C46.78 25.7 59.43 27.22 59.43 27.22C61.15 27.43 62.38 29 62.18 30.73C62.09 31.44 61.77 32.1 61.26 32.6C61.26 32.6 51.25 42.47 51.25 42.47C50.84 42.87 50.65 43.43 50.72 44C50.72 44 52.39 57.32 52.39 57.32C52.63 59.23 51.28 60.97 49.38 61.21C48.66 61.3 47.94 61.17 47.3 60.82C47.3 60.82 36.73 55.04 36.73 55.04C35.96 54.62 35.04 54.61 34.27 55.01C34.27 55.01 23.31 60.63 23.31 60.63C21.77 61.42 19.89 60.8 19.1 59.25C18.8 58.67 18.7 58.02 18.79 57.38C18.79 57.38 19.66 51.26 19.66 51.26C20.09 48.27 21.94 45.67 24.62 44.3C24.62 44.3 36.78 38.09 36.78 38.09C37.1 37.93 37.23 37.53 37.07 37.2C36.94 36.95 36.67 36.8 36.39 36.84C36.39 36.84 21.51 38.98 21.51 38.98C19.24 39.3 16.94 38.66 15.15 37.2C15.15 37.2 10.2 33.16 10.2 33.16C8.79 32.01 8.56 29.91 9.71 28.49C10.25 27.83 11.02 27.4 11.86 27.29C11.86 27.29 24.56 25.66 24.56 25.66C25.37 25.55 26.08 25.05 26.45 24.31Z" fill="#FCEFC4" />
+    <path d="M34.1 12.18C34.49 11.4 35.44 11.09 36.21 11.48C36.51 11.63 36.76 11.89 36.91 12.2C36.91 12.2 42.96 24.5 42.96 24.5C43.66 25.93 45.03 26.9 46.61 27.09C46.61 27.09 59.27 28.61 59.27 28.61C60.22 28.72 60.9 29.59 60.79 30.56C60.74 30.96 60.56 31.33 60.28 31.61C60.28 31.61 50.27 41.48 50.27 41.48C49.56 42.18 49.22 43.17 49.34 44.17C49.34 44.17 51 57.5 51 57.5C51.14 58.65 50.33 59.69 49.21 59.83C48.78 59.88 48.34 59.8 47.96 59.59C47.96 59.59 37.39 53.81 37.39 53.81C36.22 53.17 34.81 53.16 33.62 53.77C33.62 53.77 22.67 59.39 22.67 59.39C21.82 59.82 20.78 59.48 20.34 58.62C20.18 58.3 20.12 57.93 20.17 57.57C20.17 57.57 21.04 51.46 21.04 51.46C21.4 48.92 22.98 46.71 25.25 45.55C25.25 45.55 37.41 39.34 37.41 39.34C38.43 38.82 38.83 37.58 38.32 36.57C37.92 35.78 37.07 35.34 36.19 35.46C36.19 35.46 21.31 37.59 21.31 37.59C19.42 37.86 17.51 37.33 16.03 36.12C16.03 36.12 11.08 32.07 11.08 32.07C10.26 31.4 10.13 30.19 10.8 29.37C11.11 28.99 11.55 28.74 12.03 28.68C12.03 28.68 24.73 27.04 24.73 27.04C26.01 26.88 27.12 26.09 27.7 24.94Z" fill="#FFC83E" />
   </svg>
 );
 
@@ -822,7 +823,7 @@ function PromoBanner() {
 const T = {
   EN: {
     scout_tab: "Scout", results_tab: "Results", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
-    sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_connecting: "Connecting…", gate_neterr: "Couldn't reach the server (it may be waking up). Try again in a moment.", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
+    sort_general: "General", sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_connecting: "Connecting…", gate_neterr: "Couldn't reach the server (it may be waking up). Try again in a moment.", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
     fastest_way: "The fastest way to find any Telegram Gift",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
@@ -835,7 +836,7 @@ const T = {
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", data_cleared: "您的数据已清除", about_legal: "О приложении и право", data_cleared: "Ваши данные удалены", about_legal: "About and legal", data_cleared: "Your data was cleared",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", data_cleared: "您的数据已清除", data_clear_failed: "无法清除数据。请在 Telegram 中打开 GiftTrove 后重试。", about_legal: "О приложении и право", data_cleared: "Ваши данные удалены", data_clear_failed: "Не удалось удалить данные. Откройте GiftTrove в Telegram и повторите.", about_legal: "About and legal", data_cleared: "Your data was cleared", data_clear_failed: "Couldn\u2019t clear your data. Open GiftTrove inside Telegram and try again.",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
     amount_ton: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
@@ -850,7 +851,7 @@ const T = {
   },
   RU: {
     scout_tab: "Поиск", results_tab: "Итоги", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
-    sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_connecting: "Подключение…", gate_neterr: "Не удалось связаться с сервером (возможно, он просыпается). Повторите попытку.", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
+    sort_general: "Обычный", sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_connecting: "Подключение…", gate_neterr: "Не удалось связаться с сервером (возможно, он просыпается). Повторите попытку.", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
     fastest_way: "Самый быстрый способ найти любой Telegram подарок",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
@@ -878,7 +879,7 @@ const T = {
   },
   ZH: {
     scout_tab: "侦测", results_tab: "结果", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
-    sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_connecting: "连接中…", gate_neterr: "无法连接服务器（可能正在唤醒）。请稍后重试。", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
+    sort_general: "综合", sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_connecting: "连接中…", gate_neterr: "无法连接服务器（可能正在唤醒）。请稍后重试。", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
     fastest_way: "查找任何 Telegram 礼物的最快方法",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
@@ -1129,7 +1130,7 @@ const styles = `
   .chip-info { display: inline-flex; align-items: center; margin-left: 5px; opacity: 0.85; cursor: pointer; vertical-align: middle; }
   .chip-info:active { opacity: 0.5; }
   .note-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(3px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 32px; animation: fadeIn .2s ease; }
-  .note-pop { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 20px; padding: 20px 22px; max-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: toastIn .3s var(--bounce); }
+  .note-pop { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 20px; padding: 20px 22px; max-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: popIn .26s var(--bounce); transform-origin: center; }
   .note-pop-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
   .note-pop-body { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
   .note-pop-btn { margin-top: 16px; width: 100%; border: none; background: var(--accent-grad); color: #fff; font-weight: 700; font-size: 14px; padding: 11px 0; border-radius: 12px; cursor: pointer; font-family: var(--font); }
@@ -1214,6 +1215,7 @@ const styles = `
   .fade-in-up { animation: fadeInUp 0.5s var(--bounce) forwards; }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
   @media (min-width: 768px) { .mobile-only { display: none !important; } }
   @media (max-width: 767px) { .desktop-only { display: none !important; } }
@@ -1466,6 +1468,10 @@ const styles = `
   .admin-action-2:hover { border-color: var(--accent); }
   .admin-action-2:active { transform: scale(0.98); }
   .admin-foot { text-align: center; font-size: 11.5px; color: var(--text-secondary); opacity: 0.65; margin-top: 18px; }
+  .admin-gate-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; max-width: 340px; margin: 0 auto; padding: 24px; text-align: center; }
+  .admin-gate-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: var(--text-primary); }
+  .admin-gate-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+  .admin-gate-err { font-size: 13px; color: #d12d4d; font-weight: 600; margin-top: 12px; }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
   .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
@@ -1600,16 +1606,22 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const [bcSending, setBcSending] = useState(false);
   const [bcResult, setBcResult] = useState(null);
   const [bcConfirm, setBcConfirm] = useState(false);
+  const [adminCode, setAdminCode] = useState("");   // secret admin code (entered each session, never shipped)
+  const [codeInput, setCodeInput] = useState("");
 
   const load = useCallback((rng) => {
+    if (!adminCode) { setLoading(false); return; }
     setLoading(true);
-    api(`/api/analytics?range=${rng || range}&uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`)
+    api(`/api/analytics?range=${rng || range}&uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(adminCode)}`)
       .then((d) => setStats(d || {}))
       .catch(() => setStats({}))
       .finally(() => setLoading(false));
-  }, [uid, code, range]);
+  }, [uid, adminCode, range]);
 
-  useEffect(() => { load(range); /* eslint-disable-next-line */ }, [range]);
+  useEffect(() => { if (adminCode) load(range); /* eslint-disable-next-line */ }, [range, adminCode]);
+
+  const forbidden = !!(stats && stats.error === "forbidden");
+  const unlock = () => { if (!codeInput.trim()) return; haptic(); setStats(null); setAdminCode(codeInput.trim()); };
 
   const g = (k) => (stats && stats[k]) || 0;
   const overviewCards = [
@@ -1641,7 +1653,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const sendBroadcast = () => {
     if (!bcMsg.trim() && !bcImg.trim()) return;
     setBcSending(true); setBcResult(null);
-    api(`/api/broadcast?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code || "")}`, { method: "POST", body: { text: bcMsg, image_url: bcImg.trim() || undefined }, timeout: 20000 })
+    api(`/api/broadcast?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(adminCode)}`, { method: "POST", body: { text: bcMsg, image_url: bcImg.trim() || undefined }, timeout: 20000 })
       .then((r) => {
         if (r?.ok) { setBcResult({ ok: true, n: r.recipients }); setBcMsg(""); setBcImg(""); }
         else setBcResult({ ok: false, err: r?.error || "failed" });
@@ -1700,6 +1712,23 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   );
 
   const tabs = [["overview", "Overview"], ["activity", "Activity"], ["growth", "Growth"], ["broadcast", "Broadcast"]];
+
+  if (!adminCode || forbidden) {
+    return (
+      <div className={`admin-screen${desktop ? " desk" : ""}`}>
+        <div className="admin-gate-wrap">
+          <div className="logo-tile" style={{ marginBottom: 18 }}><img src={LOGO_URL} alt="GiftTrove" /></div>
+          <div className="admin-gate-title">Analytics access</div>
+          <div className="admin-gate-sub">Enter the admin code to continue.</div>
+          <input className="ios-input" type="password" inputMode="text" autoComplete="off"
+            value={codeInput} onChange={(e) => setCodeInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") unlock(); }} placeholder="Admin code" />
+          {forbidden && <div className="admin-gate-err">That code wasn\u2019t accepted. Try again.</div>}
+          <button className="action-btn" onClick={unlock}>Unlock</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`admin-screen${desktop ? " desk" : ""}`}>
@@ -1826,6 +1855,7 @@ export default function App() {
 
   const refKey = `gt_ref_count_${tgUser?.id || "guest"}`;
   const [referralCount, setReferralCount] = useState(() => parseInt(localStorage.getItem(refKey) || "0", 10));
+  const [myRefCode, setMyRefCode] = useState("");   // friendly referral code (e.g. 888OG) from the server
 
   // Persisted search (survives a full reload; only replaced by a new search).
   const savedSearch = useMemo(() => {
@@ -1854,7 +1884,9 @@ export default function App() {
     }
     clearTimeout(clearTimerRef.current);
     setClearArmed(false);
-    try { await api("/api/userdata/clear", { method: "POST" }); } catch { /* still clear locally */ }
+    let cleared = false;
+    try { const r = await api("/api/userdata/clear", { method: "POST" }); cleared = !!(r && r.ok); } catch { cleared = false; }
+    if (!cleared) { showToast(t.data_clear_failed); return; }
     try {
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
@@ -1886,7 +1918,7 @@ export default function App() {
   const [selectedGift, setSelectedGift] = useState(null);
 
   // results / sorting / pagination
-  const [sortBy, setSortBy] = useState(savedSearch.sortBy || "price_asc");      // price_asc | price_desc
+  const [sortBy, setSortBy] = useState(savedSearch.sortBy || "default");        // default (general) | price_asc | price_desc
   const [nextOffset, setNextOffset] = useState(savedSearch.nextOffset || "");
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(!!savedSearch.hasSearched);
@@ -2169,6 +2201,11 @@ export default function App() {
       .then((d) => { if (typeof d?.count === "number") { setReferralCount(d.count); localStorage.setItem(refKey, String(d.count)); } })
       .catch(() => { /* keep local cache */ });
 
+    // Fetch this member's friendly referral code (e.g. 888OG) for sharing.
+    api(`/api/refcode?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
+      .then((d) => { if (d?.code) setMyRefCode(d.code); })
+      .catch(() => { /* fall back to the derived code */ });
+
     const param = tg?.initDataUnsafe?.start_param || "";
     let refCode = param;
     // Gift deep-link: g_<slug>_<refcode>  ->  open that gift + read the ref code
@@ -2183,9 +2220,10 @@ export default function App() {
           .catch(() => {});
       }
     }
-    const referrer = decodeRef(refCode);
-    if (referrer && referrer !== String(tgUser?.id)) {
-      api("/api/referral", { method: "POST", body: { uid: referrer, by: tgUser?.id } }).catch(() => {});
+    // Send the raw token (friendly code OR legacy link) — the backend resolves it
+    // and blocks self-referral, so no client-side decoding is needed.
+    if (refCode) {
+      api("/api/referral", { method: "POST", body: { uid: refCode, by: tgUser?.id } }).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -2412,7 +2450,9 @@ export default function App() {
   };
 
   // ── referral + share ──
-  const myRef = refCodeFor(tgUser?.id) || "demo";
+  // Prefer the friendly server code (888OG); fall back to the derived code until
+  // it loads. The backend resolves either form, so links always work.
+  const myRef = myRefCode || refCodeFor(tgUser?.id) || "";
   const copyReferral = () => {
     const link = `${REF_BOT_LINK}${myRef}`;
     if (copyText(link)) showToast(t.link_copied);
@@ -2868,6 +2908,7 @@ export default function App() {
         {/* sort + price filter */}
         <div className="filter-bar">
           <div className="sort-toggle">
+            <button className={`sort-pill ${sortBy === "default" ? "active" : ""}`} onClick={() => reSort("default")}>{t.sort_general}</button>
             <button className={`sort-pill ${sortBy === "price_asc" ? "active" : ""}`} onClick={() => reSort("price_asc")}><IconArrowUp /> {t.sort_low}</button>
             <button className={`sort-pill ${sortBy === "price_desc" ? "active" : ""}`} onClick={() => reSort("price_desc")}><IconArrowDown /> {t.sort_high}</button>
           </div>
@@ -2915,6 +2956,7 @@ export default function App() {
       <div className="ios-group">
         <div className="ios-row" onClick={copyReferral}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconCopy /></div>{t.copy_ref}</div>
+          {myRefCode && <div style={{ color: "var(--text-secondary)", fontWeight: 800, fontSize: 15, letterSpacing: "0.08em" }}>{myRefCode}</div>}
         </div>
         <div className="ios-row" style={{ cursor: "default" }}>
           <div className="row-left">{t.ref_count}</div>
