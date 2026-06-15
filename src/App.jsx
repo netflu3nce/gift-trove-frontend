@@ -528,7 +528,7 @@ const PROMO_SLIDES = [
   { img: "https://i.ibb.co/d08zfZmg/Inria-Serif-2.png", url: "https://t.me/gifttrove" },
   { img: "https://i.ibb.co/Rk1hB0vS/Inria-Serif.png", url: "https://t.me/troveotc" },
   { img: "https://i.ibb.co/Kp2tJtQT/MGGA-4.png", url: "https://t.me/spinmibot?startapp=7608551523" },
-  { img: "https://i.ibb.co/v5NvzS6/MGGA-3.png", url: "https://t.me/hotontgbot/app?startapp=UQC61-XV5zwCn-7eHbciHh8qR_3k6-6Bq458qrUkGhFoYxPo" },
+  { img: "https://i.ibb.co/v5NvzS6/MGGA-3.png", url: "https://t.me/hotontgbot/app?startapp=UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ" },
   { img: "https://i.ibb.co/RkkHPgSV/MGGA-5.png", url: "https://t.me/insidemajek" },
 ];
 
@@ -833,6 +833,18 @@ const T = {
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
     scout_gift: "Scout Gift", results: "Results", found: "found",
+    selected_n: "selected", filter_upsell: "Combine multiple filters with Scout+", filter_cap_hit: "You can pick up to {n}. Upgrade for more.", done: "Done",
+    premium_label: "Membership", premium_row: "GiftTrove Premium", tier_free: "Free",
+    premium_title: "GiftTrove Premium", you_are_on: "You're on", renews: "renews", per_month: "month",
+    current_plan: "Current plan", subscribe: "Subscribe", opening: "Opening\u2026",
+    perk_5_filters: "Up to 5 of each filter", perk_unlimited: "Unlimited filters",
+    perk_vanity: "Custom referral code", perk_more_soon: "New perks as they land", perk_priority: "Priority on new perks",
+    need_stars: "Need Stars?", need_stars_sub: "Get them cheaper on Hoton",
+    vanity_title: "Your referral code", vanity_help: "Pick a custom code (letters & numbers). It replaces your random code on the links you share.", vanity_ph: "YOURCODE", claim: "Claim", your_code: "Your code",
+    vanity_ok: "Code claimed!", vanity_taken: "That code is taken \u2014 try another.", vanity_premium: "Premium only.", vanity_bad: "Use 3\u201312 letters and numbers (at least one letter).",
+    premium_fineprint: "Subscriptions are billed monthly in Telegram Stars and renew automatically. Manage or cancel anytime in Telegram. Stars purchases are non-refundable.",
+    open_in_tg: "Open inside Telegram to subscribe.", update_tg: "Update Telegram to subscribe with Stars.",
+    sub_thanks: "Subscription active \u2014 thank you!", sub_failed: "Couldn't start the payment. Try again.",
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
@@ -861,6 +873,18 @@ const T = {
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
     scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
+    selected_n: "выбрано", filter_upsell: "Объедините фильтры со Scout+", filter_cap_hit: "Можно выбрать до {n}. Обновите тариф.", done: "Готово",
+    premium_label: "Подписка", premium_row: "GiftTrove Premium", tier_free: "Бесплатно",
+    premium_title: "GiftTrove Premium", you_are_on: "Ваш тариф:", renews: "продление", per_month: "мес.",
+    current_plan: "Текущий тариф", subscribe: "Оформить", opening: "Открываю\u2026",
+    perk_5_filters: "До 5 значений каждого фильтра", perk_unlimited: "Безлимит фильтров",
+    perk_vanity: "Свой реферальный код", perk_more_soon: "Новые возможности по мере выхода", perk_priority: "Приоритет на новые функции",
+    need_stars: "Нужны Stars?", need_stars_sub: "Дешевле на Hoton",
+    vanity_title: "Ваш реферальный код", vanity_help: "Выберите свой код (буквы и цифры). Он заменит случайный код в ссылках.", vanity_ph: "ВАШКОД", claim: "Занять", your_code: "Ваш код",
+    vanity_ok: "Код закреплён за вами!", vanity_taken: "Код занят — выберите другой.", vanity_premium: "Только для премиум.", vanity_bad: "3–12 букв и цифр (хотя бы одна буква).",
+    premium_fineprint: "Подписка списывается ежемесячно в Telegram Stars и продлевается автоматически. Управление и отмена — в Telegram. Покупки за Stars не возвращаются.",
+    open_in_tg: "Откройте в Telegram, чтобы оформить.", update_tg: "Обновите Telegram для оплаты Stars.",
+    sub_thanks: "Подписка активна — спасибо!", sub_failed: "Не удалось начать оплату. Попробуйте снова.",
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
@@ -889,6 +913,18 @@ const T = {
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
     scout_gift: "侦测礼物", results: "结果", found: "已找到",
+    selected_n: "已选", filter_upsell: "使用 Scout+ 组合多个筛选", filter_cap_hit: "最多可选 {n} 个，升级解锁更多。", done: "完成",
+    premium_label: "会员", premium_row: "GiftTrove Premium", tier_free: "免费",
+    premium_title: "GiftTrove 会员", you_are_on: "当前方案：", renews: "续订", per_month: "月",
+    current_plan: "当前方案", subscribe: "订阅", opening: "正在打开\u2026",
+    perk_5_filters: "每个筛选最多 5 个", perk_unlimited: "无限筛选",
+    perk_vanity: "自定义推荐码", perk_more_soon: "新功能陆续上线", perk_priority: "新功能优先体验",
+    need_stars: "需要 Stars？", need_stars_sub: "在 Hoton 更便宜",
+    vanity_title: "你的推荐码", vanity_help: "选择自定义推荐码（字母和数字）。它会替换分享链接中的随机码。", vanity_ph: "你的码", claim: "认领", your_code: "你的码",
+    vanity_ok: "认领成功！", vanity_taken: "该码已被占用，请换一个。", vanity_premium: "仅限会员。", vanity_bad: "请使用 3–12 个字母和数字（至少一个字母）。",
+    premium_fineprint: "订阅以 Telegram Stars 按月计费并自动续订。可随时在 Telegram 管理或取消。Stars 购买不可退款。",
+    open_in_tg: "请在 Telegram 内打开以订阅。", update_tg: "请更新 Telegram 以使用 Stars 订阅。",
+    sub_thanks: "订阅已生效，谢谢！", sub_failed: "无法发起支付，请重试。",
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
@@ -1477,6 +1513,29 @@ const styles = `
   .admin-gate-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: var(--text-primary); }
   .admin-gate-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
   .admin-gate-err { font-size: 13px; color: #d12d4d; font-weight: 600; margin-top: 12px; }
+  /* multi-select filter cap note */
+  .filter-cap-note { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-align: center; margin-bottom: 14px; }
+  .filter-cap-note.upsell { color: var(--tg-blue); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 2px; }
+  /* premium sheet */
+  .premium-status { text-align: center; color: var(--text-secondary); font-size: 14px; margin: -6px 0 18px; }
+  .plan-card { border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 14px; background: var(--bg-card); }
+  .plan-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .plan-name { font-size: 18px; font-weight: 800; }
+  .plan-price { font-size: 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; color: var(--text-primary); }
+  .plan-per { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .plan-perks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .plan-perk { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-primary); }
+  .action-btn.secondary { background: var(--bg-input); color: var(--text-secondary); box-shadow: none; opacity: 1; }
+  .hoton-cta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(255,184,0,0.14), rgba(255,122,0,0.10)); border: 1px solid rgba(255,160,0,0.35); cursor: pointer; margin-bottom: 18px; }
+  .hoton-cta-title { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+  .hoton-cta-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+  .vanity-box { border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 6px; }
+  .vanity-help { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+  .vanity-row { display: flex; gap: 10px; align-items: stretch; }
+  .vanity-row .ios-input { padding: 14px 16px; font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .vanity-msg { font-size: 13px; font-weight: 600; color: var(--tg-blue); margin: 10px 0 0; }
+  .vanity-current { font-size: 13px; color: var(--text-secondary); margin: 10px 0 0; }
+  .premium-fineprint { font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); opacity: 0.8; text-align: center; margin: 18px 0 4px; }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
   .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
@@ -1959,9 +2018,18 @@ export default function App() {
   const suggestTouch = useRef({ y: 0, moved: false });
   const [giftId, setGiftId] = useState(savedSearch.giftId || "");
   const [selectedMarkets, setSelectedMarkets] = useState(savedSearch.selectedMarkets || ["All"]);
-  const [selectedModel, setSelectedModel] = useState(savedSearch.selectedModel || "Any");
-  const [selectedBackdrop, setSelectedBackdrop] = useState(savedSearch.selectedBackdrop || "Any");
-  const [selectedSymbol, setSelectedSymbol] = useState(savedSearch.selectedSymbol || "Any");
+  // Multi-select attribute filters (premium unlocks more than one of each).
+  // _toArr migrates old single-value saved searches ("Red"/"Any") to arrays.
+  const _toArr = (v) => (Array.isArray(v) ? v : (v && v !== "Any" ? [v] : []));
+  const [selectedModels, setSelectedModels] = useState(_toArr(savedSearch.selectedModels ?? savedSearch.selectedModel));
+  const [selectedBackdrops, setSelectedBackdrops] = useState(_toArr(savedSearch.selectedBackdrops ?? savedSearch.selectedBackdrop));
+  const [selectedSymbols, setSelectedSymbols] = useState(_toArr(savedSearch.selectedSymbols ?? savedSearch.selectedSymbol));
+  // Premium tier — drives the filter caps and the Premium section.
+  const [tierInfo, setTierInfo] = useState({ tier: "free", caps: { free: 1, plus: 5, pro: 999 }, prices: { plus: 100, pro: 300 }, expires_at: 0 });
+  const [buying, setBuying] = useState("");          // tier currently being purchased
+  const [vanityInput, setVanityInput] = useState("");
+  const [vanityMsg, setVanityMsg] = useState("");
+
 
   // results
   const [results, setResults] = useState(Array.isArray(savedSearch.results) ? savedSearch.results : []);
@@ -1973,12 +2041,12 @@ export default function App() {
       if (hasSearched) {
         localStorage.setItem("gt_search", JSON.stringify({
           hasSearched: true, results: results.slice(0, 300), nextOffset, sortBy,
-          giftQuery, giftId, selectedMarkets, selectedModel, selectedBackdrop, selectedSymbol,
+          giftQuery, giftId, selectedMarkets, selectedModels, selectedBackdrops, selectedSymbols,
           minPrice, maxPrice, lastSearch: lastSearch.current,
         }));
       }
     } catch { /* storage full — ignore */ }
-  }, [results, hasSearched, nextOffset, sortBy, giftQuery, giftId, selectedMarkets, selectedModel, selectedBackdrop, selectedSymbol, minPrice, maxPrice]);
+  }, [results, hasSearched, nextOffset, sortBy, giftQuery, giftId, selectedMarkets, selectedModels, selectedBackdrops, selectedSymbols, minPrice, maxPrice]);
 
   // donate
   const [donateStep, setDonateStep] = useState(1);
@@ -2184,7 +2252,7 @@ export default function App() {
   // cancel an in-flight load. Retries patiently to ride out cold starts.
   const activeGiftId = selectedCollection?.gift_id || "";
   useEffect(() => {
-    setSelectedModel("Any"); setSelectedSymbol("Any"); setSelectedBackdrop("Any");
+    setSelectedModels([]); setSelectedSymbols([]); setSelectedBackdrops([]);
     if (!activeGiftId) { setAttrs({ models: [], symbols: [], backdrops: [] }); return; }
     let alive = true;
     const load = (attempt) => api(`/api/attributes?gift_id=${encodeURIComponent(activeGiftId)}`, { timeout: 20000 })
@@ -2212,6 +2280,11 @@ export default function App() {
     api(`/api/refcode?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
       .then((d) => { if (d?.code) setMyRefCode(d.code); })
       .catch(() => { /* fall back to the derived code */ });
+
+    // Fetch premium tier (drives filter caps + the Premium section).
+    api("/api/subscription")
+      .then((d) => { if (d?.tier) setTierInfo((prev) => ({ ...prev, ...d })); })
+      .catch(() => { /* default to free */ });
 
     const param = tg?.initDataUnsafe?.start_param || "";
     let refCode = param;
@@ -2315,6 +2388,26 @@ export default function App() {
     setSelectedMarkets(nm);
   };
 
+  // ── premium tier + multi-select attribute filters ──
+  const tier = tierInfo.tier || "free";
+  const attrCap = (tierInfo.caps && tierInfo.caps[tier]) || 1;   // max of each filter type
+  const _attrState = (typ) => (
+    typ === "model" ? [selectedModels, setSelectedModels]
+    : typ === "symbol" ? [selectedSymbols, setSelectedSymbols]
+    : [selectedBackdrops, setSelectedBackdrops]
+  );
+  const toggleAttr = (typ, name) => {
+    haptic();
+    const [cur, setCur] = _attrState(typ);
+    if (cur.includes(name)) { setCur(cur.filter((x) => x !== name)); return; }
+    if (attrCap <= 1) { setCur([name]); return; }          // free: single-select (no friction)
+    if (cur.length >= attrCap) { showToast(t.filter_cap_hit.replace("{n}", attrCap)); return; }
+    setCur([...cur, name]);
+  };
+  const clearAttr = (typ) => { haptic(); _attrState(typ)[1]([]); };
+  // Short label for a filter trigger row: "Any" / the one name / "N selected".
+  const attrLabel = (arr) => (!arr.length ? t.any : arr.length === 1 ? arr[0] : `${arr.length} ${t.selected_n}`);
+
   // ── SCOUT (real backend search; results live in the Results tab) ──
   const buildSearchParams = (sort, offset) => {
     const col = collections.find((c) => c.name === giftQuery);
@@ -2323,9 +2416,9 @@ export default function App() {
     if (col?.gift_id) p.set("gift_id", col.gift_id);
     if (col?.slug) p.set("slug", col.slug);
     if (giftId) p.set("num", giftId);
-    if (selectedModel !== "Any") p.set("model", selectedModel);
-    if (selectedSymbol !== "Any") p.set("symbol", selectedSymbol);
-    if (selectedBackdrop !== "Any") p.set("backdrop", selectedBackdrop);
+    if (selectedModels.length) p.set("model", selectedModels.join(","));
+    if (selectedSymbols.length) p.set("symbol", selectedSymbols.join(","));
+    if (selectedBackdrops.length) p.set("backdrop", selectedBackdrops.join(","));
     if (!selectedMarkets.includes("All")) p.set("markets", selectedMarkets.join(","));
     if (tgUser?.id) p.set("uid", tgUser.id);
     p.set("sort", sort || sortBy);
@@ -2383,8 +2476,8 @@ export default function App() {
     if (!col?.name) return;
     haptic("medium");
     setGiftQuery(col.name);
-    setGiftId(""); setSelectedModel("Any"); setSelectedSymbol("Any");
-    setSelectedBackdrop("Any"); setSelectedMarkets(["All"]);
+    setGiftId(""); setSelectedModels([]); setSelectedSymbols([]);
+    setSelectedBackdrops([]); setSelectedMarkets(["All"]);
     setScoutError(null); setHasSearched(true); setResults([]); setNextOffset("");
     setIsScouting(true); setActiveTab("results");
     recordSearch(col.name);
@@ -2468,6 +2561,35 @@ export default function App() {
     const link = `${REF_BOT_LINK}${myRef}`;
     if (copyText(link)) showToast(t.link_copied);
   };
+
+  // ── premium: subscribe (Stars) + claim a vanity referral code ──
+  const HOTON_STARS_LINK = "https://t.me/hotontgbot/app?startapp=UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
+  const refreshTier = () => api("/api/subscription").then((d) => { if (d?.tier) setTierInfo((p) => ({ ...p, ...d })); }).catch(() => {});
+  const subscribe = async (planTier) => {
+    if (!window.Telegram?.WebApp?.initData) { showToast(t.open_in_tg); return; }
+    if (!tg?.openInvoice) { showToast(t.update_tg); return; }
+    setBuying(planTier);
+    try {
+      const r = await api("/api/create-invoice", { method: "POST", body: { tier: planTier } });
+      if (r?.ok && r.link) {
+        tg.openInvoice(r.link, (status) => {
+          setBuying("");
+          if (status === "paid") { showToast(t.sub_thanks); setTimeout(refreshTier, 1500); }
+          else if (status === "failed") showToast(t.sub_failed);
+        });
+      } else { setBuying(""); showToast(t.sub_failed); }
+    } catch { setBuying(""); showToast(t.sub_failed); }
+  };
+  const claimVanity = async () => {
+    const code = vanityInput.trim().toUpperCase();
+    if (!code) return;
+    setVanityMsg("");
+    try {
+      const r = await api("/api/vanity", { method: "POST", body: { code } });
+      if (r?.ok) { setMyRefCode(r.code); setVanityInput(""); setVanityMsg(t.vanity_ok); }
+      else setVanityMsg(r?.error === "taken" ? t.vanity_taken : r?.error === "premium" ? t.vanity_premium : t.vanity_bad);
+    } catch { setVanityMsg(t.vanity_bad); }
+  };
   const shareGift = async (item) => {
     haptic();
     const link = giftDeepLink(item, myRef);
@@ -2550,6 +2672,62 @@ export default function App() {
 
   // ── SHEETS ──
   const renderSheet = () => {
+    if (activeSheet === "premium") {
+      const prices = tierInfo.prices || { plus: 100, pro: 300 };
+      const exp = tierInfo.expires_at
+        ? new Date(tierInfo.expires_at * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        : "";
+      const isPremium = tier === "plus" || tier === "pro";
+      const statusLabel = tier === "pro" ? "Scout Pro" : tier === "plus" ? "Scout+" : t.tier_free;
+      const Plan = ({ id, name, price, perks, accent }) => {
+        const current = tier === id;
+        return (
+          <div className="plan-card" style={{ borderColor: current ? accent : "var(--separator)" }}>
+            <div className="plan-head">
+              <span className="plan-name" style={{ color: accent }}>{name}</span>
+              <span className="plan-price"><TGStar size={17} />{price}<span className="plan-per">/{t.per_month}</span></span>
+            </div>
+            <div className="plan-perks">
+              {perks.map((p, i) => (<div key={i} className="plan-perk"><span style={{ color: accent, display: "inline-flex" }}><IconCheck /></span>{p}</div>))}
+            </div>
+            {current
+              ? <button className="action-btn secondary" disabled>{t.current_plan}</button>
+              : <button className="action-btn" style={{ background: accent }} disabled={buying === id}
+                  onClick={() => subscribe(id)}>{buying === id ? t.opening : t.subscribe}</button>}
+          </div>
+        );
+      };
+      return (
+        <BottomSheet onClose={() => setActiveSheet(null)}>
+          <div className="sheet-title">{t.premium_title}</div>
+          <p className="premium-status">{t.you_are_on} <b>{statusLabel}</b>{isPremium && exp ? ` \u00b7 ${t.renews} ${exp}` : ""}</p>
+          <Plan id="plus" name="Scout+" price={prices.plus} accent="#0a84ff" perks={[t.perk_5_filters, t.perk_vanity, t.perk_more_soon]} />
+          <Plan id="pro" name="Scout Pro" price={prices.pro} accent="#bf5af2" perks={[t.perk_unlimited, t.perk_vanity, t.perk_priority]} />
+
+          <div className="hoton-cta" onClick={() => safeOpen(HOTON_STARS_LINK)}>
+            <div><div className="hoton-cta-title">{t.need_stars}</div><div className="hoton-cta-sub">{t.need_stars_sub}</div></div>
+            <IconChevronRight />
+          </div>
+
+          {isPremium && (
+            <div className="vanity-box">
+              <div className="section-label" style={{ marginBottom: 8 }}>{t.vanity_title}</div>
+              <p className="vanity-help">{t.vanity_help}</p>
+              <div className="vanity-row">
+                <input className="ios-input" style={{ flex: 1 }} value={vanityInput} maxLength={12}
+                  onChange={(e) => setVanityInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                  placeholder={t.vanity_ph} />
+                <button className="action-btn" style={{ width: "auto", padding: "0 18px", margin: 0 }} onClick={claimVanity}>{t.claim}</button>
+              </div>
+              {vanityMsg && <p className="vanity-msg">{vanityMsg}</p>}
+              <p className="vanity-current">{t.your_code}: <b>{myRef}</b></p>
+            </div>
+          )}
+
+          <p className="premium-fineprint">{t.premium_fineprint}</p>
+        </BottomSheet>
+      );
+    }
     if (activeSheet === "faq" || activeSheet === "terms" || activeSheet === "privacy") {
       const title = activeSheet === "faq" ? "FAQ" : activeSheet === "terms" ? "Terms of Service" : "Privacy Policy";
       const rows = LEGAL[activeSheet] || [];
@@ -2701,23 +2879,26 @@ export default function App() {
         );
       }
       const list = isModel ? attrs.models : attrs.symbols;
-      const sel = isModel ? selectedModel : selectedSymbol;
-      const setSel = isModel ? setSelectedModel : setSelectedSymbol;
+      const arr = isModel ? selectedModels : selectedSymbols;
+      const typ = isModel ? "model" : "symbol";
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
+            {attrCap > 1
+              ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
+              : <div className="filter-cap-note upsell" onClick={() => setActiveSheet("premium")}>{t.filter_upsell}<IconChevronRight /></div>}
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
                 {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${isModel ? t.model.toLowerCase() : t.symbol.toLowerCase()}`}
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
-              <div className="sheet-model-item" onClick={() => { setSel("Any"); setActiveSheet(null); }}>
+              <div className="sheet-model-item" onClick={() => clearAttr(typ)}>
                 <span style={{ fontSize: 15, fontWeight: 600 }}>{t.any}</span>
-                {sel === "Any" && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                {arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
               </div>
               {list.map((m) => (
-                <div key={m.name} className="sheet-model-item" onClick={() => { haptic(); setSel(m.name); setActiveSheet(null); }}>
+                <div key={m.name} className="sheet-model-item" onClick={() => toggleAttr(typ, m.name)}>
                   <div className="model-left">
                     {m.img
                       ? <img src={m.img} alt="" className={isModel ? "opt-thumb" : "opt-thumb sym"} onError={(e) => { e.target.style.display = "none"; }} />
@@ -2727,10 +2908,11 @@ export default function App() {
                       {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}>{fmtRarity(m.rarity)} {t.rarity}</span>}
                     </div>
                   </div>
-                  {sel === m.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                  {arr.includes(m.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
               ))}
             </div>
+            <button className="action-btn" style={{ marginTop: 16 }} onClick={() => setActiveSheet(null)}>{t.done}</button>
         </BottomSheet>
       );
     }
@@ -2748,28 +2930,33 @@ export default function App() {
         );
       }
       const list = attrs.backdrops;
+      const arr = selectedBackdrops;
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{t.backdrop}</div>
+            {attrCap > 1
+              ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
+              : <div className="filter-cap-note upsell" onClick={() => setActiveSheet("premium")}>{t.filter_upsell}<IconChevronRight /></div>}
             {list.length === 0 && (
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
                 {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${t.backdrop.toLowerCase()}`}
               </p>
             )}
             <div className="ios-group" style={{ margin: 0 }}>
-              <div className="sheet-list-item" onClick={() => { setSelectedBackdrop("Any"); setActiveSheet(null); }}>
-                <span>{t.any}</span>{selectedBackdrop === "Any" && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+              <div className="sheet-list-item" onClick={() => clearAttr("backdrop")}>
+                <span>{t.any}</span>{arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
               </div>
               {list.map((c) => (
-                <div key={c.name} className="sheet-list-item" onClick={() => { haptic(); setSelectedBackdrop(c.name); setActiveSheet(null); }}>
+                <div key={c.name} className="sheet-list-item" onClick={() => toggleAttr("backdrop", c.name)}>
                   <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     {c.hex && <span className="backdrop-swatch" style={{ background: c.edge ? `radial-gradient(circle at 50% 35%, ${c.hex}, ${c.edge})` : c.hex }} />}{c.name}
                     {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}>{fmtRarity(c.rarity)}</span>}
                   </span>
-                  {selectedBackdrop === c.name && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                  {arr.includes(c.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
               ))}
             </div>
+            <button className="action-btn" style={{ marginTop: 16 }} onClick={() => setActiveSheet(null)}>{t.done}</button>
         </BottomSheet>
       );
     }
@@ -2841,17 +3028,17 @@ export default function App() {
           <div className="section-label">{t.attributes}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <button className="select-btn" disabled={!selectedCollection} onClick={() => setActiveSheet("model")}>
-              <span>{t.model}</span><span className="select-val">{selectedModel} <IconChevronRight /></span>
+              <span>{t.model}</span><span className="select-val">{attrLabel(selectedModels)} <IconChevronRight /></span>
             </button>
             <button className="select-btn" disabled={!selectedCollection} onClick={() => setActiveSheet("backdrop")}>
               <span>{t.backdrop}</span>
               <span className="select-val">
-                {(() => { const c = attrs.backdrops.find((x) => x.name === selectedBackdrop); return c?.hex ? <span className="color-dot" style={{ background: c.hex, width: 14, height: 14 }} /> : null; })()}
-                {selectedBackdrop} <IconChevronRight />
+                {selectedBackdrops.length === 1 && (() => { const c = attrs.backdrops.find((x) => x.name === selectedBackdrops[0]); return c?.hex ? <span className="color-dot" style={{ background: c.hex, width: 14, height: 14 }} /> : null; })()}
+                {attrLabel(selectedBackdrops)} <IconChevronRight />
               </span>
             </button>
             <button className="select-btn" disabled={!selectedCollection} onClick={() => setActiveSheet("symbol")}>
-              <span>{t.symbol}</span><span className="select-val">{selectedSymbol} <IconChevronRight /></span>
+              <span>{t.symbol}</span><span className="select-val">{attrLabel(selectedSymbols)} <IconChevronRight /></span>
             </button>
           </div>
         </div>
@@ -2962,6 +3149,17 @@ export default function App() {
   const renderProfile = (desktop = false) => (
     <div className="fade-in-up">
       <div className={desktop ? "page-header desktop" : "page-header"}>{t.profile_tab}</div>
+
+      <div className="section-label" style={{ marginTop: 12 }}>{t.premium_label}</div>
+      <div className="ios-group">
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("premium"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #0a84ff, #bf5af2)" }}><TGStar size={16} /></div>{t.premium_row}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: tier === "free" ? "var(--text-secondary)" : "var(--tg-blue)", fontWeight: 700, fontSize: 14 }}>{tier === "pro" ? "Scout Pro" : tier === "plus" ? "Scout+" : t.tier_free}</span>
+            <IconChevronRight />
+          </div>
+        </div>
+      </div>
 
       <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
       <div className="ios-group">
