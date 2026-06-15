@@ -838,10 +838,10 @@ const T = {
     premium_title: "GiftTrove Premium", you_are_on: "You're on", renews: "renews", per_month: "month",
     current_plan: "Current plan", subscribe: "Subscribe", opening: "Opening\u2026",
     perk_5_filters: "Up to 5 of each filter", perk_unlimited: "Unlimited filters",
-    perk_vanity: "Custom referral code", perk_more_soon: "New perks as they land", perk_priority: "Priority on new perks",
+    perk_vanity: "Custom referral code", perk_more_soon: "New perks as they land", perk_priority: "Priority on new perks", perk_no_ads: "No promoted gifts in your scouts",
     need_stars: "Need Stars?", need_stars_sub: "Get them cheaper on Hoton",
     vanity_title: "Your referral code", vanity_help: "Pick a custom code (letters & numbers). It replaces your random code on the links you share.", vanity_ph: "YOURCODE", claim: "Claim", your_code: "Your code",
-    vanity_ok: "Code claimed!", vanity_taken: "That code is taken \u2014 try another.", vanity_premium: "Premium only.", vanity_bad: "Use 3\u201312 letters and numbers (at least one letter).",
+    vanity_ok: "Code claimed!", vanity_taken: "That code is taken \u2014 try another.", vanity_premium: "Scout Pro only.", vanity_bad: "Use 3\u201312 letters and numbers (at least one letter).",
     premium_fineprint: "Subscriptions are billed monthly in Telegram Stars and renew automatically. Manage or cancel anytime in Telegram. Stars purchases are non-refundable.",
     open_in_tg: "Open inside Telegram to subscribe.", update_tg: "Update Telegram to subscribe with Stars.",
     sub_thanks: "Subscription active \u2014 thank you!", sub_failed: "Couldn't start the payment. Try again.",
@@ -878,10 +878,10 @@ const T = {
     premium_title: "GiftTrove Premium", you_are_on: "Ваш тариф:", renews: "продление", per_month: "мес.",
     current_plan: "Текущий тариф", subscribe: "Оформить", opening: "Открываю\u2026",
     perk_5_filters: "До 5 значений каждого фильтра", perk_unlimited: "Безлимит фильтров",
-    perk_vanity: "Свой реферальный код", perk_more_soon: "Новые возможности по мере выхода", perk_priority: "Приоритет на новые функции",
+    perk_vanity: "Свой реферальный код", perk_more_soon: "Новые возможности по мере выхода", perk_priority: "Приоритет на новые функции", perk_no_ads: "Без рекламных подарков в поиске",
     need_stars: "Нужны Stars?", need_stars_sub: "Дешевле на Hoton",
     vanity_title: "Ваш реферальный код", vanity_help: "Выберите свой код (буквы и цифры). Он заменит случайный код в ссылках.", vanity_ph: "ВАШКОД", claim: "Занять", your_code: "Ваш код",
-    vanity_ok: "Код закреплён за вами!", vanity_taken: "Код занят — выберите другой.", vanity_premium: "Только для премиум.", vanity_bad: "3–12 букв и цифр (хотя бы одна буква).",
+    vanity_ok: "Код закреплён за вами!", vanity_taken: "Код занят — выберите другой.", vanity_premium: "Только для Scout Pro.", vanity_bad: "3–12 букв и цифр (хотя бы одна буква).",
     premium_fineprint: "Подписка списывается ежемесячно в Telegram Stars и продлевается автоматически. Управление и отмена — в Telegram. Покупки за Stars не возвращаются.",
     open_in_tg: "Откройте в Telegram, чтобы оформить.", update_tg: "Обновите Telegram для оплаты Stars.",
     sub_thanks: "Подписка активна — спасибо!", sub_failed: "Не удалось начать оплату. Попробуйте снова.",
@@ -918,10 +918,10 @@ const T = {
     premium_title: "GiftTrove 会员", you_are_on: "当前方案：", renews: "续订", per_month: "月",
     current_plan: "当前方案", subscribe: "订阅", opening: "正在打开\u2026",
     perk_5_filters: "每个筛选最多 5 个", perk_unlimited: "无限筛选",
-    perk_vanity: "自定义推荐码", perk_more_soon: "新功能陆续上线", perk_priority: "新功能优先体验",
+    perk_vanity: "自定义推荐码", perk_more_soon: "新功能陆续上线", perk_priority: "新功能优先体验", perk_no_ads: "搜索中不显示推广礼物",
     need_stars: "需要 Stars？", need_stars_sub: "在 Hoton 更便宜",
     vanity_title: "你的推荐码", vanity_help: "选择自定义推荐码（字母和数字）。它会替换分享链接中的随机码。", vanity_ph: "你的码", claim: "认领", your_code: "你的码",
-    vanity_ok: "认领成功！", vanity_taken: "该码已被占用，请换一个。", vanity_premium: "仅限会员。", vanity_bad: "请使用 3–12 个字母和数字（至少一个字母）。",
+    vanity_ok: "认领成功！", vanity_taken: "该码已被占用，请换一个。", vanity_premium: "仅限 Scout Pro。", vanity_bad: "请使用 3–12 个字母和数字（至少一个字母）。",
     premium_fineprint: "订阅以 Telegram Stars 按月计费并自动续订。可随时在 Telegram 管理或取消。Stars 购买不可退款。",
     open_in_tg: "请在 Telegram 内打开以订阅。", update_tg: "请更新 Telegram 以使用 Stars 订阅。",
     sub_thanks: "订阅已生效，谢谢！", sub_failed: "无法发起支付，请重试。",
@@ -1967,6 +1967,10 @@ export default function App() {
     haptic();
     try { localStorage.setItem("gt_legal_ok", "1"); } catch { /* noop */ }
     setLegalOk(true);
+    // Accepting the Terms opts into broadcasts and lifts any opt-out from a prior
+    // data clear — so a returning user who re-accepts is re-subscribed (their old
+    // searches/saved/referrals stay cleared; this only re-enables messaging).
+    if (window.Telegram?.WebApp?.initData) api("/api/consent", { method: "POST" }).catch(() => {});
   };
   const consentOverlay = !legalOk ? (
     <div className="consent-wrap" role="dialog" aria-label="Terms notice">
@@ -2587,7 +2591,7 @@ export default function App() {
     try {
       const r = await api("/api/vanity", { method: "POST", body: { code } });
       if (r?.ok) { setMyRefCode(r.code); setVanityInput(""); setVanityMsg(t.vanity_ok); }
-      else setVanityMsg(r?.error === "taken" ? t.vanity_taken : r?.error === "premium" ? t.vanity_premium : t.vanity_bad);
+      else setVanityMsg(r?.error === "taken" ? t.vanity_taken : (r?.error === "pro" || r?.error === "premium") ? t.vanity_premium : t.vanity_bad);
     } catch { setVanityMsg(t.vanity_bad); }
   };
   const shareGift = async (item) => {
@@ -2701,15 +2705,15 @@ export default function App() {
         <BottomSheet onClose={() => setActiveSheet(null)}>
           <div className="sheet-title">{t.premium_title}</div>
           <p className="premium-status">{t.you_are_on} <b>{statusLabel}</b>{isPremium && exp ? ` \u00b7 ${t.renews} ${exp}` : ""}</p>
-          <Plan id="plus" name="Scout+" price={prices.plus} accent="#0a84ff" perks={[t.perk_5_filters, t.perk_vanity, t.perk_more_soon]} />
-          <Plan id="pro" name="Scout Pro" price={prices.pro} accent="#bf5af2" perks={[t.perk_unlimited, t.perk_vanity, t.perk_priority]} />
+          <Plan id="plus" name="Scout+" price={prices.plus} accent="#0a84ff" perks={[t.perk_5_filters]} />
+          <Plan id="pro" name="Scout Pro" price={prices.pro} accent="#bf5af2" perks={[t.perk_unlimited, t.perk_vanity, t.perk_no_ads]} />
 
           <div className="hoton-cta" onClick={() => safeOpen(HOTON_STARS_LINK)}>
             <div><div className="hoton-cta-title">{t.need_stars}</div><div className="hoton-cta-sub">{t.need_stars_sub}</div></div>
             <IconChevronRight />
           </div>
 
-          {isPremium && (
+          {tier === "pro" && (
             <div className="vanity-box">
               <div className="section-label" style={{ marginBottom: 8 }}>{t.vanity_title}</div>
               <p className="vanity-help">{t.vanity_help}</p>
@@ -3183,10 +3187,6 @@ export default function App() {
           <div className="row-left"><div className="row-icon-box" style={{ background: "#000" }}><IconXLogo /></div>{t.x_account}</div>
           <IconChevronRight />
         </div>
-        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
-          <IconChevronRight />
-        </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.support)}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconHeart /></div>{t.support}</div>
           <IconChevronRight />
@@ -3195,6 +3195,10 @@ export default function App() {
 
       <div className="section-label">{t.support_builder}</div>
       <div className="ios-group">
+        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
+          <IconChevronRight />
+        </div>
         <div className="ios-row" onClick={() => { haptic(); setDonateStep(1); setActiveSheet("donate"); }}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#ff2d55" }}><IconHeart /></div>{t.donate}</div>
           <IconChevronRight />
