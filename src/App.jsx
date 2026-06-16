@@ -36,9 +36,15 @@ const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 const LOGO_URL = "https://i.ibb.co/nMV7Mvfp/Inria-Serif.png";
 const HERO_IMG = "https://i.ibb.co/PsCBq79k/MGGA.png";  // image beside the hero title
 
-// Optional: a Lottie URL for the launch splash. Left empty -> we show real
-// animated gifts (Plush Pepe + 2 others) pulled from the backend instead.
-const SPLASH_LOTTIE_URL = "";
+// Fixed launch-screen gift animations (served from /public/lottie). The splash
+// now uses these three set pieces instead of fetching live featured gifts.
+const LAUNCH_LOTTIE = {
+  left: "/lottie/locket_launch.json",
+  hero: "/lottie/plush_launch.json",
+  right: "/lottie/tele_egg.json",
+};
+// Animated gold star for the Hoton "Need Stars?" CTA.
+const HOTON_STAR_LOTTIE = "/lottie/star_motion.json";
 
 const DONATE_ADDRESS = "UQCvd6Sw_JJQsedBGfR2JOn7it7VdREWQ7v3kIluUi0RPMXJ";
 const DONATE_COMMENT = "GiftTrove Donation";
@@ -423,55 +429,21 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
 // ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
 function LaunchLoader({ onDone }) {
   const [leaving, setLeaving] = useState(false);
-  // Instant brand moment: hydrate from the last session's featured gifts so
-  // returning users see animated gifts immediately, then revalidate.
-  const [gifts, setGifts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("gt_featured") || "[]").slice(0, 3); } catch { return []; }
-  });
-
   useEffect(() => {
-    let alive = true;
-    api("/api/featured").then((d) => {
-      if (alive && d?.gifts?.length) {
-        setGifts(d.gifts.slice(0, 3));
-        try { localStorage.setItem("gt_featured", JSON.stringify(d.gifts.slice(0, 6))); } catch { /* noop */ }
-      }
-    }).catch(() => {});
     const t1 = setTimeout(() => setLeaving(true), 1650); // short, predictable splash
     const t2 = setTimeout(() => onDone?.(), 2050);
-    return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
-
-  // distinct gifts so the three slots never repeat the same gift
-  const uniq = [];
-  const seen = new Set();
-  for (const g of gifts) {
-    const key = (g && (g.name || g.slug)) || "";
-    if (key && !seen.has(key)) { seen.add(key); uniq.push(g); }
-  }
-  const hero = uniq[0] || null;
-  const left = uniq[1] || uniq[0] || null;
-  const right = uniq[2] || uniq[1] || uniq[0] || null;
 
   return (
     <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
       <div className="splash-glow" />
       <div className="splash-card">
-        {SPLASH_LOTTIE_URL ? (
-          <LottieGift src={SPLASH_LOTTIE_URL} size={150} radius={28} eager />
-        ) : (
-          <div className="splash-gifts">
-            <div className="splash-gift sg-left">
-              {left ? <LottieGift src={left.animation} poster={left.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
-            </div>
-            <div className="splash-gift sg-hero">
-              {hero ? <LottieGift src={hero.animation} poster={hero.image} size={116} radius={24} eager /> : <div className="splash-gift-ph big skeleton" />}
-            </div>
-            <div className="splash-gift sg-right">
-              {right ? <LottieGift src={right.animation} poster={right.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
-            </div>
-          </div>
-        )}
+        <div className="splash-gifts">
+          <div className="splash-gift sg-left"><LottieGift src={LAUNCH_LOTTIE.left} size={74} radius={18} eager /></div>
+          <div className="splash-gift sg-hero"><LottieGift src={LAUNCH_LOTTIE.hero} size={116} radius={24} eager /></div>
+          <div className="splash-gift sg-right"><LottieGift src={LAUNCH_LOTTIE.right} size={74} radius={18} eager /></div>
+        </div>
         <div className="splash-brand">
           GIFT<span className="splash-logo"><GiftTroveLogo size={26} /></span>TROVE
         </div>
@@ -1554,7 +1526,10 @@ const styles = `
   .plan-perks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
   .plan-perk { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-primary); }
   .action-btn.secondary { background: var(--bg-input); color: var(--text-secondary); box-shadow: none; opacity: 1; }
-  .hoton-cta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(255,184,0,0.14), rgba(255,122,0,0.10)); border: 1px solid rgba(255,160,0,0.35); cursor: pointer; margin-bottom: 18px; }
+  .hoton-cta { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(255,184,0,0.16), rgba(255,122,0,0.10)); border: 1px solid rgba(255,160,0,0.4); cursor: pointer; margin-bottom: 18px; box-shadow: 0 6px 20px rgba(255,150,0,0.12); transition: transform .18s var(--spring); }
+  .hoton-cta:active { transform: scale(0.985); }
+  .hoton-star { flex-shrink: 0; filter: drop-shadow(0 3px 8px rgba(255,150,0,0.4)); }
+  .hoton-cta-body { flex: 1; min-width: 0; }
   .hoton-cta-title { font-weight: 700; font-size: 15px; color: var(--text-primary); }
   .hoton-cta-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
   .vanity-box { border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 6px; }
@@ -1599,6 +1574,13 @@ const styles = `
   .admin-tabs { display: flex; gap: 6px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; padding: 4px; margin-bottom: 20px; }
   .admin-tab { flex: 1; border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13.5px; padding: 9px 0; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .25s var(--spring); }
   .admin-tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
+  .star-balance-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(255,184,0,0.16), rgba(255,122,0,0.10)); border: 1px solid rgba(255,160,0,0.4); box-shadow: 0 8px 24px rgba(255,150,0,0.14); }
+  .sbc-icon { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #ffb800, #ff7a00); box-shadow: 0 4px 12px rgba(255,150,0,0.4); flex-shrink: 0; }
+  .sbc-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .sbc-value { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin-top: 2px; }
+  .sbc-unit { font-size: 15px; font-weight: 700; color: var(--text-secondary); }
+  .sbc-err { font-size: 16px; font-weight: 700; color: var(--text-secondary); }
+  .sbc-note { font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); opacity: 0.85; margin: 10px 2px 18px; }
   .admin-strip { display: flex; align-items: center; justify-content: space-between; background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 18px; box-shadow: var(--shadow-card); font-size: 14px; color: var(--text-secondary); font-weight: 600; }
   .admin-strip strong { color: var(--accent); font-size: 20px; font-variant-numeric: tabular-nums; }
   .admin-chart-card { background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px 12px; box-shadow: var(--shadow-card); margin-bottom: 18px; }
@@ -1720,6 +1702,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   const [bcConfirm, setBcConfirm] = useState(false);
   const [adminCode, setAdminCode] = useState("");   // secret admin code (entered each session, never shipped)
   const [codeInput, setCodeInput] = useState("");
+  const [starBalance, setStarBalance] = useState(null);   // bot's earned Stars (admin readout)
 
   const load = useCallback((rng) => {
     if (!adminCode) { setLoading(false); return; }
@@ -1728,6 +1711,9 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
       .then((d) => setStats(d || {}))
       .catch(() => setStats({}))
       .finally(() => setLoading(false));
+    api(`/api/star-balance?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(adminCode)}`)
+      .then((d) => setStarBalance(d && d.ok ? d : { error: (d && d.error) || "unavailable" }))
+      .catch(() => setStarBalance({ error: "unavailable" }));
   }, [uid, adminCode, range]);
 
   useEffect(() => { if (adminCode) load(range); /* eslint-disable-next-line */ }, [range, adminCode]);
@@ -1873,6 +1859,18 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
 
           {tab === "overview" && (
             <div className="fade-in-up">
+              <div className="star-balance-card">
+                <div className="sbc-icon"><TGStar size={26} /></div>
+                <div className="sbc-body">
+                  <div className="sbc-label">Bot Star balance</div>
+                  <div className="sbc-value">
+                    {starBalance == null ? "\u2026"
+                      : starBalance.error ? <span className="sbc-err">unavailable</span>
+                      : <>{Number(starBalance.stars || 0).toLocaleString("en-US")} <span className="sbc-unit">Stars</span></>}
+                  </div>
+                </div>
+              </div>
+              <p className="sbc-note">Earned by @gifttrovebot. Stars are held ~21 days and need 1,000 minimum to withdraw to TON via Fragment.</p>
               <Cards list={overviewCards} />
               <TopSearches />
             </div>
@@ -2869,7 +2867,11 @@ export default function App() {
           <Plan id="pro" name="Scout Pro" price={prices.pro} accent="#bf5af2" perks={[t.perk_unlimited, t.perk_vanity, t.perk_no_ads]} />
 
           <div className="hoton-cta" onClick={() => safeOpen(HOTON_STARS_LINK)}>
-            <div><div className="hoton-cta-title">{t.need_stars}</div><div className="hoton-cta-sub">{t.need_stars_sub}</div></div>
+            <div className="hoton-star"><LottieGift src={HOTON_STAR_LOTTIE} size={46} radius={12} eager /></div>
+            <div className="hoton-cta-body">
+              <div className="hoton-cta-title">{t.need_stars}</div>
+              <div className="hoton-cta-sub">{t.need_stars_sub}</div>
+            </div>
             <IconChevronRight />
           </div>
 
