@@ -36,13 +36,9 @@ const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 const LOGO_URL = "https://i.ibb.co/nMV7Mvfp/Inria-Serif.png";
 const HERO_IMG = "https://i.ibb.co/PsCBq79k/MGGA.png";  // image beside the hero title
 
-// Fixed launch-screen gift animations (served from /public/lottie). The splash
-// now uses these three set pieces instead of fetching live featured gifts.
-const LAUNCH_LOTTIE = {
-  left: "/lottie/locket_launch.json",
-  hero: "/lottie/plush_launch.json",
-  right: "/lottie/tele_egg.json",
-};
+// Optional: a Lottie URL for the launch splash. Left empty -> we show real
+// animated gifts (Plush Pepe + 2 others) pulled from the backend instead.
+const SPLASH_LOTTIE_URL = "";
 // Animated gold star for the Hoton "Need Stars?" CTA.
 const HOTON_STAR_LOTTIE = "/lottie/star_motion.json";
 
@@ -429,21 +425,55 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
 // ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
 function LaunchLoader({ onDone }) {
   const [leaving, setLeaving] = useState(false);
+  // Instant brand moment: hydrate from the last session's featured gifts so
+  // returning users see animated gifts immediately, then revalidate.
+  const [gifts, setGifts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("gt_featured") || "[]").slice(0, 3); } catch { return []; }
+  });
+
   useEffect(() => {
+    let alive = true;
+    api("/api/featured").then((d) => {
+      if (alive && d?.gifts?.length) {
+        setGifts(d.gifts.slice(0, 3));
+        try { localStorage.setItem("gt_featured", JSON.stringify(d.gifts.slice(0, 6))); } catch { /* noop */ }
+      }
+    }).catch(() => {});
     const t1 = setTimeout(() => setLeaving(true), 1650); // short, predictable splash
     const t2 = setTimeout(() => onDone?.(), 2050);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
+
+  // distinct gifts so the three slots never repeat the same gift
+  const uniq = [];
+  const seen = new Set();
+  for (const g of gifts) {
+    const key = (g && (g.name || g.slug)) || "";
+    if (key && !seen.has(key)) { seen.add(key); uniq.push(g); }
+  }
+  const hero = uniq[0] || null;
+  const left = uniq[1] || uniq[0] || null;
+  const right = uniq[2] || uniq[1] || uniq[0] || null;
 
   return (
     <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
       <div className="splash-glow" />
       <div className="splash-card">
-        <div className="splash-gifts">
-          <div className="splash-gift sg-left"><LottieGift src={LAUNCH_LOTTIE.left} size={74} radius={18} eager /></div>
-          <div className="splash-gift sg-hero"><LottieGift src={LAUNCH_LOTTIE.hero} size={116} radius={24} eager /></div>
-          <div className="splash-gift sg-right"><LottieGift src={LAUNCH_LOTTIE.right} size={74} radius={18} eager /></div>
-        </div>
+        {SPLASH_LOTTIE_URL ? (
+          <LottieGift src={SPLASH_LOTTIE_URL} size={150} radius={28} eager />
+        ) : (
+          <div className="splash-gifts">
+            <div className="splash-gift sg-left">
+              {left ? <LottieGift src={left.animation} poster={left.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
+            </div>
+            <div className="splash-gift sg-hero">
+              {hero ? <LottieGift src={hero.animation} poster={hero.image} size={116} radius={24} eager /> : <div className="splash-gift-ph big skeleton" />}
+            </div>
+            <div className="splash-gift sg-right">
+              {right ? <LottieGift src={right.animation} poster={right.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
+            </div>
+          </div>
+        )}
         <div className="splash-brand">
           GIFT<span className="splash-logo"><GiftTroveLogo size={26} /></span>TROVE
         </div>
@@ -827,6 +857,17 @@ const T = {
     promo_limit: "You\u2019ve hit the max active promotions. Wait for one to expire.", promo_bad_coll: "That collection can\u2019t be promoted right now.",
     promo_failed: "Couldn\u2019t start the promotion. Try again.", promo_live: "Your promotion is live!",
     promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
+    view: "View", tier_pro_short: "Pro",
+    promo_price_opt: "Asking price (optional)", promo_amount_ph: "e.g. 250", promo_link_opt: "Direct gift link (optional)",
+    promo_link_help: "Paste the exact Telegram or Fragment listing so taps go straight to it.",
+    affiliate_row: "Affiliate program", affiliate_title: "Affiliate program",
+    affiliate_sub: "Earn {n}% of every subscription from members you invite \u2014 for as long as you stay Scout Pro.",
+    aff_locked_title: "A Scout Pro perk", aff_locked_sub: "Upgrade to Scout Pro to earn {n}% of every subscription from members you invite.",
+    aff_upgrade: "Upgrade to Scout Pro", aff_available: "Available to withdraw", aff_earned: "Earned", aff_pending: "Pending",
+    aff_referred: "Referred", aff_payers: "Paying", aff_ton_addr: "TON wallet address", aff_addr_ph: "Your TON address",
+    aff_withdraw: "Request payout", aff_min: "Withdraw at {n}\u2605", aff_need_addr: "Enter your TON wallet address.",
+    aff_requested: "Payout requested \u2014 we\u2019ll settle it in TON.", aff_pro_only: "Scout Pro only.", aff_failed: "Couldn\u2019t load. Try again.",
+    aff_fineprint: "Earnings accrue only while you\u2019re Scout Pro and pause if your plan lapses. Minimum payout {n}\u2605, settled in TON to your wallet. Fake or self-referrals forfeit earnings.",
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
@@ -876,6 +917,17 @@ const T = {
     promo_limit: "Достигнут лимит активной рекламы. Дождитесь окончания одной.", promo_bad_coll: "Эту коллекцию сейчас нельзя продвигать.",
     promo_failed: "Не удалось запустить рекламу. Попробуйте снова.", promo_live: "Ваша реклама запущена!",
     promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
+    view: "Открыть", tier_pro_short: "Pro",
+    promo_price_opt: "Цена (необязательно)", promo_amount_ph: "напр. 250", promo_link_opt: "Прямая ссылка на подарок (необязательно)",
+    promo_link_help: "Вставьте точную ссылку на Telegram или Fragment, чтобы переход вёл сразу к ней.",
+    affiliate_row: "Партнёрская программа", affiliate_title: "Партнёрская программа",
+    affiliate_sub: "Получайте {n}% с каждой подписки приглашённых вами участников — пока у вас активен Scout Pro.",
+    aff_locked_title: "Привилегия Scout Pro", aff_locked_sub: "Оформите Scout Pro, чтобы получать {n}% с каждой подписки приглашённых участников.",
+    aff_upgrade: "Оформить Scout Pro", aff_available: "Доступно к выводу", aff_earned: "Заработано", aff_pending: "В ожидании",
+    aff_referred: "Приглашено", aff_payers: "Платящих", aff_ton_addr: "Адрес TON-кошелька", aff_addr_ph: "Ваш TON-адрес",
+    aff_withdraw: "Запросить выплату", aff_min: "Вывод от {n}\u2605", aff_need_addr: "Укажите адрес TON-кошелька.",
+    aff_requested: "Выплата запрошена — переведём в TON.", aff_pro_only: "Только для Scout Pro.", aff_failed: "Не удалось загрузить. Попробуйте снова.",
+    aff_fineprint: "Начисления идут только при активном Scout Pro и приостанавливаются, если подписка истекает. Минимальная выплата {n}\u2605, переводится в TON на ваш кошелёк. Фейковые или само-рефералы аннулируют начисления.",
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
@@ -925,6 +977,17 @@ const T = {
     promo_limit: "已达到活跃推广上限，请等待其中一个到期。", promo_bad_coll: "该系列暂时无法推广。",
     promo_failed: "无法启动推广，请重试。", promo_live: "您的推广已上线！",
     promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
+    view: "查看", tier_pro_short: "Pro",
+    promo_price_opt: "售价（可选）", promo_amount_ph: "例如 250", promo_link_opt: "礼物直达链接（可选）",
+    promo_link_help: "粘贴确切的 Telegram 或 Fragment 链接，点击即可直达。",
+    affiliate_row: "推广联盟", affiliate_title: "推广联盟",
+    affiliate_sub: "邀请的会员每次订阅，您可赚取 {n}% — 只要您保持 Scout Pro。",
+    aff_locked_title: "Scout Pro 专属", aff_locked_sub: "升级 Scout Pro，邀请会员订阅即可赚取 {n}%。",
+    aff_upgrade: "升级 Scout Pro", aff_available: "可提现", aff_earned: "已赚取", aff_pending: "待处理",
+    aff_referred: "已邀请", aff_payers: "付费", aff_ton_addr: "TON 钱包地址", aff_addr_ph: "您的 TON 地址",
+    aff_withdraw: "申请提现", aff_min: "满 {n}\u2605 可提现", aff_need_addr: "请输入您的 TON 钱包地址。",
+    aff_requested: "提现已申请 — 将以 TON 结算。", aff_pro_only: "仅限 Scout Pro。", aff_failed: "加载失败，请重试。",
+    aff_fineprint: "仅在 Scout Pro 有效期间累积收益，订阅失效则暂停。最低提现 {n}\u2605，以 TON 结算至您的钱包。虚假或自我推荐将取消收益。",
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
@@ -1559,6 +1622,23 @@ const styles = `
   .promo-badge { position: absolute; top: 8px; left: 8px; z-index: 2; background: linear-gradient(135deg, #ff9f0a, #ff375f); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,90,30,0.35); }
   .promo-flag { position: absolute; top: 8px; right: 8px; z-index: 3; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.4); color: #fff; cursor: pointer; }
   .promo-flag:active { background: rgba(0,0,0,0.6); }
+  .promo-poster { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 14px; display: block; background: var(--bg-input); }
+  .promo-amt { color: var(--text-primary); font-weight: 800; font-size: 15px; }
+  .promo-amount-row { display: flex; gap: 10px; align-items: stretch; }
+  .promo-hint { font-size: 11.5px; color: var(--text-secondary); opacity: 0.85; margin: 6px 2px 0; line-height: 1.45; }
+  /* affiliate sheet */
+  .aff-locked { text-align: center; padding: 18px 0 6px; }
+  .aff-locked-icon { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a84ff, #bf5af2); box-shadow: 0 8px 24px rgba(10,132,255,0.35); }
+  .aff-locked-title { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+  .aff-locked-sub { font-size: 13.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; padding: 0 8px; }
+  .aff-balance { text-align: center; padding: 18px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(48,209,88,0.16), rgba(10,132,255,0.10)); border: 1px solid rgba(48,209,88,0.4); margin-bottom: 14px; }
+  .aff-bal-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .aff-bal-value { font-size: 30px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 4px; }
+  .aff-bal-ton { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+  .aff-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
+  .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+  .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
   .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
@@ -2096,8 +2176,17 @@ export default function App() {
   const [promoSymbol, setPromoSymbol] = useState("");
   const [promoBackdrop, setPromoBackdrop] = useState("");
   const [promoMarket, setPromoMarket] = useState("Telegram");
+  const [promoAmount, setPromoAmount] = useState("");
+  const [promoCurrency, setPromoCurrency] = useState("GRAM");
+  const [promoLink, setPromoLink] = useState("");
   const [promoBusy, setPromoBusy] = useState(false);
   const [promoMsg, setPromoMsg] = useState("");
+  // affiliate program (Scout Pro)
+  const [affInfo, setAffInfo] = useState(null);
+  const [affAddr, setAffAddr] = useState("");
+  const [affBusy, setAffBusy] = useState(false);
+  const [affMsg, setAffMsg] = useState("");
+  const [pendingScout, setPendingScout] = useState("");   // gift_id from a q_ inline deep link
 
   // Save the current search so it survives a full page reload.
   useEffect(() => {
@@ -2346,6 +2435,14 @@ export default function App() {
     return () => { alive = false; };
   }, [promoGiftId]);
 
+  // Affiliate dashboard: load when the sheet opens.
+  useEffect(() => {
+    if (activeSheet === "affiliate" && window.Telegram?.WebApp?.initData) {
+      setAffMsg("");
+      api("/api/affiliate").then((d) => setAffInfo(d || { ok: false })).catch(() => setAffInfo({ ok: false }));
+    }
+  }, [activeSheet]);
+
   // ── referral + deep-link handling on launch ──
   useEffect(() => {
     api(`/api/referrals?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
@@ -2364,6 +2461,12 @@ export default function App() {
 
     const param = tg?.initDataUnsafe?.start_param || "";
     let refCode = param;
+    // Inline-search deep link: q_<gift_id> -> scout that collection once loaded.
+    if (param.startsWith("q_")) {
+      const gid = param.slice(2).replace(/[^0-9]/g, "");
+      if (gid) setPendingScout(gid);
+      refCode = "";
+    }
     // Gift deep-link: g_<slug>_<refcode>  ->  open that gift + read the ref code
     if (param.startsWith("g_")) {
       const rest = param.slice(2);
@@ -2383,6 +2486,15 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Run a pending q_<gift_id> inline-search once collections have loaded.
+  useEffect(() => {
+    if (!pendingScout || !collections.length) return;
+    const col = collections.find((c) => String(c.gift_id) === String(pendingScout));
+    if (col) scoutGift(col);
+    setPendingScout("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingScout, collections]);
 
   // ── keyboard detection (hide tab bar) ──
   useEffect(() => {
@@ -2691,6 +2803,7 @@ export default function App() {
       const r = await api("/api/promote/create", { method: "POST", body: {
         gift_id: promoColl.gift_id, slug: promoColl.slug || "", marketplace: promoMarket,
         model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
+        amount: promoAmount.trim(), currency: promoCurrency, link: promoLink.trim(),
       }, timeout: 20000 });
       if (!r?.ok || !r.link) {
         const m = r?.error === "limit" ? t.promo_limit : r?.error === "collection" ? t.promo_bad_coll
@@ -2702,6 +2815,7 @@ export default function App() {
         if (status === "paid") {
           setPromoMsg(t.promo_live); haptic("medium");
           setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop("");
+          setPromoAmount(""); setPromoLink("");
           setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 1600);
         } else if (status === "failed") { setPromoMsg(t.promo_failed); }
       });
@@ -2715,11 +2829,29 @@ export default function App() {
   };
   const openPromo = (promo) => {
     haptic();
+    // Prefer the exact listing link the promoter supplied.
+    if (promo.link && /^https:\/\//.test(promo.link)) { safeOpen(promo.link); return; }
     if (promo.marketplace === "Fragment" && promo.slug) { safeOpen(`https://fragment.com/gifts/${promo.slug}`); return; }
     // Telegram (or missing slug): open the collection inside GiftTrove so live listings show.
     const col = collections.find((c) => String(c.gift_id) === String(promo.gift_id));
     if (col) { setActiveSheet(null); scoutGift(col); }
     else if (promo.slug) safeOpen(`https://t.me/nft/${promo.slug}`);
+  };
+  const withdrawAffiliate = async () => {
+    const addr = affAddr.trim();
+    if (!addr) { setAffMsg(t.aff_need_addr); return; }
+    setAffBusy(true); setAffMsg("");
+    try {
+      const r = await api("/api/affiliate/withdraw", { method: "POST", body: { ton_address: addr }, timeout: 20000 });
+      if (r?.ok) {
+        setAffMsg(t.aff_requested); haptic("medium"); setAffAddr("");
+        api("/api/affiliate").then((d) => setAffInfo(d || {})).catch(() => {});
+      } else {
+        setAffMsg(r?.error === "min" ? t.aff_min.replace("{n}", String(r.min || 1000))
+          : r?.error === "pro" ? t.aff_pro_only : r?.error === "address" ? t.aff_need_addr : t.aff_failed);
+      }
+    } catch { setAffMsg(t.aff_failed); }
+    setAffBusy(false);
   };
   const shareGift = async (item) => {
     haptic();
@@ -2812,21 +2944,30 @@ export default function App() {
     promoMatch(selectedBackdrops, p.backdrop));
 
   const renderPromoCard = (promo, i = 0) => {
-    const poster = giftImage(promo.slug, 1);   // collection art (instance #1)
-    const anim = giftAnimation(promo.slug, 1);
-    const sub = [promo.model, promo.symbol, promo.backdrop].filter(Boolean).join(" • ");
+    const poster = giftImage(promo.slug, 1);   // static collection art (instant, no Lottie fetch)
+    const sub = [promo.model, promo.symbol, promo.backdrop].filter(Boolean).join(" \u00b7 ");
+    const amt = (promo.amount || "").toString().trim();
+    let amtText = "";
+    if (amt) {
+      const n = Number(amt.replace(/,/g, ""));
+      const shown = Number.isFinite(n) ? n.toLocaleString("en-US") : amt;
+      const unit = promo.currency === "Stars" ? "Stars" : promo.currency === "TON" ? "TON" : "GRAM";
+      amtText = `${shown} ${unit}`;
+    }
     return (
       <div key={`promo-${promo.id}`} className="result-card promo-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => openPromo(promo)}>
         <div className="promo-flag" onClick={(e) => { e.stopPropagation(); reportPromo(promo); }} title={t.promo_report}><IconFlag /></div>
         <div className="result-gift-hero">
-          <LottieGift src={anim} poster={poster} size={132} radius={18} />
+          {poster
+            ? <img src={poster} alt="" loading="lazy" decoding="async" className="promo-poster" />
+            : <div className="promo-poster skeleton" />}
           <div className="promo-badge">{t.promoted}</div>
         </div>
         <div className="result-name">{promo.collection}</div>
-        <div className="result-meta"><span>{sub || t.promo_on.replace("{m}", promo.marketplace)}</span></div>
+        <div className="result-meta"><span>{sub || "\u00a0"}</span></div>
         <div className="result-foot">
-          <div className="result-price"><span className="result-view">{t.promo_on.replace("{m}", promo.marketplace)}</span></div>
-          <div className="badge-buy" onClick={(e) => { e.stopPropagation(); openPromo(promo); }}>{t.view_on}</div>
+          <div className="result-price">{amtText ? <span className="promo-amt">{amtText}</span> : <span className="result-view">{t.view}</span>}</div>
+          <div className="badge-buy" onClick={(e) => { e.stopPropagation(); openPromo(promo); }}>{promo.marketplace}</div>
         </div>
       </div>
     );
@@ -2874,21 +3015,6 @@ export default function App() {
             </div>
             <IconChevronRight />
           </div>
-
-          {tier === "pro" && (
-            <div className="vanity-box">
-              <div className="section-label" style={{ marginBottom: 8 }}>{t.vanity_title}</div>
-              <p className="vanity-help">{t.vanity_help}</p>
-              <div className="vanity-row">
-                <input className="ios-input" style={{ flex: 1 }} value={vanityInput} maxLength={12}
-                  onChange={(e) => setVanityInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                  placeholder={t.vanity_ph} />
-                <button className="action-btn" style={{ width: "auto", padding: "0 18px", margin: 0 }} onClick={claimVanity}>{t.claim}</button>
-              </div>
-              {vanityMsg && <p className="vanity-msg">{vanityMsg}</p>}
-              <p className="vanity-current">{t.your_code}: <b>{myRef}</b></p>
-            </div>
-          )}
 
           <p className="premium-fineprint">{t.premium_fineprint}</p>
         </BottomSheet>
@@ -2954,12 +3080,77 @@ export default function App() {
             </>
           )}
 
+          <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_price_opt}</div>
+          <div className="promo-amount-row">
+            <input className="ios-input" style={{ flex: 1 }} inputMode="decimal" value={promoAmount}
+              placeholder={t.promo_amount_ph} onChange={(e) => setPromoAmount(e.target.value.replace(/[^0-9.,]/g, ""))} />
+            <select className="promo-select" style={{ width: 110 }} value={promoCurrency} onChange={(e) => setPromoCurrency(e.target.value)}>
+              <option value="GRAM">GRAM</option>
+              <option value="TON">TON</option>
+              <option value="Stars">Stars</option>
+            </select>
+          </div>
+
+          <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_link_opt}</div>
+          <input className="ios-input" value={promoLink} placeholder="https://t.me/nft/... or fragment.com/..."
+            onChange={(e) => setPromoLink(e.target.value)} />
+          <p className="promo-hint">{t.promo_link_help}</p>
+
           <button className="action-btn" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)", marginTop: 16 }}
             disabled={!promoColl || promoBusy} onClick={createPromo}>
             <TGStar size={16} /> &nbsp;{promoBusy ? t.opening : t.promote_cta.replace("{n}", String(price))}
           </button>
           {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
           <p className="premium-fineprint">{t.promote_fineprint}</p>
+        </BottomSheet>
+      );
+    }
+    if (activeSheet === "affiliate") {
+      const a = affInfo && affInfo.ok ? affInfo : null;
+      const isPro = !!(a && a.is_pro);
+      const pct = (a && a.pct) || 30;
+      const minW = (a && a.min_withdraw) || 1000;
+      const avail = (a && a.available) || 0;
+      const canWithdraw = isPro && avail >= minW;
+      return (
+        <BottomSheet onClose={() => setActiveSheet(null)}>
+          <div className="sheet-title">{t.affiliate_title}</div>
+          <p className="premium-status">{t.affiliate_sub.replace("{n}", String(pct))}</p>
+
+          {!a ? (
+            <p className="vanity-help" style={{ textAlign: "center", padding: "18px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
+          ) : !isPro ? (
+            <>
+              <div className="aff-locked">
+                <div className="aff-locked-icon"><TGStar size={28} /></div>
+                <div className="aff-locked-title">{t.aff_locked_title}</div>
+                <div className="aff-locked-sub">{t.aff_locked_sub.replace("{n}", String(pct))}</div>
+              </div>
+              <button className="action-btn" onClick={() => { haptic(); setActiveSheet("premium"); }}>{t.aff_upgrade}</button>
+            </>
+          ) : (
+            <>
+              <div className="aff-balance">
+                <div className="aff-bal-label">{t.aff_available}</div>
+                <div className="aff-bal-value"><TGStar size={22} /> {Number(avail).toLocaleString("en-US")}</div>
+                {a.ton_value != null && <div className="aff-bal-ton">{"\u2248 "}{a.ton_value} TON</div>}
+              </div>
+              <div className="aff-stats">
+                <div className="aff-stat"><div className="aff-stat-n">{Number(a.earned || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_earned}</div></div>
+                <div className="aff-stat"><div className="aff-stat-n">{Number(a.pending || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_pending}</div></div>
+                <div className="aff-stat"><div className="aff-stat-n">{a.referees || 0}</div><div className="aff-stat-l">{t.aff_referred}</div></div>
+                <div className="aff-stat"><div className="aff-stat-n">{a.payers || 0}</div><div className="aff-stat-l">{t.aff_payers}</div></div>
+              </div>
+              <div className="promo-field-label" style={{ marginTop: 16 }}>{t.aff_ton_addr}</div>
+              <input className="ios-input" value={affAddr} placeholder={t.aff_addr_ph}
+                onChange={(e) => setAffAddr(e.target.value.trim())} />
+              <button className="action-btn" style={{ marginTop: 14 }} disabled={!canWithdraw || affBusy} onClick={withdrawAffiliate}>
+                {affBusy ? t.opening : canWithdraw ? t.aff_withdraw : t.aff_min.replace("{n}", String(minW))}
+              </button>
+              {affMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{affMsg}</p>}
+            </>
+          )}
+          <p className="premium-fineprint">{t.aff_fineprint.replace("{n}", String(minW))}</p>
         </BottomSheet>
       );
     }
@@ -3399,6 +3590,10 @@ export default function App() {
           <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}</div>
           <IconChevronRight />
         </div>
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("affiliate"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}</div>
+          <IconChevronRight />
+        </div>
       </div>
 
       <div className="section-label" style={{ marginTop: 12 }}>{t.referrals}</div>
@@ -3412,6 +3607,31 @@ export default function App() {
           <div style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
         </div>
       </div>
+
+      {tier === "pro" ? (
+        <div className="ios-group" style={{ padding: "16px 16px 18px" }}>
+          <div className="section-label" style={{ marginTop: 0, marginBottom: 8, padding: 0 }}>{t.vanity_title}</div>
+          <p className="vanity-help">{t.vanity_help}</p>
+          <div className="vanity-row">
+            <input className="ios-input" style={{ flex: 1 }} value={vanityInput} maxLength={12}
+              onChange={(e) => setVanityInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+              placeholder={t.vanity_ph} />
+            <button className="action-btn" style={{ width: "auto", padding: "0 18px", margin: 0 }} onClick={claimVanity}>{t.claim}</button>
+          </div>
+          {vanityMsg && <p className="vanity-msg">{vanityMsg}</p>}
+          <p className="vanity-current">{t.your_code}: <b>{myRef}</b></p>
+        </div>
+      ) : (
+        <div className="ios-group">
+          <div className="ios-row" onClick={() => { haptic(); setActiveSheet("premium"); }}>
+            <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg,#0a84ff,#bf5af2)" }}><TGStar size={16} /></div>{t.vanity_title}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 13 }}>{t.tier_pro_short}</span>
+              <IconChevronRight />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="section-label">{t.community}</div>
       <div className="ios-group">
