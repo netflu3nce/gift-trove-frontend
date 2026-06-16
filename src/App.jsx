@@ -235,6 +235,7 @@ function useIconPlay(trigger) {
 const IconSearch = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
 
 const IconBell = ({ trigger, size = 22 }) => {
   const on = useIconPlay(trigger);
@@ -845,6 +846,15 @@ const T = {
     premium_fineprint: "Subscriptions are billed monthly in Telegram Stars and renew automatically. Manage or cancel anytime in Telegram. Stars purchases are non-refundable.",
     open_in_tg: "Open inside Telegram to subscribe.", update_tg: "Update Telegram to subscribe with Stars.",
     sub_thanks: "Subscription active \u2014 thank you!", sub_failed: "Couldn't start the payment. Try again.",
+    promote_row: "Promote a gift", promoted: "Promoted", promo_on: "on {m}",
+    promote_title: "Promote a gift", promote_sub: "Pin a gift to the top of matching scouts for {d} days \u2014 {n} Stars, one-time.",
+    promo_collection: "Collection", promo_search_coll: "Search collections\u2026", promo_change: "Change",
+    promo_marketplace: "Marketplace", promo_attrs_opt: "Refine (optional)", promo_any: "Any",
+    promote_cta: "Promote for {n}", promo_pick_coll: "Pick a collection first.",
+    promote_fineprint: "Your promotion appears at the top of scouts for this gift that match what you pick. It is a redirect only \u2014 GiftTrove takes no part in any sale. Stars are non-refundable; GiftTrove may remove promotions that breach the rules.",
+    promo_limit: "You\u2019ve hit the max active promotions. Wait for one to expire.", promo_bad_coll: "That collection can\u2019t be promoted right now.",
+    promo_failed: "Couldn\u2019t start the promotion. Try again.", promo_live: "Your promotion is live!",
+    promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
     no_results: "No live listings matched your filters.", try_again: "Try again",
     offline_title: "Live data is offline", offline_sub: "Couldn't reach the GiftTrove server. Pull to refresh or try again shortly.",
@@ -885,6 +895,15 @@ const T = {
     premium_fineprint: "Подписка списывается ежемесячно в Telegram Stars и продлевается автоматически. Управление и отмена — в Telegram. Покупки за Stars не возвращаются.",
     open_in_tg: "Откройте в Telegram, чтобы оформить.", update_tg: "Обновите Telegram для оплаты Stars.",
     sub_thanks: "Подписка активна — спасибо!", sub_failed: "Не удалось начать оплату. Попробуйте снова.",
+    promote_row: "Продвинуть подарок", promoted: "Реклама", promo_on: "на {m}",
+    promote_title: "Продвинуть подарок", promote_sub: "Закрепите подарок вверху подходящих поисков на {d} дн. — {n} Stars, разово.",
+    promo_collection: "Коллекция", promo_search_coll: "Поиск коллекций…", promo_change: "Изменить",
+    promo_marketplace: "Маркетплейс", promo_attrs_opt: "Уточнить (необязательно)", promo_any: "Любой",
+    promote_cta: "Продвинуть за {n}", promo_pick_coll: "Сначала выберите коллекцию.",
+    promote_fineprint: "Ваша реклама показывается вверху поисков по этому подарку, совпадающих с выбором. Это только переход — GiftTrove не участвует в сделках. Stars не возвращаются; GiftTrove может удалить рекламу, нарушающую правила.",
+    promo_limit: "Достигнут лимит активной рекламы. Дождитесь окончания одной.", promo_bad_coll: "Эту коллекцию сейчас нельзя продвигать.",
+    promo_failed: "Не удалось запустить рекламу. Попробуйте снова.", promo_live: "Ваша реклама запущена!",
+    promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
     no_results: "Нет активных объявлений по фильтрам.", try_again: "Повторить",
     offline_title: "Данные недоступны", offline_sub: "Не удалось связаться с сервером GiftTrove. Потяните вниз для обновления.",
@@ -925,6 +944,15 @@ const T = {
     premium_fineprint: "订阅以 Telegram Stars 按月计费并自动续订。可随时在 Telegram 管理或取消。Stars 购买不可退款。",
     open_in_tg: "请在 Telegram 内打开以订阅。", update_tg: "请更新 Telegram 以使用 Stars 订阅。",
     sub_thanks: "订阅已生效，谢谢！", sub_failed: "无法发起支付，请重试。",
+    promote_row: "推广礼物", promoted: "推广", promo_on: "在 {m}",
+    promote_title: "推广礼物", promote_sub: "将礼物置于匹配搜索的顶部，持续 {d} 天 — {n} Stars，一次性。",
+    promo_collection: "系列", promo_search_coll: "搜索系列…", promo_change: "更改",
+    promo_marketplace: "市场", promo_attrs_opt: "细化（可选）", promo_any: "任意",
+    promote_cta: "支付 {n} 推广", promo_pick_coll: "请先选择一个系列。",
+    promote_fineprint: "您的推广会出现在该礼物匹配搜索的顶部。这仅为跳转链接 — GiftTrove 不参与任何交易。Stars 不可退款；GiftTrove 可移除违规推广。",
+    promo_limit: "已达到活跃推广上限，请等待其中一个到期。", promo_bad_coll: "该系列暂时无法推广。",
+    promo_failed: "无法启动推广，请重试。", promo_live: "您的推广已上线！",
+    promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
     no_results: "没有符合筛选条件的在售商品。", try_again: "重试",
     offline_title: "实时数据离线", offline_sub: "无法连接 GiftTrove 服务器。请下拉刷新或稍后再试。",
@@ -1536,6 +1564,26 @@ const styles = `
   .vanity-msg { font-size: 13px; font-weight: 600; color: var(--tg-blue); margin: 10px 0 0; }
   .vanity-current { font-size: 13px; color: var(--text-secondary); margin: 10px 0 0; }
   .premium-fineprint { font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); opacity: 0.8; text-align: center; margin: 18px 0 4px; }
+  /* promote-a-gift sheet */
+  .promo-field-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px; }
+  .promo-coll-list { max-height: 240px; overflow-y: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius-lg); margin-top: 10px; background: var(--bg-card); }
+  .promo-coll-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; cursor: pointer; border-bottom: 1px solid var(--separator); font-size: 15px; font-weight: 600; }
+  .promo-coll-row:last-child { border-bottom: none; }
+  .promo-coll-row:active { background: var(--bg-input); }
+  .promo-coll-img { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; background: var(--bg-input); flex-shrink: 0; }
+  .promo-coll-empty { padding: 18px 14px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+  .promo-chosen { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-card); }
+  .promo-change { background: none; border: none; color: var(--tg-blue); font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--font); padding: 4px 6px; }
+  .promo-market-row { display: flex; gap: 10px; }
+  .promo-market-btn { flex: 1; padding: 13px 0; border-radius: var(--radius-lg); border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
+  .promo-market-btn.active { border-color: #ff9f0a; background: linear-gradient(135deg, rgba(255,159,10,0.16), rgba(255,55,95,0.10)); color: #ff7a0a; }
+  .promo-field { margin-bottom: 12px; }
+  .promo-select { width: 100%; box-sizing: border-box; -webkit-appearance: none; appearance: none; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 13px 40px 13px 14px; font-size: 15px; color: var(--text-primary); font-family: var(--font); cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  /* promoted result card */
+  .promo-card { position: relative; border: 1.5px solid rgba(255,159,10,0.5) !important; }
+  .promo-badge { position: absolute; top: 8px; left: 8px; z-index: 2; background: linear-gradient(135deg, #ff9f0a, #ff375f); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,90,30,0.35); }
+  .promo-flag { position: absolute; top: 8px; right: 8px; z-index: 3; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.4); color: #fff; cursor: pointer; }
+  .promo-flag:active { background: rgba(0,0,0,0.6); }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
   .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
@@ -2039,6 +2087,20 @@ export default function App() {
   const [results, setResults] = useState(Array.isArray(savedSearch.results) ? savedSearch.results : []);
   const [scoutError, setScoutError] = useState(null);
 
+  // promoted gifts (blended atop matching scouts; hidden for Scout Pro)
+  const [promos, setPromos] = useState([]);
+  const [hiddenPromos, setHiddenPromos] = useState([]);   // ids reported/dismissed this session
+  // promote-a-gift form
+  const [promoColl, setPromoColl] = useState(null);       // chosen collection {gift_id,name,slug}
+  const [promoCollQuery, setPromoCollQuery] = useState("");
+  const [promoAttrs, setPromoAttrs] = useState({ models: [], symbols: [], backdrops: [] });
+  const [promoModel, setPromoModel] = useState("");
+  const [promoSymbol, setPromoSymbol] = useState("");
+  const [promoBackdrop, setPromoBackdrop] = useState("");
+  const [promoMarket, setPromoMarket] = useState("Telegram");
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMsg, setPromoMsg] = useState("");
+
   // Save the current search so it survives a full page reload.
   useEffect(() => {
     try {
@@ -2274,6 +2336,18 @@ export default function App() {
     return () => { alive = false; };
   }, [activeGiftId]);
 
+  // Load attributes for the collection chosen in the promote form (separate from scouting).
+  const promoGiftId = promoColl?.gift_id || "";
+  useEffect(() => {
+    setPromoModel(""); setPromoSymbol(""); setPromoBackdrop("");
+    if (!promoGiftId) { setPromoAttrs({ models: [], symbols: [], backdrops: [] }); return; }
+    let alive = true;
+    api(`/api/attributes?gift_id=${encodeURIComponent(promoGiftId)}`, { timeout: 20000 })
+      .then((d) => { if (alive && d) setPromoAttrs({ models: d.models || [], symbols: d.symbols || [], backdrops: d.backdrops || [] }); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [promoGiftId]);
+
   // ── referral + deep-link handling on launch ──
   useEffect(() => {
     api(`/api/referrals?uid=${encodeURIComponent(tgUser?.id || "guest")}`)
@@ -2451,6 +2525,7 @@ export default function App() {
     setScoutError(null);
     setHasSearched(true);
     setResults([]);            // cancel/replace any previous search
+    setPromos([]);             // promos re-fetched for the new collection
     setNextOffset("");
     setIsScouting(true);
     setActiveTab("results");   // results pop up in the next tab
@@ -2466,6 +2541,13 @@ export default function App() {
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
       setNextOffset(d?.next_offset || "");
+      // Blend promoted gifts for this collection (backend returns none for Scout Pro).
+      const gid = selectedCollection?.gift_id || "";
+      if (gid && (tierInfo?.tier || "free") !== "pro") {
+        api(`/api/promos?gift_id=${encodeURIComponent(gid)}`)
+          .then((pr) => setPromos(Array.isArray(pr?.promos) ? pr.promos : []))
+          .catch(() => {});
+      }
     } catch {
       setScoutError("offline");
       setResults([]);
@@ -2498,6 +2580,12 @@ export default function App() {
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
       setResults(Array.isArray(d?.results) ? d.results : []);
       setNextOffset(d?.next_offset || "");
+      setPromos([]);
+      if (col.gift_id && (tierInfo?.tier || "free") !== "pro") {
+        api(`/api/promos?gift_id=${encodeURIComponent(col.gift_id)}`)
+          .then((pr) => setPromos(Array.isArray(pr?.promos) ? pr.promos : []))
+          .catch(() => {});
+      }
     } catch { setScoutError("offline"); setResults([]); }
     setTimeout(() => { setIsScouting(false); setIsSearching(true); }, 300);
   };
@@ -2594,6 +2682,47 @@ export default function App() {
       else setVanityMsg(r?.error === "taken" ? t.vanity_taken : (r?.error === "pro" || r?.error === "premium") ? t.vanity_premium : t.vanity_bad);
     } catch { setVanityMsg(t.vanity_bad); }
   };
+
+  // ── promote a gift (one-time Stars, any tier) ──
+  const createPromo = async () => {
+    if (!promoColl?.gift_id) { setPromoMsg(t.promo_pick_coll); return; }
+    if (!window.Telegram?.WebApp?.initData) { showToast(t.open_in_tg); return; }
+    if (!tg?.openInvoice) { showToast(t.update_tg); return; }
+    setPromoBusy(true); setPromoMsg("");
+    try {
+      const r = await api("/api/promote/create", { method: "POST", body: {
+        gift_id: promoColl.gift_id, slug: promoColl.slug || "", marketplace: promoMarket,
+        model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
+      }, timeout: 20000 });
+      if (!r?.ok || !r.link) {
+        const m = r?.error === "limit" ? t.promo_limit : r?.error === "collection" ? t.promo_bad_coll
+          : r?.error === "auth" ? t.open_in_tg : t.promo_failed;
+        setPromoMsg(m); setPromoBusy(false); return;
+      }
+      tg.openInvoice(r.link, (status) => {
+        setPromoBusy(false);
+        if (status === "paid") {
+          setPromoMsg(t.promo_live); haptic("medium");
+          setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop("");
+          setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 1600);
+        } else if (status === "failed") { setPromoMsg(t.promo_failed); }
+      });
+    } catch { setPromoMsg(t.promo_failed); setPromoBusy(false); }
+  };
+  const reportPromo = (promo) => {
+    haptic();
+    setHiddenPromos((p) => [...p, promo.id]);   // hide immediately for this user
+    showToast(t.promo_reported);
+    api("/api/promote/report", { method: "POST", body: { id: promo.id } }).catch(() => {});
+  };
+  const openPromo = (promo) => {
+    haptic();
+    if (promo.marketplace === "Fragment" && promo.slug) { safeOpen(`https://fragment.com/gifts/${promo.slug}`); return; }
+    // Telegram (or missing slug): open the collection inside GiftTrove so live listings show.
+    const col = collections.find((c) => String(c.gift_id) === String(promo.gift_id));
+    if (col) { setActiveSheet(null); scoutGift(col); }
+    else if (promo.slug) safeOpen(`https://t.me/nft/${promo.slug}`);
+  };
   const shareGift = async (item) => {
     haptic();
     const link = giftDeepLink(item, myRef);
@@ -2674,6 +2803,37 @@ export default function App() {
     );
   };
 
+  // Promoted gifts shown for the current scout: filter by the attribute filters the
+  // user picked (a promo with no value for a type matches any filter of that type),
+  // drop anything reported/dismissed this session.
+  const promoMatch = (sel, val) => !val || sel.length === 0 || sel.includes(val);
+  const visiblePromos = promos.filter((p) =>
+    !hiddenPromos.includes(p.id) &&
+    promoMatch(selectedModels, p.model) &&
+    promoMatch(selectedSymbols, p.symbol) &&
+    promoMatch(selectedBackdrops, p.backdrop));
+
+  const renderPromoCard = (promo, i = 0) => {
+    const poster = giftImage(promo.slug, 1);   // collection art (instance #1)
+    const anim = giftAnimation(promo.slug, 1);
+    const sub = [promo.model, promo.symbol, promo.backdrop].filter(Boolean).join(" • ");
+    return (
+      <div key={`promo-${promo.id}`} className="result-card promo-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => openPromo(promo)}>
+        <div className="promo-flag" onClick={(e) => { e.stopPropagation(); reportPromo(promo); }} title={t.promo_report}><IconFlag /></div>
+        <div className="result-gift-hero">
+          <LottieGift src={anim} poster={poster} size={132} radius={18} />
+          <div className="promo-badge">{t.promoted}</div>
+        </div>
+        <div className="result-name">{promo.collection}</div>
+        <div className="result-meta"><span>{sub || t.promo_on.replace("{m}", promo.marketplace)}</span></div>
+        <div className="result-foot">
+          <div className="result-price"><span className="result-view">{t.promo_on.replace("{m}", promo.marketplace)}</span></div>
+          <div className="badge-buy" onClick={(e) => { e.stopPropagation(); openPromo(promo); }}>{t.view_on}</div>
+        </div>
+      </div>
+    );
+  };
+
   // ── SHEETS ──
   const renderSheet = () => {
     if (activeSheet === "premium") {
@@ -2729,6 +2889,75 @@ export default function App() {
           )}
 
           <p className="premium-fineprint">{t.premium_fineprint}</p>
+        </BottomSheet>
+      );
+    }
+    if (activeSheet === "promote") {
+      const price = tierInfo.promo_price || 50;
+      const days = tierInfo.promo_days || 3;
+      const PromoSelect = ({ label, options, value, onChange }) => (
+        <div className="promo-field">
+          <label className="promo-field-label">{label}</label>
+          <select className="promo-select" value={value} onChange={(e) => onChange(e.target.value)}>
+            <option value="">{t.promo_any}</option>
+            {options.map((o) => <option key={o.name} value={o.name}>{o.name}</option>)}
+          </select>
+        </div>
+      );
+      const collMatches = collections
+        .filter((c) => c.name.toLowerCase().includes(promoCollQuery.trim().toLowerCase()))
+        .slice(0, 40);
+      return (
+        <BottomSheet onClose={() => setActiveSheet(null)}>
+          <div className="sheet-title">{t.promote_title}</div>
+          <p className="premium-status">{t.promote_sub.replace("{n}", String(price)).replace("{d}", String(days))}</p>
+
+          <div className="promo-field-label" style={{ marginTop: 4 }}>{t.promo_collection}</div>
+          {!promoColl ? (
+            <>
+              <input className="ios-input" value={promoCollQuery} placeholder={t.promo_search_coll}
+                onChange={(e) => setPromoCollQuery(e.target.value)} />
+              <div className="promo-coll-list" onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                {collMatches.map((c) => (
+                  <div key={c.gift_id} className="promo-coll-row" onClick={() => { haptic(); setPromoColl(c); setPromoCollQuery(""); }}>
+                    {c.slug && <img src={giftImage(c.slug, 1)} alt="" loading="lazy" className="promo-coll-img" />}
+                    <span>{c.name}</span>
+                  </div>
+                ))}
+                {collMatches.length === 0 && <div className="promo-coll-empty">{t.no_results}</div>}
+              </div>
+            </>
+          ) : (
+            <div className="promo-chosen">
+              {promoColl.slug && <img src={giftImage(promoColl.slug, 1)} alt="" className="promo-coll-img" />}
+              <span style={{ flex: 1, fontWeight: 700 }}>{promoColl.name}</span>
+              <button className="promo-change" onClick={() => setPromoColl(null)}>{t.promo_change}</button>
+            </div>
+          )}
+
+          <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_marketplace}</div>
+          <div className="promo-market-row">
+            {["Telegram", "Fragment"].map((m) => (
+              <button key={m} className={`promo-market-btn ${promoMarket === m ? "active" : ""}`}
+                onClick={() => { haptic(); setPromoMarket(m); }}>{m}</button>
+            ))}
+          </div>
+
+          {promoColl && (promoAttrs.models.length + promoAttrs.symbols.length + promoAttrs.backdrops.length > 0) && (
+            <>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_attrs_opt}</div>
+              {promoAttrs.models.length > 0 && <PromoSelect label={t.model} options={promoAttrs.models} value={promoModel} onChange={setPromoModel} />}
+              {promoAttrs.symbols.length > 0 && <PromoSelect label={t.symbol} options={promoAttrs.symbols} value={promoSymbol} onChange={setPromoSymbol} />}
+              {promoAttrs.backdrops.length > 0 && <PromoSelect label={t.backdrop} options={promoAttrs.backdrops} value={promoBackdrop} onChange={setPromoBackdrop} />}
+            </>
+          )}
+
+          <button className="action-btn" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)", marginTop: 16 }}
+            disabled={!promoColl || promoBusy} onClick={createPromo}>
+            <TGStar size={16} /> &nbsp;{promoBusy ? t.opening : t.promote_cta.replace("{n}", String(price))}
+          </button>
+          {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
+          <p className="premium-fineprint">{t.promote_fineprint}</p>
         </BottomSheet>
       );
     }
@@ -3123,6 +3352,7 @@ export default function App() {
         </div>
 
         <div className={desktop ? "results-grid desktop" : "results-grid"}>
+          {visiblePromos.map((p, i) => renderPromoCard(p, i))}
           {results.map((item, i) => renderGiftCard(item, i))}
         </div>
 
@@ -3162,6 +3392,10 @@ export default function App() {
             <span style={{ color: tier === "free" ? "var(--text-secondary)" : "var(--tg-blue)", fontWeight: 700, fontSize: 14 }}>{tier === "pro" ? "Scout Pro" : tier === "plus" ? "Scout+" : t.tier_free}</span>
             <IconChevronRight />
           </div>
+        </div>
+        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("promote"); }}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}</div>
+          <IconChevronRight />
         </div>
       </div>
 
