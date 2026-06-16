@@ -135,7 +135,8 @@ function marketplaceUrl(item) {
   return null;
 }
 
-// Compact, mobile-safe number formatting: 2,562,062 -> 2.5M, 12,500 -> 12.5K.
+// Compact, mobile-safe number formatting: 2,562,062 -> 2.5M, 12,500 -> 12.5K,
+// but small values keep their real decimals (8.94 stays 8.94, not 9).
 function compactNum(n) {
   n = Number(n);
   if (!Number.isFinite(n)) return "0";
@@ -143,7 +144,11 @@ function compactNum(n) {
   if (n >= 1e9) return trim(Math.floor(n / 1e8) / 10) + "B";
   if (n >= 1e6) return trim(Math.floor(n / 1e5) / 10) + "M";
   if (n >= 1e3) return trim(Math.floor(n / 100) / 10) + "K";
-  return Math.round(n).toLocaleString("en-US");
+  if (n === 0) return "0";
+  if (Number.isInteger(n)) return n.toLocaleString("en-US");
+  // keep up to 2 decimals for fractional values, trimming trailing zeros
+  const s = (Math.round(n * 100) / 100).toFixed(2).replace(/\.?0+$/, "");
+  return s;
 }
 
 // Wallet deeplinks — TON spec, address in the PATH, amount in nanotons, comment as `text`.
@@ -237,7 +242,9 @@ function useIconPlay(trigger) {
 const IconSearch = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconChevronLeft = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
+const IconEdit = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>;
 
 const IconBell = ({ trigger, size = 22 }) => {
   const on = useIconPlay(trigger);
@@ -858,6 +865,13 @@ const T = {
     promo_failed: "Couldn\u2019t start the promotion. Try again.", promo_live: "Your promotion is live!",
     promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
     view: "View", tier_pro_short: "Pro",
+    promo_tg_note: "GiftTrove finds this gift\u2019s live floor on Telegram and keeps the promoted price current.",
+    promo_frag_link: "Fragment gift link", promo_bad_link: "That doesn\u2019t look like a fragment.com link.",
+    promo_frag_note: "Paste the fragment.com link to your gift. An admin reviews it before it goes live; invalid links are auto-declined and refunded.",
+    promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
+    aff_withdraw_as: "Withdraw as \u2248 {v} GRAM", aff_track_note: "Tracked earnings \u2014 withdrawn as GRAM to your wallet.",
+    aff_earnings_30d: "Earnings (30 days)", aff_no_earnings: "No earnings yet", aff_30d_ago: "30d ago", aff_today: "Today",
+    aff_history: "Payout history", aff_st_paid: "Paid", aff_st_pending: "Pending", aff_st_declined: "Declined",
     promo_price_opt: "Asking price (optional)", promo_amount_ph: "e.g. 250", promo_link_opt: "Direct gift link (optional)",
     promo_link_help: "Paste the exact Telegram or Fragment listing so taps go straight to it.",
     affiliate_row: "Affiliate program", affiliate_title: "Affiliate program",
@@ -918,6 +932,13 @@ const T = {
     promo_failed: "Не удалось запустить рекламу. Попробуйте снова.", promo_live: "Ваша реклама запущена!",
     promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
     view: "Открыть", tier_pro_short: "Pro",
+    promo_tg_note: "GiftTrove находит актуальную цену этого подарка в Telegram и поддерживает её в рекламе.",
+    promo_frag_link: "Ссылка на подарок Fragment", promo_bad_link: "Это не похоже на ссылку fragment.com.",
+    promo_frag_note: "Вставьте ссылку fragment.com на ваш подарок. Админ проверит её перед публикацией; неверные ссылки отклоняются и возвращаются.",
+    promo_review: "Отправлено — реклама появится после одобрения админом.",
+    aff_withdraw_as: "Вывод ≈ {v} GRAM", aff_track_note: "Отслеживаемый доход — выводится в GRAM на ваш кошелёк.",
+    aff_earnings_30d: "Доход (30 дней)", aff_no_earnings: "Пока нет дохода", aff_30d_ago: "30 дн. назад", aff_today: "Сегодня",
+    aff_history: "История выплат", aff_st_paid: "Выплачено", aff_st_pending: "В обработке", aff_st_declined: "Отклонено",
     promo_price_opt: "Цена (необязательно)", promo_amount_ph: "напр. 250", promo_link_opt: "Прямая ссылка на подарок (необязательно)",
     promo_link_help: "Вставьте точную ссылку на Telegram или Fragment, чтобы переход вёл сразу к ней.",
     affiliate_row: "Партнёрская программа", affiliate_title: "Партнёрская программа",
@@ -978,6 +999,13 @@ const T = {
     promo_failed: "无法启动推广，请重试。", promo_live: "您的推广已上线！",
     promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
     view: "查看", tier_pro_short: "Pro",
+    promo_tg_note: "GiftTrove 会在 Telegram 上获取该礼物的实时地板价并保持推广价格更新。",
+    promo_frag_link: "Fragment 礼物链接", promo_bad_link: "这看起来不是 fragment.com 链接。",
+    promo_frag_note: "粘贴您礼物的 fragment.com 链接。管理员审核后上线；无效链接将自动拒绝并退款。",
+    promo_review: "已提交 — 管理员批准后推广即上线。",
+    aff_withdraw_as: "提现 ≈ {v} GRAM", aff_track_note: "追踪收益 — 以 GRAM 提现至您的钱包。",
+    aff_earnings_30d: "收益（30 天）", aff_no_earnings: "暂无收益", aff_30d_ago: "30 天前", aff_today: "今天",
+    aff_history: "提现记录", aff_st_paid: "已支付", aff_st_pending: "处理中", aff_st_declined: "已拒绝",
     promo_price_opt: "售价（可选）", promo_amount_ph: "例如 250", promo_link_opt: "礼物直达链接（可选）",
     promo_link_help: "粘贴确切的 Telegram 或 Fragment 链接，点击即可直达。",
     affiliate_row: "推广联盟", affiliate_title: "推广联盟",
@@ -1597,6 +1625,9 @@ const styles = `
   .hoton-cta-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
   .vanity-box { border-top: 1px solid var(--border); padding-top: 18px; margin-bottom: 6px; }
   .vanity-help { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+  .ref-edit-btn { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: var(--bg-input); color: var(--tg-blue); cursor: pointer; flex-shrink: 0; }
+  .ref-edit-btn:active { background: var(--bg-card); }
+  .vanity-inline { display: block !important; cursor: default; padding: 12px 16px 16px !important; }
   .vanity-row { display: flex; gap: 10px; align-items: stretch; }
   .vanity-row .ios-input { padding: 14px 16px; font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; }
   .vanity-msg { font-size: 13px; font-weight: 600; color: var(--tg-blue); margin: 10px 0 0; }
@@ -1639,6 +1670,27 @@ const styles = `
   .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
   .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
   .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
+  .aff-screen { position: fixed; inset: 0; z-index: 1000; background: var(--bg); display: flex; flex-direction: column; animation: affSlideIn 0.34s var(--spring); will-change: transform; }
+  @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .aff-topbar { display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); }
+  .aff-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-primary); cursor: pointer; }
+  .aff-topbar-title { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+  .aff-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 2px 10px; }
+  .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
+  .aff-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
+  .aff-bar { flex: 1; background: linear-gradient(180deg, #30d158, #0a84ff); border-radius: 3px 3px 0 0; min-height: 2px; transform-origin: bottom; animation: affBarGrow 0.5s var(--spring) both; }
+  @keyframes affBarGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  .aff-chart-empty { height: 120px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
+  .aff-chart-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-secondary); }
+  .aff-payout-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--separator); }
+  .aff-payout-row:last-child { border-bottom: none; }
+  .aff-payout-amt { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+  .aff-payout-date { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .aff-payout-status { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .st-paid { background: rgba(48,209,88,0.15); color: #30d158; }
+  .st-requested { background: rgba(255,159,10,0.15); color: #ff9f0a; }
+  .st-declined, .st-rejected { background: rgba(255,69,58,0.15); color: #ff453a; }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .bc-count { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
   .bc-text, .bc-img { width: 100%; box-sizing: border-box; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; font-size: 14px; color: var(--text-primary); font-family: var(--font); resize: vertical; }
@@ -1660,6 +1712,9 @@ const styles = `
   .sbc-value { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1.1; margin-top: 2px; }
   .sbc-unit { font-size: 15px; font-weight: 700; color: var(--text-secondary); }
   .sbc-err { font-size: 16px; font-weight: 700; color: var(--text-secondary); }
+  .sbc-icon-anim { width: 46px; height: 46px; flex-shrink: 0; filter: drop-shadow(0 3px 8px rgba(255,150,0,0.4)); }
+  .sbc-gram { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-top: 2px; }
+  .aff-bal-star { display: inline-flex; filter: drop-shadow(0 2px 6px rgba(255,150,0,0.4)); }
   .sbc-note { font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); opacity: 0.85; margin: 10px 2px 18px; }
   .admin-strip { display: flex; align-items: center; justify-content: space-between; background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 18px; box-shadow: var(--shadow-card); font-size: 14px; color: var(--text-secondary); font-weight: 600; }
   .admin-strip strong { color: var(--accent); font-size: 20px; font-variant-numeric: tabular-nums; }
@@ -1940,7 +1995,7 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
           {tab === "overview" && (
             <div className="fade-in-up">
               <div className="star-balance-card">
-                <div className="sbc-icon"><TGStar size={26} /></div>
+                <div className="sbc-icon-anim"><LottieGift src={HOTON_STAR_LOTTIE} size={46} radius={12} eager /></div>
                 <div className="sbc-body">
                   <div className="sbc-label">Bot Star balance</div>
                   <div className="sbc-value">
@@ -1948,6 +2003,9 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
                       : starBalance.error ? <span className="sbc-err">unavailable</span>
                       : <>{Number(starBalance.stars || 0).toLocaleString("en-US")} <span className="sbc-unit">Stars</span></>}
                   </div>
+                  {starBalance && !starBalance.error && starBalance.gram != null && (
+                    <div className="sbc-gram">{"\u2248 "}{Number(starBalance.gram).toLocaleString("en-US")} GRAM</div>
+                  )}
                 </div>
               </div>
               <p className="sbc-note">Earned by @gifttrovebot. Stars are held ~21 days and need 1,000 minimum to withdraw to TON via Fragment.</p>
@@ -2187,6 +2245,7 @@ export default function App() {
   const [affBusy, setAffBusy] = useState(false);
   const [affMsg, setAffMsg] = useState("");
   const [pendingScout, setPendingScout] = useState("");   // gift_id from a q_ inline deep link
+  const [editingVanity, setEditingVanity] = useState(false);   // inline custom-code editor (Pro)
 
   // Save the current search so it survives a full page reload.
   useEffect(() => {
@@ -2799,24 +2858,24 @@ export default function App() {
     if (!window.Telegram?.WebApp?.initData) { showToast(t.open_in_tg); return; }
     if (!tg?.openInvoice) { showToast(t.update_tg); return; }
     setPromoBusy(true); setPromoMsg("");
+    const isFragment = promoMarket === "Fragment";
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
         gift_id: promoColl.gift_id, slug: promoColl.slug || "", marketplace: promoMarket,
         model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
-        amount: promoAmount.trim(), currency: promoCurrency, link: promoLink.trim(),
+        link: isFragment ? promoLink.trim() : "",
       }, timeout: 20000 });
       if (!r?.ok || !r.link) {
-        const m = r?.error === "limit" ? t.promo_limit : r?.error === "collection" ? t.promo_bad_coll
-          : r?.error === "auth" ? t.open_in_tg : t.promo_failed;
+        const m = r?.error === "domain" ? t.promo_bad_link : r?.error === "collection" ? t.promo_bad_coll
+          : r?.error === "marketplace" ? t.promo_bad_coll : r?.error === "auth" ? t.open_in_tg : t.promo_failed;
         setPromoMsg(m); setPromoBusy(false); return;
       }
       tg.openInvoice(r.link, (status) => {
         setPromoBusy(false);
         if (status === "paid") {
-          setPromoMsg(t.promo_live); haptic("medium");
-          setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop("");
-          setPromoAmount(""); setPromoLink("");
-          setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 1600);
+          setPromoMsg(isFragment ? t.promo_review : t.promo_live); haptic("medium");
+          setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop(""); setPromoLink("");
+          setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 2000);
         } else if (status === "failed") { setPromoMsg(t.promo_failed); }
       });
     } catch { setPromoMsg(t.promo_failed); setPromoBusy(false); }
@@ -2958,9 +3017,7 @@ export default function App() {
       <div key={`promo-${promo.id}`} className="result-card promo-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => openPromo(promo)}>
         <div className="promo-flag" onClick={(e) => { e.stopPropagation(); reportPromo(promo); }} title={t.promo_report}><IconFlag /></div>
         <div className="result-gift-hero">
-          {poster
-            ? <img src={poster} alt="" loading="lazy" decoding="async" className="promo-poster" />
-            : <div className="promo-poster skeleton" />}
+          <LottieGift src={giftAnimation(promo.slug, 1)} poster={poster} size={132} radius={14} />
           <div className="promo-badge">{t.promoted}</div>
         </div>
         <div className="result-name">{promo.collection}</div>
@@ -3071,33 +3128,30 @@ export default function App() {
             ))}
           </div>
 
-          {promoColl && (promoAttrs.models.length + promoAttrs.symbols.length + promoAttrs.backdrops.length > 0) && (
+          {promoMarket === "Telegram" ? (
             <>
-              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_attrs_opt}</div>
-              {promoAttrs.models.length > 0 && <PromoSelect label={t.model} options={promoAttrs.models} value={promoModel} onChange={setPromoModel} />}
-              {promoAttrs.symbols.length > 0 && <PromoSelect label={t.symbol} options={promoAttrs.symbols} value={promoSymbol} onChange={setPromoSymbol} />}
-              {promoAttrs.backdrops.length > 0 && <PromoSelect label={t.backdrop} options={promoAttrs.backdrops} value={promoBackdrop} onChange={setPromoBackdrop} />}
+              {promoColl && (promoAttrs.models.length + promoAttrs.symbols.length + promoAttrs.backdrops.length > 0) && (
+                <>
+                  <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_attrs_opt}</div>
+                  {promoAttrs.models.length > 0 && <PromoSelect label={t.model} options={promoAttrs.models} value={promoModel} onChange={setPromoModel} />}
+                  {promoAttrs.symbols.length > 0 && <PromoSelect label={t.symbol} options={promoAttrs.symbols} value={promoSymbol} onChange={setPromoSymbol} />}
+                  {promoAttrs.backdrops.length > 0 && <PromoSelect label={t.backdrop} options={promoAttrs.backdrops} value={promoBackdrop} onChange={setPromoBackdrop} />}
+                </>
+              )}
+              <p className="promo-hint" style={{ marginTop: 12 }}>{t.promo_tg_note}</p>
+            </>
+          ) : (
+            <>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_frag_link}</div>
+              <input className="ios-input" value={promoLink} placeholder="https://fragment.com/gift/..."
+                onChange={(e) => setPromoLink(e.target.value)} />
+              <p className="promo-hint">{t.promo_frag_note}</p>
             </>
           )}
 
-          <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_price_opt}</div>
-          <div className="promo-amount-row">
-            <input className="ios-input" style={{ flex: 1 }} inputMode="decimal" value={promoAmount}
-              placeholder={t.promo_amount_ph} onChange={(e) => setPromoAmount(e.target.value.replace(/[^0-9.,]/g, ""))} />
-            <select className="promo-select" style={{ width: 110 }} value={promoCurrency} onChange={(e) => setPromoCurrency(e.target.value)}>
-              <option value="GRAM">GRAM</option>
-              <option value="TON">TON</option>
-              <option value="Stars">Stars</option>
-            </select>
-          </div>
-
-          <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_link_opt}</div>
-          <input className="ios-input" value={promoLink} placeholder="https://t.me/nft/... or fragment.com/..."
-            onChange={(e) => setPromoLink(e.target.value)} />
-          <p className="promo-hint">{t.promo_link_help}</p>
-
           <button className="action-btn" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)", marginTop: 16 }}
-            disabled={!promoColl || promoBusy} onClick={createPromo}>
+            disabled={!promoColl || promoBusy || (promoMarket === "Fragment" && !/^https:\/\/(www\.)?fragment\.com\//i.test(promoLink.trim()))}
+            onClick={createPromo}>
             <TGStar size={16} /> &nbsp;{promoBusy ? t.opening : t.promote_cta.replace("{n}", String(price))}
           </button>
           {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
@@ -3112,46 +3166,88 @@ export default function App() {
       const minW = (a && a.min_withdraw) || 1000;
       const avail = (a && a.available) || 0;
       const canWithdraw = isPro && avail >= minW;
+      const series = (a && a.series) || [];
+      const maxV = Math.max(1, ...series.map((d) => d.v || 0));
+      const hasEarn = series.some((d) => (d.v || 0) > 0);
+      const payouts = (a && a.payouts) || [];
+      const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
       return (
-        <BottomSheet onClose={() => setActiveSheet(null)}>
-          <div className="sheet-title">{t.affiliate_title}</div>
-          <p className="premium-status">{t.affiliate_sub.replace("{n}", String(pct))}</p>
+        <div className="aff-screen">
+          <div className="aff-topbar">
+            <button className="aff-back" onClick={() => { haptic(); setActiveSheet(null); }}><IconChevronLeft /></button>
+            <div className="aff-topbar-title">{t.affiliate_title}</div>
+            <div style={{ width: 32 }} />
+          </div>
+          <div className="aff-scroll">
+            <p className="premium-status" style={{ marginTop: 0 }}>{t.affiliate_sub.replace("{n}", String(pct))}</p>
+            {!a ? (
+              <p className="vanity-help" style={{ textAlign: "center", padding: "32px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
+            ) : !isPro ? (
+              <>
+                <div className="aff-locked">
+                  <div className="aff-locked-icon"><LottieGift src={HOTON_STAR_LOTTIE} size={52} radius={14} eager /></div>
+                  <div className="aff-locked-title">{t.aff_locked_title}</div>
+                  <div className="aff-locked-sub">{t.aff_locked_sub.replace("{n}", String(pct))}</div>
+                </div>
+                <button className="action-btn" onClick={() => { haptic(); setActiveSheet("premium"); }}>{t.aff_upgrade}</button>
+              </>
+            ) : (
+              <>
+                <div className="aff-balance">
+                  <div className="aff-bal-label">{t.aff_available}</div>
+                  <div className="aff-bal-value"><span className="aff-bal-star"><LottieGift src={HOTON_STAR_LOTTIE} size={28} radius={8} eager /></span> {Number(avail).toLocaleString("en-US")}</div>
+                  {a.gram_value != null
+                    ? <div className="aff-bal-ton">{t.aff_withdraw_as.replace("{v}", Number(a.gram_value).toLocaleString("en-US"))}</div>
+                    : <div className="aff-bal-ton">{t.aff_track_note}</div>}
+                </div>
+                <div className="aff-stats">
+                  <div className="aff-stat"><div className="aff-stat-n">{Number(a.earned || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_earned}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{Number(a.pending || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_pending}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{a.referees || 0}</div><div className="aff-stat-l">{t.aff_referred}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{a.payers || 0}</div><div className="aff-stat-l">{t.aff_payers}</div></div>
+                </div>
 
-          {!a ? (
-            <p className="vanity-help" style={{ textAlign: "center", padding: "18px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
-          ) : !isPro ? (
-            <>
-              <div className="aff-locked">
-                <div className="aff-locked-icon"><TGStar size={28} /></div>
-                <div className="aff-locked-title">{t.aff_locked_title}</div>
-                <div className="aff-locked-sub">{t.aff_locked_sub.replace("{n}", String(pct))}</div>
-              </div>
-              <button className="action-btn" onClick={() => { haptic(); setActiveSheet("premium"); }}>{t.aff_upgrade}</button>
-            </>
-          ) : (
-            <>
-              <div className="aff-balance">
-                <div className="aff-bal-label">{t.aff_available}</div>
-                <div className="aff-bal-value"><TGStar size={22} /> {Number(avail).toLocaleString("en-US")}</div>
-                {a.ton_value != null && <div className="aff-bal-ton">{"\u2248 "}{a.ton_value} TON</div>}
-              </div>
-              <div className="aff-stats">
-                <div className="aff-stat"><div className="aff-stat-n">{Number(a.earned || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_earned}</div></div>
-                <div className="aff-stat"><div className="aff-stat-n">{Number(a.pending || 0).toLocaleString("en-US")}</div><div className="aff-stat-l">{t.aff_pending}</div></div>
-                <div className="aff-stat"><div className="aff-stat-n">{a.referees || 0}</div><div className="aff-stat-l">{t.aff_referred}</div></div>
-                <div className="aff-stat"><div className="aff-stat-n">{a.payers || 0}</div><div className="aff-stat-l">{t.aff_payers}</div></div>
-              </div>
-              <div className="promo-field-label" style={{ marginTop: 16 }}>{t.aff_ton_addr}</div>
-              <input className="ios-input" value={affAddr} placeholder={t.aff_addr_ph}
-                onChange={(e) => setAffAddr(e.target.value.trim())} />
-              <button className="action-btn" style={{ marginTop: 14 }} disabled={!canWithdraw || affBusy} onClick={withdrawAffiliate}>
-                {affBusy ? t.opening : canWithdraw ? t.aff_withdraw : t.aff_min.replace("{n}", String(minW))}
-              </button>
-              {affMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{affMsg}</p>}
-            </>
-          )}
-          <p className="premium-fineprint">{t.aff_fineprint.replace("{n}", String(minW))}</p>
-        </BottomSheet>
+                <div className="aff-card-title">{t.aff_earnings_30d}</div>
+                <div className="aff-chart-wrap">
+                  {hasEarn ? (
+                    <div className="aff-chart">
+                      {series.map((d, i) => (
+                        <div key={i} className="aff-bar" style={{ height: `${Math.max(2, (d.v / maxV) * 100)}%` }} />
+                      ))}
+                    </div>
+                  ) : <div className="aff-chart-empty">{t.aff_no_earnings}</div>}
+                  <div className="aff-chart-axis"><span>{t.aff_30d_ago}</span><span>{t.aff_today}</span></div>
+                </div>
+
+                <div className="promo-field-label" style={{ marginTop: 18 }}>{t.aff_ton_addr}</div>
+                <input className="ios-input" value={affAddr} placeholder={t.aff_addr_ph}
+                  onChange={(e) => setAffAddr(e.target.value.trim())} />
+                <button className="action-btn" style={{ marginTop: 14 }} disabled={!canWithdraw || affBusy} onClick={withdrawAffiliate}>
+                  {affBusy ? t.opening : canWithdraw ? t.aff_withdraw : t.aff_min.replace("{n}", String(minW))}
+                </button>
+                {affMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{affMsg}</p>}
+
+                {payouts.length > 0 && (
+                  <>
+                    <div className="aff-card-title" style={{ marginTop: 22 }}>{t.aff_history}</div>
+                    <div className="ios-group">
+                      {payouts.map((p) => (
+                        <div key={p.id} className="aff-payout-row">
+                          <div>
+                            <div className="aff-payout-amt">{Number(p.stars).toLocaleString("en-US")} {"\u2605"}</div>
+                            <div className="aff-payout-date">{new Date((p.ts || 0) * 1000).toLocaleDateString()}</div>
+                          </div>
+                          <span className={`aff-payout-status st-${p.status}`}>{payoutLabel(p.status)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            <p className="premium-fineprint">{t.aff_fineprint.replace("{n}", String(minW))}</p>
+          </div>
+        </div>
       );
     }
     if (activeSheet === "faq" || activeSheet === "terms" || activeSheet === "privacy") {
@@ -3600,38 +3696,31 @@ export default function App() {
       <div className="ios-group">
         <div className="ios-row" onClick={copyReferral}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#ff9500" }}><IconCopy /></div>{t.copy_ref}</div>
-          {myRefCode && <div style={{ color: "var(--text-secondary)", fontWeight: 800, fontSize: 15, letterSpacing: "0.08em" }}>{myRefCode}</div>}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {myRefCode && <span style={{ color: "var(--text-secondary)", fontWeight: 800, fontSize: 15, letterSpacing: "0.08em" }}>{myRefCode}</span>}
+            <button className="ref-edit-btn" title={t.vanity_title}
+              onClick={(e) => { e.stopPropagation(); haptic(); if (tier === "pro") setEditingVanity((v) => !v); else setActiveSheet("premium"); }}>
+              <IconEdit />
+            </button>
+          </div>
         </div>
+        {editingVanity && tier === "pro" && (
+          <div className="ios-row vanity-inline">
+            <p className="vanity-help">{t.vanity_help}</p>
+            <div className="vanity-row">
+              <input className="ios-input" style={{ flex: 1 }} value={vanityInput} maxLength={12}
+                onChange={(e) => setVanityInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                placeholder={t.vanity_ph} />
+              <button className="action-btn" style={{ width: "auto", padding: "0 18px", margin: 0 }} onClick={claimVanity}>{t.claim}</button>
+            </div>
+            {vanityMsg && <p className="vanity-msg">{vanityMsg}</p>}
+          </div>
+        )}
         <div className="ios-row" style={{ cursor: "default" }}>
           <div className="row-left">{t.ref_count}</div>
           <div style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 16 }}>{referralCount}</div>
         </div>
       </div>
-
-      {tier === "pro" ? (
-        <div className="ios-group" style={{ padding: "16px 16px 18px" }}>
-          <div className="section-label" style={{ marginTop: 0, marginBottom: 8, padding: 0 }}>{t.vanity_title}</div>
-          <p className="vanity-help">{t.vanity_help}</p>
-          <div className="vanity-row">
-            <input className="ios-input" style={{ flex: 1 }} value={vanityInput} maxLength={12}
-              onChange={(e) => setVanityInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-              placeholder={t.vanity_ph} />
-            <button className="action-btn" style={{ width: "auto", padding: "0 18px", margin: 0 }} onClick={claimVanity}>{t.claim}</button>
-          </div>
-          {vanityMsg && <p className="vanity-msg">{vanityMsg}</p>}
-          <p className="vanity-current">{t.your_code}: <b>{myRef}</b></p>
-        </div>
-      ) : (
-        <div className="ios-group">
-          <div className="ios-row" onClick={() => { haptic(); setActiveSheet("premium"); }}>
-            <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg,#0a84ff,#bf5af2)" }}><TGStar size={16} /></div>{t.vanity_title}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ color: "var(--tg-blue)", fontWeight: 700, fontSize: 13 }}>{t.tier_pro_short}</span>
-              <IconChevronRight />
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="section-label">{t.community}</div>
       <div className="ios-group">
