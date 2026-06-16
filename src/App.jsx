@@ -243,6 +243,7 @@ const IconSearch = ({ size = 22 }) => <svg width={size} height={size} viewBox="0
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
 const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 const IconChevronLeft = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
+const IconClose = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
 const IconEdit = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>;
 
@@ -847,7 +848,7 @@ const T = {
     premium_label: "Membership", premium_row: "GiftTrove Premium", tier_free: "Free",
     premium_title: "GiftTrove Premium", you_are_on: "You're on", renews: "renews", per_month: "month",
     current_plan: "Current plan", subscribe: "Subscribe", opening: "Opening\u2026",
-    perk_5_filters: "Up to 5 of each filter", perk_unlimited: "Unlimited filters",
+    perk_5_filters: "Up to 7 of each filter", perk_unlimited: "Unlimited filters",
     perk_vanity: "Custom referral code", perk_more_soon: "New perks as they land", perk_priority: "Priority on new perks", perk_no_ads: "No promoted gifts in your scouts",
     need_stars: "Need Stars?", need_stars_sub: "Get them cheaper on Hoton",
     vanity_title: "Your referral code", vanity_help: "Pick a custom code (letters & numbers). It replaces your random code on the links you share.", vanity_ph: "YOURCODE", claim: "Claim", your_code: "Your code",
@@ -914,7 +915,7 @@ const T = {
     premium_label: "Подписка", premium_row: "GiftTrove Premium", tier_free: "Бесплатно",
     premium_title: "GiftTrove Premium", you_are_on: "Ваш тариф:", renews: "продление", per_month: "мес.",
     current_plan: "Текущий тариф", subscribe: "Оформить", opening: "Открываю\u2026",
-    perk_5_filters: "До 5 значений каждого фильтра", perk_unlimited: "Безлимит фильтров",
+    perk_5_filters: "До 7 значений каждого фильтра", perk_unlimited: "Безлимит фильтров",
     perk_vanity: "Свой реферальный код", perk_more_soon: "Новые возможности по мере выхода", perk_priority: "Приоритет на новые функции", perk_no_ads: "Без рекламных подарков в поиске",
     need_stars: "Нужны Stars?", need_stars_sub: "Дешевле на Hoton",
     vanity_title: "Ваш реферальный код", vanity_help: "Выберите свой код (буквы и цифры). Он заменит случайный код в ссылках.", vanity_ph: "ВАШКОД", claim: "Занять", your_code: "Ваш код",
@@ -981,7 +982,7 @@ const T = {
     premium_label: "会员", premium_row: "GiftTrove Premium", tier_free: "免费",
     premium_title: "GiftTrove 会员", you_are_on: "当前方案：", renews: "续订", per_month: "月",
     current_plan: "当前方案", subscribe: "订阅", opening: "正在打开\u2026",
-    perk_5_filters: "每个筛选最多 5 个", perk_unlimited: "无限筛选",
+    perk_5_filters: "每个筛选最多 7 个", perk_unlimited: "无限筛选",
     perk_vanity: "自定义推荐码", perk_more_soon: "新功能陆续上线", perk_priority: "新功能优先体验", perk_no_ads: "搜索中不显示推广礼物",
     need_stars: "需要 Stars？", need_stars_sub: "在 Hoton 更便宜",
     vanity_title: "你的推荐码", vanity_help: "选择自定义推荐码（字母和数字）。它会替换分享链接中的随机码。", vanity_ph: "你的码", claim: "认领", your_code: "你的码",
@@ -1670,12 +1671,15 @@ const styles = `
   .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
   .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
   .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
-  .aff-screen { position: fixed; inset: 0; z-index: 1000; background: var(--bg); display: flex; flex-direction: column; animation: affSlideIn 0.34s var(--spring); will-change: transform; }
+  .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg); display: flex; flex-direction: column; height: 100vh; height: 100dvh; animation: affSlideIn 0.34s var(--spring); }
   @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .aff-topbar { display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top, 0px)) 12px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); }
+  .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); flex-shrink: 0; }
   .aff-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-primary); cursor: pointer; }
-  .aff-topbar-title { font-size: 17px; font-weight: 800; color: var(--text-primary); }
-  .aff-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .aff-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-input); border: none; color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
+  .aff-close:active { background: var(--bg-card); }
+  .aff-topbar-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
+  .aff-sub { font-size: 14px; color: var(--text-secondary); margin: 0 2px 16px; line-height: 1.45; }
+  .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
   .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 2px 10px; }
   .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
   .aff-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
@@ -1941,6 +1945,12 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
         <div className="admin-row"><span className="admin-gift">Returning members</span><span className="admin-count">{compactNum(g("returning_members"))}</span></div>
         <div className="admin-row"><span className="admin-gift">Unique gifts searched</span><span className="admin-count">{compactNum(g("unique_gifts"))}</span></div>
         <div className="admin-row"><span className="admin-gift">Total referrals</span><span className="admin-count">{compactNum(g("referrals_total"))}</span></div>
+      </div>
+      <div className="admin-section-title">Membership</div>
+      <div className="admin-list">
+        <div className="admin-row"><span className="admin-gift">Free users</span><span className="admin-count">{compactNum(g("subs_free"))}</span></div>
+        <div className="admin-row"><span className="admin-gift">Scout+ subscribers</span><span className="admin-count" style={{ color: "#0a84ff" }}>{compactNum(g("subs_plus"))}</span></div>
+        <div className="admin-row"><span className="admin-gift">Scout Pro subscribers</span><span className="admin-count" style={{ color: "#bf5af2" }}>{compactNum(g("subs_pro"))}</span></div>
       </div>
     </>
   );
@@ -2656,8 +2666,10 @@ export default function App() {
   const attrLabel = (arr) => (!arr.length ? t.any : arr.length === 1 ? arr[0] : `${arr.length} ${t.selected_n}`);
 
   // ── SCOUT (real backend search; results live in the Results tab) ──
-  const buildSearchParams = (sort, offset) => {
+  const buildSearchParams = (sort, offset, minOv, maxOv) => {
     const col = collections.find((c) => c.name === giftQuery);
+    const mn = minOv !== undefined ? minOv : minPrice;
+    const mx = maxOv !== undefined ? maxOv : maxPrice;
     const p = new URLSearchParams();
     if (giftQuery) p.set("gift", giftQuery);
     if (col?.gift_id) p.set("gift_id", col.gift_id);
@@ -2670,8 +2682,8 @@ export default function App() {
     if (tgUser?.id) p.set("uid", tgUser.id);
     p.set("sort", sort || sortBy);
     p.set("limit", "100");
-    if (minPrice) p.set("min_price", minPrice);
-    if (maxPrice) p.set("max_price", maxPrice);
+    if (mn) p.set("min_price", mn);
+    if (mx) p.set("max_price", mx);
     if (offset) p.set("offset", offset);
     return p;
   };
@@ -2700,9 +2712,10 @@ export default function App() {
     setActiveTab("results");   // results pop up in the next tab
     const newSort = "default"; // a brand-new search always starts in General
     setSortBy(newSort);
+    setMinPrice(""); setMaxPrice("");   // clear price range on every fresh scout
     const started = Date.now();
     try {
-      const p = buildSearchParams(newSort, "");
+      const p = buildSearchParams(newSort, "", "", "");
       const q = giftQuery.trim();
       const known = collectionNames.some((n) => n.toLowerCase() === q.toLowerCase());
       lastSearch.current = { sort: newSort, query: q, known };
@@ -2732,7 +2745,7 @@ export default function App() {
     haptic("medium");
     setGiftQuery(col.name);
     setGiftId(""); setSelectedModels([]); setSelectedSymbols([]);
-    setSelectedBackdrops([]); setSelectedMarkets(["All"]);
+    setSelectedBackdrops([]); setSelectedMarkets(["All"]); setMinPrice(""); setMaxPrice("");
     setScoutError(null); setHasSearched(true); setResults([]); setNextOffset("");
     setIsScouting(true); setActiveTab("results");
     recordSearch(col.name);
@@ -2861,7 +2874,7 @@ export default function App() {
     const isFragment = promoMarket === "Fragment";
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
-        gift_id: promoColl.gift_id, slug: promoColl.slug || "", marketplace: promoMarket,
+        gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "", marketplace: promoMarket,
         model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
         link: isFragment ? promoLink.trim() : "",
       }, timeout: 20000 });
@@ -2960,7 +2973,7 @@ export default function App() {
   };
 
   // ── card renderer ──
-  const renderGiftCard = (item, i = 0) => {
+  const renderGiftCard = (item, i = 0, promoted = false) => {
     const poster = item.image || giftImage(item.slug, item.num);
     const anim = giftAnimation(item.slug, item.num);
     const saved = isSavedGift(item);
@@ -2969,6 +2982,7 @@ export default function App() {
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
           <LottieGift src={anim} poster={poster} size={132} radius={18} />
+          {promoted && <div className="promo-badge">{t.promoted}</div>}
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
             {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
@@ -3003,28 +3017,43 @@ export default function App() {
     promoMatch(selectedBackdrops, p.backdrop));
 
   const renderPromoCard = (promo, i = 0) => {
-    const poster = giftImage(promo.slug, 1);   // static collection art (instant, no Lottie fetch)
-    const sub = [promo.model, promo.symbol, promo.backdrop].filter(Boolean).join(" \u00b7 ");
+    const poster = giftImage(promo.slug, 1);
     const amt = (promo.amount || "").toString().trim();
-    let amtText = "";
-    if (amt) {
-      const n = Number(amt.replace(/,/g, ""));
-      const shown = Number.isFinite(n) ? n.toLocaleString("en-US") : amt;
-      const unit = promo.currency === "Stars" ? "Stars" : promo.currency === "TON" ? "TON" : "GRAM";
-      amtText = `${shown} ${unit}`;
-    }
+    const n = amt ? Number(amt.replace(/,/g, "")) : null;
+    const item = {
+      id: `promo-${promo.id}`,
+      name: promo.collection,
+      slug: promo.slug,
+      num: null,
+      price: amt && Number.isFinite(n) ? n : null,
+      currency: promo.currency || "GRAM",
+      model: promo.model || "",
+      symbol: promo.symbol || "",
+      backdrop: promo.backdrop || "",
+      market: promo.marketplace,
+      url: promo.link || "",
+      gift_id: promo.gift_id,
+      _promo: promo,
+    };
+    const saved = isSavedGift(item);
     return (
-      <div key={`promo-${promo.id}`} className="result-card promo-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => openPromo(promo)}>
-        <div className="promo-flag" onClick={(e) => { e.stopPropagation(); reportPromo(promo); }} title={t.promo_report}><IconFlag /></div>
+      <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }}
+        onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero">
-          <LottieGift src={giftAnimation(promo.slug, 1)} poster={poster} size={132} radius={14} />
+          <LottieGift src={giftAnimation(promo.slug, 1)} poster={poster} size={132} radius={18} />
           <div className="promo-badge">{t.promoted}</div>
+          <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
+            {saved ? <IconBookmarkFilled /> : <IconBookmark />}
+          </div>
         </div>
-        <div className="result-name">{promo.collection}</div>
-        <div className="result-meta"><span>{sub || "\u00a0"}</span></div>
+        <div className="result-name">{item.name}</div>
+        <div className="result-meta"><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
+        {item.model && (
+          <div className="result-model"><span className="model-rarity">{item.model}</span></div>
+        )}
         <div className="result-foot">
-          <div className="result-price">{amtText ? <span className="promo-amt">{amtText}</span> : <span className="result-view">{t.view}</span>}</div>
-          <div className="badge-buy" onClick={(e) => { e.stopPropagation(); openPromo(promo); }}>{promo.marketplace}</div>
+          <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} exact={isDesktop} /> : <span className="result-view">{t.view_on}</span>}</div>
+          <div className="badge-buy" onClick={(e) => { e.stopPropagation(); openPromo(promo); }}>{t.buy}</div>
         </div>
       </div>
     );
@@ -3174,12 +3203,11 @@ export default function App() {
       return (
         <div className="aff-screen">
           <div className="aff-topbar">
-            <button className="aff-back" onClick={() => { haptic(); setActiveSheet(null); }}><IconChevronLeft /></button>
             <div className="aff-topbar-title">{t.affiliate_title}</div>
-            <div style={{ width: 32 }} />
+            <button className="aff-close" onClick={() => { haptic(); setActiveSheet(null); }}><IconClose /></button>
           </div>
           <div className="aff-scroll">
-            <p className="premium-status" style={{ marginTop: 0 }}>{t.affiliate_sub.replace("{n}", String(pct))}</p>
+            <p className="aff-sub">{t.affiliate_sub.replace("{n}", String(pct))}</p>
             {!a ? (
               <p className="vanity-help" style={{ textAlign: "center", padding: "32px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
             ) : !isPro ? (
@@ -3316,7 +3344,7 @@ export default function App() {
               <button className="action-btn" style={{ flex: 1, background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)", marginTop: 0 }} onClick={() => { toggleSave(g); setActiveSheet(null); }}>
                 {saved ? t.remove_saved : t.save_gift}
               </button>
-              <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => handleBuy(e, g)}>{t.buy_now}</button>
+              <button className="action-btn" style={{ flex: 1, marginTop: 0 }} onClick={(e) => { e.stopPropagation(); if (g._promo) { setActiveSheet(null); openPromo(g._promo); } else handleBuy(e, g); }}>{t.buy_now}</button>
               <button className="share-btn" onClick={() => shareGift(g)} title={t.share_gift}><IconShare /></button>
             </div>
         </BottomSheet>
@@ -3538,7 +3566,7 @@ export default function App() {
                 <div key={m}
                   className={`chip ${selectedMarkets.includes(m) ? "active" : ""} ${live ? "" : "chip-soon"}`}
                   onClick={live ? () => handleMarketToggle(m) : undefined}>
-                  {m}{!live && <span className="chip-soon-tag">{t.soon}</span>}
+                  {m}
                   {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setSoonNote(true); }}><IconInfo /></span>}
                 </div>
               );
