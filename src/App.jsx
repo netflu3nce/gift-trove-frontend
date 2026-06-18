@@ -747,7 +747,24 @@ function VoidGifts({ gifts, onPick, count = 12, portal = false, drift = false })
   return layer;
 }
 
-// Reusable bottom sheet with swipe-down-to-dismiss + spring open/close.
+// Shared floating-gifts backdrop for BottomSheet panels (premium / promote / affiliate)
+function SheetMotion({ gifts }) {
+  const picks = (gifts || []).filter((g) => g && g.preview).slice(0, 6);
+  if (!picks.length) return null;
+  const lefts  = [8, 70, 32, 58, 16, 82];
+  const tops   = [6, 16, 52, 72, 36, 88];
+  return (
+    <div className="sheet-motion" aria-hidden="true">
+      {picks.map((g, i) => (
+        <img key={i} src={g.preview} alt="" className="void-gift" loading="lazy"
+          style={{ width: 56 + ((i * 17) % 46), height: 56 + ((i * 17) % 46),
+            left: `${lefts[i % 6]}%`, top: `${tops[i % 6]}%`,
+            animationDuration: `${20 + ((i * 5) % 16)}s`, animationDelay: `${-i * 3}s` }}
+          onError={(e) => { e.target.style.display = "none"; }} />
+      ))}
+    </div>
+  );
+}
 function BottomSheet({ onClose, children }) {
   const [y, setY] = useState(1200);          // current translateY in px
   const [dragging, setDragging] = useState(false);
@@ -872,6 +889,9 @@ const T = {
     promo_frag_note: "Paste the fragment.com link to your gift. An admin reviews it before it goes live; invalid links are auto-declined and refunded.",
     promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
     aff_withdraw_as: "Withdraw as \u2248 {v} GRAM", aff_track_note: "Tracked earnings \u2014 withdrawn as GRAM to your wallet.",
+    footer_live: "Live", footer_for_devs: "For Developers", footer_api_agents: "API for Agents", footer_powered: "Powered by GRAM (ex TON)",
+    promo_ma_link: "MarketApp listing link", promo_ma_note: "Paste the marketapp.ws link to your gift listing. An admin reviews it before it goes live.",
+    promo_bad_ma_link: "That doesn\u2019t look like a marketapp.ws link.",
     aff_earnings_30d: "Earnings (30 days)", aff_no_earnings: "No earnings yet", aff_30d_ago: "30d ago", aff_today: "Today",
     aff_history: "Payout history", aff_st_paid: "Paid", aff_st_pending: "Pending", aff_st_declined: "Declined",
     promo_price_opt: "Asking price (optional)", promo_amount_ph: "e.g. 250", promo_link_opt: "Direct gift link (optional)",
@@ -940,6 +960,9 @@ const T = {
     promo_frag_note: "Вставьте ссылку fragment.com на ваш подарок. Админ проверит её перед публикацией; неверные ссылки отклоняются и возвращаются.",
     promo_review: "Отправлено — реклама появится после одобрения админом.",
     aff_withdraw_as: "Вывод ≈ {v} GRAM", aff_track_note: "Отслеживаемый доход — выводится в GRAM на ваш кошелёк.",
+    footer_live: "Активно", footer_for_devs: "Разработчикам", footer_api_agents: "API для агентов", footer_powered: "Работает на GRAM (экс TON)",
+    promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Вставьте ссылку marketapp.ws на ваш листинг. Админ проверит её перед публикацией.",
+    promo_bad_ma_link: "Это не похоже на ссылку marketapp.ws.",
     aff_earnings_30d: "Доход (30 дней)", aff_no_earnings: "Пока нет дохода", aff_30d_ago: "30 дн. назад", aff_today: "Сегодня",
     aff_history: "История выплат", aff_st_paid: "Выплачено", aff_st_pending: "В обработке", aff_st_declined: "Отклонено",
     promo_price_opt: "Цена (необязательно)", promo_amount_ph: "напр. 250", promo_link_opt: "Прямая ссылка на подарок (необязательно)",
@@ -1008,6 +1031,9 @@ const T = {
     promo_frag_note: "粘贴您礼物的 fragment.com 链接。管理员审核后上线；无效链接将自动拒绝并退款。",
     promo_review: "已提交 — 管理员批准后推广即上线。",
     aff_withdraw_as: "提现 ≈ {v} GRAM", aff_track_note: "追踪收益 — 以 GRAM 提现至您的钱包。",
+    footer_live: "已上线", footer_for_devs: "开发者", footer_api_agents: "智能体 API", footer_powered: "基于 GRAM（原 TON）",
+    promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "粘贴您礼物的 marketapp.ws 链接。管理员审核后上线。",
+    promo_bad_ma_link: "这看起来不是 marketapp.ws 链接。",
     aff_earnings_30d: "收益（30 天）", aff_no_earnings: "暂无收益", aff_30d_ago: "30 天前", aff_today: "今天",
     aff_history: "提现记录", aff_st_paid: "已支付", aff_st_pending: "处理中", aff_st_declined: "已拒绝",
     promo_price_opt: "售价（可选）", promo_amount_ph: "例如 250", promo_link_opt: "礼物直达链接（可选）",
@@ -1752,7 +1778,13 @@ const styles = `
   .legal-item { margin-bottom: 16px; }
   .legal-q { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
   .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
-  .legal-foot { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 10px 0 4px; }
+  .sheet-motion { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; border-radius: inherit; }
+  .sheet-body { position: relative; z-index: 1; }
+  .mkt-badge { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.02em; flex-shrink: 0; }
+  .mkt-live { background: rgba(48,209,88,0.15); color: #30d158; }
+  .mkt-soon { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
+  .ios-row-muted { opacity: 0.55; cursor: default; }
+  .footer-powered { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; opacity: 0.8; }
   .profile-footer { text-align: center; margin-top: 30px; padding-bottom: 10px; }
   .footer-links { display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 13px; color: var(--text-secondary); }
   .footer-links span { cursor: pointer; }
@@ -2884,23 +2916,25 @@ export default function App() {
     if (!window.Telegram?.WebApp?.initData) { showToast(t.open_in_tg); return; }
     if (!tg?.openInvoice) { showToast(t.update_tg); return; }
     setPromoBusy(true); setPromoMsg("");
-    const isFragment = promoMarket === "Fragment";
+    const isExternal = promoMarket === "Fragment" || promoMarket === "MarketApp";
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
         gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "", marketplace: promoMarket,
-        num: isFragment ? "" : promoNum.trim(),
-        model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
-        link: isFragment ? promoLink.trim() : "",
+        num: isExternal ? "" : promoNum.trim(),
+        model: "", symbol: "", backdrop: "",
+        link: isExternal ? promoLink.trim() : "",
       }, timeout: 20000 });
       if (!r?.ok || !r.link) {
-        const m = r?.error === "domain" ? t.promo_bad_link : r?.error === "collection" ? t.promo_bad_coll
-          : r?.error === "marketplace" ? t.promo_bad_coll : r?.error === "auth" ? t.open_in_tg : t.promo_failed;
+        const m = r?.error === "domain"      ? (promoMarket === "MarketApp" ? t.promo_bad_ma_link : t.promo_bad_link)
+                : r?.error === "collection"  ? t.promo_bad_coll
+                : r?.error === "marketplace" ? t.promo_bad_coll
+                : r?.error === "auth"        ? t.open_in_tg : t.promo_failed;
         setPromoMsg(m); setPromoBusy(false); return;
       }
       tg.openInvoice(r.link, (status) => {
         setPromoBusy(false);
         if (status === "paid") {
-          setPromoMsg(isFragment ? t.promo_review : t.promo_live); haptic("medium");
+          setPromoMsg(isExternal ? t.promo_review : t.promo_live); haptic("medium");
           setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop(""); setPromoLink(""); setPromoNum("");
           setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 2000);
         } else if (status === "failed") { setPromoMsg(t.promo_failed); }
@@ -3108,6 +3142,8 @@ export default function App() {
       };
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
+          <SheetMotion gifts={collections} />
+          <div className="sheet-body">
           <div className="sheet-title">{t.premium_title}</div>
           <p className="premium-status">{t.you_are_on} <b>{statusLabel}</b>{isPremium && exp ? ` \u00b7 ${t.renews} ${exp}` : ""}</p>
           <Plan id="plus" name="Scout+" price={prices.plus} accent="#0a84ff" perks={[t.perk_5_filters]} />
@@ -3123,6 +3159,7 @@ export default function App() {
           </div>
 
           <p className="premium-fineprint">{t.premium_fineprint}</p>
+          </div>
         </BottomSheet>
       );
     }
@@ -3143,6 +3180,8 @@ export default function App() {
         .slice(0, 40);
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
+          <SheetMotion gifts={collections} />
+          <div className="sheet-body">
           <div className="sheet-title">{t.promote_title}</div>
           <p className="premium-status">{t.promote_sub.replace("{n}", String(price)).replace("{d}", String(days))}</p>
 
@@ -3171,9 +3210,9 @@ export default function App() {
 
           <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_marketplace}</div>
           <div className="promo-market-row">
-            {["Telegram", "Fragment"].map((m) => (
+            {["Telegram", "Fragment", "MarketApp"].map((m) => (
               <button key={m} className={`promo-market-btn ${promoMarket === m ? "active" : ""}`}
-                onClick={() => { haptic(); setPromoMarket(m); }}>{m}</button>
+                onClick={() => { haptic(); setPromoMarket(m); setPromoLink(""); }}>{m}</button>
             ))}
           </div>
 
@@ -3182,15 +3221,14 @@ export default function App() {
               <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label}</div>
               <input className="ios-input" inputMode="numeric" value={promoNum}
                 placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
-              {promoColl && (promoAttrs.models.length + promoAttrs.symbols.length + promoAttrs.backdrops.length > 0) && (
-                <>
-                  <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_attrs_opt}</div>
-                  {promoAttrs.models.length > 0 && <PromoSelect label={t.model} options={promoAttrs.models} value={promoModel} onChange={setPromoModel} />}
-                  {promoAttrs.symbols.length > 0 && <PromoSelect label={t.symbol} options={promoAttrs.symbols} value={promoSymbol} onChange={setPromoSymbol} />}
-                  {promoAttrs.backdrops.length > 0 && <PromoSelect label={t.backdrop} options={promoAttrs.backdrops} value={promoBackdrop} onChange={setPromoBackdrop} />}
-                </>
-              )}
               <p className="promo-hint" style={{ marginTop: 12 }}>{t.promo_tg_note}</p>
+            </>
+          ) : promoMarket === "MarketApp" ? (
+            <>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_ma_link}</div>
+              <input className="ios-input" value={promoLink} placeholder="https://marketapp.ws/nft/..."
+                onChange={(e) => setPromoLink(e.target.value)} />
+              <p className="promo-hint">{t.promo_ma_note}</p>
             </>
           ) : (
             <>
@@ -3202,12 +3240,15 @@ export default function App() {
           )}
 
           <button className="action-btn" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)", marginTop: 16 }}
-            disabled={!promoColl || promoBusy || (promoMarket === "Fragment" && !/^https:\/\/(www\.)?fragment\.com\//i.test(promoLink.trim()))}
+            disabled={!promoColl || promoBusy ||
+              (promoMarket === "Fragment"  && !/^https:\/\/(www\.)?fragment\.com\//i.test(promoLink.trim())) ||
+              (promoMarket === "MarketApp" && !/^https:\/\/(www\.)?marketapp\.ws\//i.test(promoLink.trim()))}
             onClick={createPromo}>
             <TGStar size={16} /> &nbsp;{promoBusy ? t.opening : t.promote_cta.replace("{n}", String(price))}
           </button>
           {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
           <p className="premium-fineprint">{t.promote_fineprint}</p>
+          </div>
         </BottomSheet>
       );
     }
@@ -3225,16 +3266,8 @@ export default function App() {
       const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
-          <div className="aff-motion" aria-hidden="true">
-            {collections.filter((c) => c.preview).slice(0, 6).map((g, i) => (
-              <img key={i} src={g.preview} alt="" className="void-gift" loading="lazy"
-                style={{ width: 56 + ((i * 17) % 46), height: 56 + ((i * 17) % 46),
-                  left: `${[8, 70, 32, 58, 16, 82][i % 6]}%`, top: `${[6, 16, 52, 72, 36, 88][i % 6]}%`,
-                  animationDuration: `${20 + ((i * 5) % 16)}s`, animationDelay: `${-i * 3}s` }}
-                onError={(e) => { e.target.style.display = "none"; }} />
-            ))}
-          </div>
-          <div className="aff-body">
+          <SheetMotion gifts={collections} />
+          <div className="sheet-body">
             <div className="sheet-title">{t.affiliate_title}</div>
             <p className="premium-status">{t.affiliate_sub.replace("{n}", String(pct))}</p>
             {!a ? (
@@ -3799,7 +3832,36 @@ export default function App() {
         </div>
       </div>
 
+      <div className="section-label" style={{ marginTop: 28 }}>{t.marketplaces}</div>
+      <div className="ios-group">
+        {[
+          { name: "Telegram", live: true, url: "https://t.me" },
+          { name: "Fragment", live: true, url: "https://fragment.com/gifts" },
+          { name: "MarketApp", live: true, url: "https://marketapp.ws/gifts/" },
+          { name: "GetGems", live: false },
+          { name: "Portals", live: false },
+          { name: "MRKT", live: false },
+          { name: "Tonnel", live: false },
+        ].map(({ name, live, url }) => (
+          <div key={name} className={`ios-row ${!live ? "ios-row-muted" : ""}`}
+            onClick={live && url ? () => safeOpen(url) : undefined} style={{ cursor: live ? "pointer" : "default" }}>
+            <div className="row-left" style={{ fontWeight: 600 }}>{name}</div>
+            {live ? <span className="mkt-badge mkt-live">{t.footer_live}</span>
+                  : <span className="mkt-badge mkt-soon">{t.soon}</span>}
+          </div>
+        ))}
+      </div>
+
+      <div className="section-label" style={{ marginTop: 20 }}>{t.footer_for_devs}</div>
+      <div className="ios-group">
+        <div className="ios-row" style={{ cursor: "default" }}>
+          <div className="row-left" style={{ fontWeight: 600 }}>{t.footer_api_agents}</div>
+          <span className="mkt-badge mkt-soon">{t.soon}</span>
+        </div>
+      </div>
+
       <div className="profile-footer">
+        <div className="footer-powered">{t.footer_powered}</div>
         <div className="footer-links">
           <span onClick={() => { haptic(); setActiveSheet("faq"); }}>FAQ</span>
           <span className="dot">·</span>
