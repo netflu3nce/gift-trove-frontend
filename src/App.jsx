@@ -3078,6 +3078,56 @@ export default function App() {
   };
 
   // ── card renderer ──
+  const renderDetailNote = () => {
+    if (!detailNote) return null;
+    const promoPrice = Number(tierInfo?.promo_price) || 50;
+    const promoDays  = Number(tierInfo?.promo_days)  || 3;
+    const affPct     = Number(tierInfo?.affiliate_pct)   || 30;
+    const affMin     = Number(tierInfo?.affiliate_min)   || 1000;
+    const NOTES = {
+      premium: {
+        title: "GiftTrove Premium",
+        paras: [
+          "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.",
+          "All Star purchases are non-refundable.",
+        ],
+      },
+      promote: {
+        title: "Promote a Gift",
+        paras: [
+          `Feature your gift at the top of matching search results for ${promoDays} days \u2014 one-time fee of ${promoPrice} Stars.`,
+          "Your promotion appears at the top of results matching users\u2019 selected attributes, as a direct redirect to your listing.",
+          "GiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.",
+          "GiftTrove reserves the right to remove any promoted gift. A gift not currently listed for sale will not be displayed.",
+        ],
+      },
+      affiliate: {
+        title: "Affiliate Program",
+        paras: [
+          `Earn ${affPct}% of every subscription from members you invite \u2014 for as long as you hold Scout Pro.`,
+          "Share your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.",
+          `Earnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.`,
+          "Fake or self-referrals forfeit all earnings and result in removal from the program.",
+        ],
+      },
+    };
+    const n = NOTES[detailNote];
+    if (!n) return null;
+    return (
+      <div className="note-overlay" onClick={() => setDetailNote(null)}>
+        <div className="note-pop detail-pop" onClick={(e) => e.stopPropagation()}>
+          <div className="note-pop-title">{n.title}</div>
+          <div className="note-pop-body detail-body">
+            {n.paras.map((p, i) => (
+              <p key={i} style={{ marginTop: i === 0 ? "0" : "10px", marginBottom: 0 }}>{p}</p>
+            ))}
+          </div>
+          <button className="note-pop-btn" onClick={() => setDetailNote(null)}>{t.got_it}</button>
+        </div>
+      </div>
+    );
+  };
+
   const renderGiftCard = (item, i = 0, promoted = false) => {
     const poster = item.image || giftImage(item.slug, item.num);
     const anim = giftAnimation(item.slug, item.num);
@@ -4015,28 +4065,7 @@ export default function App() {
             </div>
           </div>
         )}
-        {detailNote && (() => {
-          const promoPrice = tierInfo?.promo_price || 50;
-          const promoDays = tierInfo?.promo_days || 3;
-          const affPct = tierInfo?.affiliate_pct || 30;
-          const affMin = tierInfo?.affiliate_min || 1000;
-          const DETAILS = {
-            premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
-            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days — one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results matching users\u2019 selected attributes, functioning as a direct redirect to your listing.\n\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nGiftTrove reserves the right to remove any promoted gift. A gift not currently listed for sale will not be displayed.` },
-            affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
-          };
-          const d = DETAILS[detailNote];
-          if (!d) return null;
-          return (
-            <div className="note-overlay" onClick={() => setDetailNote(null)}>
-              <div className="note-pop detail-pop" onClick={(e) => e.stopPropagation()}>
-                <div className="note-pop-title">{d.title}</div>
-                <div className="note-pop-body detail-body">{d.body.split("\n\n").map((para, i) => <p key={i} style={{ margin: i===0?0:"10px 0 0" }}>{para}</p>)}</div>
-                <button className="note-pop-btn" onClick={() => setDetailNote(null)}>{t.got_it}</button>
-              </div>
-            </div>
-          );
-        })()}
+        {renderDetailNote()}
         {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
           <VoidGifts gifts={voidGifts} count={8} onPick={scoutGift} portal drift />
@@ -4081,28 +4110,7 @@ export default function App() {
             </div>
           </div>
         )}
-        {detailNote && (() => {
-          const promoPrice = tierInfo?.promo_price || 50;
-          const promoDays = tierInfo?.promo_days || 3;
-          const affPct = tierInfo?.affiliate_pct || 30;
-          const affMin = tierInfo?.affiliate_min || 1000;
-          const DETAILS = {
-            premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
-            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days — one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results matching users\u2019 selected attributes, functioning as a direct redirect to your listing.\n\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nGiftTrove reserves the right to remove any promoted gift. A gift not currently listed for sale will not be displayed.` },
-            affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
-          };
-          const d = DETAILS[detailNote];
-          if (!d) return null;
-          return (
-            <div className="note-overlay" onClick={() => setDetailNote(null)}>
-              <div className="note-pop detail-pop" onClick={(e) => e.stopPropagation()}>
-                <div className="note-pop-title">{d.title}</div>
-                <div className="note-pop-body detail-body">{d.body.split("\n\n").map((para, i) => <p key={i} style={{ margin: i===0?0:"10px 0 0" }}>{para}</p>)}</div>
-                <button className="note-pop-btn" onClick={() => setDetailNote(null)}>{t.got_it}</button>
-              </div>
-            </div>
-          );
-        })()}
+        {renderDetailNote()}
         {consentOverlay}
 
         <div className="top-nav">
