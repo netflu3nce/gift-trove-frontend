@@ -1674,6 +1674,8 @@ const styles = `
   .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
   .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
   .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
+  .aff-motion { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; border-radius: inherit; }
+  .aff-body { position: relative; z-index: 1; }
   .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; animation: affSlideIn 0.34s var(--spring); }
   @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
   .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); flex-shrink: 0; position: relative; z-index: 2; }
@@ -1751,6 +1753,13 @@ const styles = `
   .legal-q { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
   .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
   .legal-foot { text-align: center; color: var(--text-secondary); font-size: 12px; padding: 10px 0 4px; }
+  .profile-footer { text-align: center; margin-top: 30px; padding-bottom: 10px; }
+  .footer-links { display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 13px; color: var(--text-secondary); }
+  .footer-links span { cursor: pointer; }
+  .footer-links span:not(.dot):active { color: var(--tg-blue); }
+  .footer-links .dot { opacity: 0.45; cursor: default; }
+  .footer-clear { margin-top: 13px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer; }
+  .footer-built { margin-top: 14px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
   /* first-launch consent */
   .consent-wrap { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; padding: 0 14px calc(var(--safe-bottom, 16px) + 14px); }
   .consent-card { width: 100%; max-width: 430px; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; padding: 20px 18px; box-shadow: 0 18px 60px rgba(0,0,0,0.5); animation: fadeInUp .45s var(--bounce) both; }
@@ -3215,14 +3224,19 @@ export default function App() {
       const payouts = (a && a.payouts) || [];
       const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
       return (
-        <div className="aff-screen">
-          <VoidGifts gifts={collections.filter((c) => c.preview).slice(0, 10)} count={10} />
-          <div className="aff-topbar">
-            <div className="aff-topbar-title">{t.affiliate_title}</div>
-            <button className="aff-close" onClick={() => { haptic(); setActiveSheet(null); }}><IconClose /></button>
+        <BottomSheet onClose={() => setActiveSheet(null)}>
+          <div className="aff-motion" aria-hidden="true">
+            {collections.filter((c) => c.preview).slice(0, 6).map((g, i) => (
+              <img key={i} src={g.preview} alt="" className="void-gift" loading="lazy"
+                style={{ width: 56 + ((i * 17) % 46), height: 56 + ((i * 17) % 46),
+                  left: `${[8, 70, 32, 58, 16, 82][i % 6]}%`, top: `${[6, 16, 52, 72, 36, 88][i % 6]}%`,
+                  animationDuration: `${20 + ((i * 5) % 16)}s`, animationDelay: `${-i * 3}s` }}
+                onError={(e) => { e.target.style.display = "none"; }} />
+            ))}
           </div>
-          <div className="aff-scroll">
-            <p className="aff-sub">{t.affiliate_sub.replace("{n}", String(pct))}</p>
+          <div className="aff-body">
+            <div className="sheet-title">{t.affiliate_title}</div>
+            <p className="premium-status">{t.affiliate_sub.replace("{n}", String(pct))}</p>
             {!a ? (
               <p className="vanity-help" style={{ textAlign: "center", padding: "32px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
             ) : !isPro ? (
@@ -3290,7 +3304,7 @@ export default function App() {
             )}
             <p className="premium-fineprint">{t.aff_fineprint.replace("{n}", String(minW))}</p>
           </div>
-        </div>
+        </BottomSheet>
       );
     }
     if (activeSheet === "faq" || activeSheet === "terms" || activeSheet === "privacy") {
@@ -3775,48 +3789,30 @@ export default function App() {
           <div className="row-left"><div className="row-icon-box" style={{ background: "#000" }}><IconXLogo /></div>{t.x_account}</div>
           <IconChevronRight />
         </div>
+        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
+          <IconChevronRight />
+        </div>
         <div className="ios-row" onClick={() => safeOpen(COMMUNITY.support)}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconHeart /></div>{t.support}</div>
           <IconChevronRight />
         </div>
       </div>
 
-      <div className="section-label">{t.support_builder}</div>
-      <div className="ios-group">
-        <div className="ios-row" onClick={() => safeOpen(COMMUNITY.insideMajek)}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#5856d6" }}><IconUser /></div>{t.inside_majek}</div>
-          <IconChevronRight />
+      <div className="profile-footer">
+        <div className="footer-links">
+          <span onClick={() => { haptic(); setActiveSheet("faq"); }}>FAQ</span>
+          <span className="dot">·</span>
+          <span onClick={() => { haptic(); setActiveSheet("terms"); }}>Terms</span>
+          <span className="dot">·</span>
+          <span onClick={() => { haptic(); setActiveSheet("privacy"); }}>Privacy</span>
         </div>
-        <div className="ios-row" onClick={() => { haptic(); setDonateStep(1); setActiveSheet("donate"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#ff2d55" }}><IconHeart /></div>{t.donate}</div>
-          <IconChevronRight />
+        <div className="footer-clear" onClick={clearMyData}>
+          <span style={clearArmed ? { color: "#ff3b30", fontWeight: 700 } : undefined}>{clearArmed ? "Tap again to confirm" : "Clear my data"}</span>
         </div>
-      </div>
-
-      <div className="section-label">{t.about_legal}</div>
-      <div className="ios-group">
-        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("faq"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#0a84ff" }}><IconGlobe /></div>FAQ</div>
-          <IconChevronRight />
+        <div className="footer-built">
+          Built by <span onClick={() => safeOpen("https://t.me/insidemajek")} style={{ color: "var(--tg-blue)", cursor: "pointer" }}>@insidemajek</span>
         </div>
-        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("terms"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#8e8e93" }}><IconCopy /></div>Terms of Service</div>
-          <IconChevronRight />
-        </div>
-        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("privacy"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#34c759" }}><IconUser /></div>Privacy Policy</div>
-          <IconChevronRight />
-        </div>
-        <div className="ios-row" onClick={clearMyData}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "#ff3b30" }}><IconTrash /></div>
-            <span style={clearArmed ? { color: "#ff3b30", fontWeight: 700 } : undefined}>{clearArmed ? "Tap again to confirm" : "Clear my data"}</span>
-          </div>
-          <IconChevronRight />
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", marginTop: 40, color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>
-        Built by <span onClick={() => safeOpen("https://t.me/insidemajek")} style={{ color: "var(--tg-blue)", cursor: "pointer" }}>@insidemajek</span>
       </div>
     </div>
   );
