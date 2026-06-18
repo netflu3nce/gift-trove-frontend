@@ -289,6 +289,42 @@ function MarketIcon({market, size=13}) {
   if (m === "marketapp") return <IconMarketAppBrand size={size} />;
   return null;
 }
+// Plain (non-component) version safe to call from render helpers like renderGiftCard.
+// Lowercase intentional — React never treats this as a component, avoids reconciliation bugs.
+const mktIcon = (market, size = 13) => {
+  if (!market) return null;
+  const s = size;
+  switch ((market || "").toLowerCase()) {
+    case "telegram":
+      return (
+        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0098EA"/>
+          <path d="M19 49 L76 26 L62 73 L46 60 L68 39 L38 56.5 Z" fill="white"/>
+          <path d="M38 56.5 L46 60 L42 75 Z" fill="white" opacity="0.7"/>
+        </svg>
+      );
+    case "fragment":
+      return (
+        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#1C1C1E"/>
+          <path d="M50 63 L33 36 L44 36 L50 48 L56 36 L67 36 Z" fill="white"/>
+          <path d="M30 28 L42 28 L30 44 Z" fill="white"/>
+          <path d="M70 28 L58 28 L70 44 Z" fill="white"/>
+        </svg>
+      );
+    case "marketapp":
+      return (
+        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="22" fill="#0F87FF"/>
+          <rect x="15" y="38" width="16" height="42" rx="5" fill="white"/>
+          <rect x="38" y="52" width="16" height="28" rx="5" fill="white"/>
+          <path d="M31 45 Q31 22 54 22 L62 22 Q85 22 85 46 Q85 66 62 66 L54 66" stroke="white" strokeWidth="16" strokeLinecap="round" fill="none"/>
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 const IconChevronLeft = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconClose = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
@@ -3145,8 +3181,8 @@ export default function App() {
         <div className="result-name">{item.name}{item.num != null ? ` #${item.num}` : ""}</div>
         <div className="result-meta">
           {dotHex && <span className="color-dot" style={{ width: 11, height: 11, background: dotHex }} />}
-          <MarketIcon market={item.market} size={13} />
-          <span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span>
+          {mktIcon(item.market, 13)}
+          <span>{item.market}{item.backdrop ? ` \u00b7 ${item.backdrop}` : ""}</span>
         </div>
         {item.model && (
           <div className="result-model">
@@ -3207,7 +3243,7 @@ export default function App() {
           </div>
         </div>
         <div className="result-name">{item.name}{num != null ? ` #${num}` : ""}</div>
-        <div className="result-meta"><MarketIcon market={item.market} size={13} /><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
+        <div className="result-meta">{mktIcon(item.market, 13)}<span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
         {item.model && (
           <div className="result-model"><span className="model-rarity">{item.model}</span></div>
         )}
