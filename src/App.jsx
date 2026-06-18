@@ -885,7 +885,7 @@ const T = {
     view: "View", tier_pro_short: "Pro",
     promo_tg_note: "Enter the gift\u2019s ID number. The bot will find its price, model, backdrop and symbol automatically.",
     promo_num_required: "Gift number is required",
-    promo_num_label: "Gift number (optional)", promo_num_ph: "e.g. 1234 \u2014 links buyers to this exact gift",
+    promo_num_label: "Gift number", promo_num_ph: "e.g. 1234",
     promo_frag_link: "Fragment gift link", promo_bad_link: "That doesn\u2019t look like a fragment.com link.",
     promo_frag_note: "Enter the gift ID. The bot finds its listing on Fragment automatically.",
     promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
@@ -957,7 +957,7 @@ const T = {
     view: "Открыть", tier_pro_short: "Pro",
     promo_tg_note: "Введите номер подарка. Бот автоматически найдёт его цену, модель, фон и символ.",
     promo_num_required: "Номер подарка обязателен",
-    promo_num_label: "Номер подарка (необязательно)", promo_num_ph: "напр. 1234 — ведёт к этому подарку",
+    promo_num_label: "Номер подарка", promo_num_ph: "напр. 1234",
     promo_frag_link: "Ссылка на подарок Fragment", promo_bad_link: "Это не похоже на ссылку fragment.com.",
     promo_frag_note: "Введите номер подарка. Бот автоматически найдёт его на Fragment.",
     promo_review: "Отправлено — реклама появится после одобрения админом.",
@@ -1029,7 +1029,7 @@ const T = {
     view: "查看", tier_pro_short: "Pro",
     promo_tg_note: "输入礼物 ID 编号，机器人将自动获取其价格、模型、背景和符号。",
     promo_num_required: "礼物编号为必填项",
-    promo_num_label: "礼物编号（可选）", promo_num_ph: "例如 1234 — 链接到该特定礼物",
+    promo_num_label: "礼物编号", promo_num_ph: "例如 1234",
     promo_frag_link: "Fragment 礼物链接", promo_bad_link: "这看起来不是 fragment.com 链接。",
     promo_frag_note: "输入礼物 ID，机器人将在 Fragment 上自动查找。",
     promo_review: "已提交 — 管理员批准后推广即上线。",
@@ -1783,6 +1783,10 @@ const styles = `
   .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
   .sheet-motion { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; border-radius: inherit; }
   .sheet-body { position: relative; z-index: 1; }
+  .detail-pop { max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .detail-body p { line-height: 1.5; font-size: 14px; }
+  .row-detail-mark { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-left: 5px; color: var(--text-secondary); cursor: pointer; vertical-align: middle; flex-shrink: 0; }
+  .row-detail-mark:active { color: var(--tg-blue); }
   .mkt-badge { display: inline-block; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 10px; letter-spacing: 0.02em; flex-shrink: 0; }
   .mkt-live { background: rgba(48,209,88,0.15); color: #30d158; }
   .mkt-soon { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
@@ -2174,6 +2178,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [toast, setToast] = useState(null);
   const [soonNote, setSoonNote] = useState(false);
+  const [detailNote, setDetailNote] = useState(null); // "premium"|"promote"|"affiliate"
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
   const [activeSheet, setActiveSheet] = useState(null);
@@ -3211,7 +3216,7 @@ export default function App() {
 
           <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_marketplace}</div>
           <div className="promo-market-row">
-            {["Telegram", "Fragment", "MarketApp"].map((m) => (
+            {["Telegram", "MarketApp"].map((m) => (
               <button key={m} className={`promo-market-btn ${promoMarket === m ? "active" : ""}`}
                 onClick={() => { haptic(); setPromoMarket(m); setPromoLink(""); }}>{m}</button>
             ))}
@@ -3766,18 +3771,24 @@ export default function App() {
       <div className="section-label" style={{ marginTop: 12 }}>{t.premium_label}</div>
       <div className="ios-group">
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("premium"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #0a84ff, #bf5af2)" }}><TGStar size={16} /></div>{t.premium_row}</div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #0a84ff, #bf5af2)" }}><TGStar size={16} /></div>{t.premium_row}
+            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("premium"); }}><IconInfo /></span>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: tier === "free" ? "var(--text-secondary)" : "var(--tg-blue)", fontWeight: 700, fontSize: 14 }}>{tier === "pro" ? "Scout Pro" : tier === "plus" ? "Scout+" : t.tier_free}</span>
             <IconChevronRight />
           </div>
         </div>
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("promote"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}</div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}
+            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("promote"); }}><IconInfo /></span>
+          </div>
           <IconChevronRight />
         </div>
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("affiliate"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}</div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}
+            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("affiliate"); }}><IconInfo /></span>
+          </div>
           <IconChevronRight />
         </div>
       </div>
@@ -3832,16 +3843,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="section-label" style={{ marginTop: 20 }}>{t.footer_for_devs}</div>
-      <div className="ios-group">
-        <div className="ios-row" style={{ cursor: "default" }}>
-          <div className="row-left" style={{ fontWeight: 600 }}>{t.footer_api_agents}</div>
-          <span className="mkt-badge mkt-soon">{t.soon}</span>
-        </div>
-      </div>
-
-      <div className="profile-footer">
-        <div className="footer-links">
+      <div className="profile-footer">        <div className="footer-links">
           <span onClick={() => { haptic(); setActiveSheet("faq"); }}>FAQs</span>
           <span className="dot">|</span>
           <span onClick={() => { haptic(); setActiveSheet("terms"); }}>Terms &amp; Conditions</span>
@@ -3857,7 +3859,13 @@ export default function App() {
           <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <IconInfo /></span>
         </div>
         <div className="footer-copy">{"\u00a9"} 2026 GiftTrove {"\u2022"} All Rights Reserved</div>
-        <div className="footer-powered">{t.footer_powered}</div>
+        <div className="footer-powered" onClick={() => safeOpen("https://gram.org")} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          {t.footer_powered}
+          <svg width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+            <circle cx="20" cy="20" r="20" fill="#0088CC"/>
+            <path d="M20 8C13.373 8 8 13.373 8 20C8 26.627 13.373 32 20 32C26.627 32 32 26.627 32 20C32 13.373 26.627 8 20 8ZM25.5 15H22V20.5H25.5C25.5 20.5 25.5 23 22 23C18.5 23 17 21.5 17 20C17 18.5 18.5 15 22 15C23.3 15 24.4 15.4 25.5 16V15Z" fill="white"/>
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -3963,12 +3971,34 @@ export default function App() {
         {soonNote && (
           <div className="note-overlay" onClick={() => setSoonNote(false)}>
             <div className="note-pop" onClick={(e) => e.stopPropagation()}>
-              <div className="note-pop-title">{t.soon_title}</div>
-              <div className="note-pop-body">{t.soon_note}</div>
+              <div className="note-pop-title">Agent API</div>
+              <div className="note-pop-body">APIs built specifically for your agents are coming soon. Stay tuned in our channels for updates.</div>
               <button className="note-pop-btn" onClick={() => setSoonNote(false)}>{t.got_it}</button>
             </div>
           </div>
         )}
+        {detailNote && (() => {
+          const promoPrice = tierInfo?.promo_price || 50;
+          const promoDays = tierInfo?.promo_days || 3;
+          const affPct = tierInfo?.affiliate_pct || 30;
+          const affMin = tierInfo?.affiliate_min || 1000;
+          const DETAILS = {
+            premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
+            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days for a one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results that match your selected criteria — functioning as a direct redirect to your listing.\n\nFees & Revenue\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nCompliance\nGiftTrove reserves the right to remove any promotion. A gift that is not currently listed for sale will not be displayed until it is live.` },
+            affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
+          };
+          const d = DETAILS[detailNote];
+          if (!d) return null;
+          return (
+            <div className="note-overlay" onClick={() => setDetailNote(null)}>
+              <div className="note-pop detail-pop" onClick={(e) => e.stopPropagation()}>
+                <div className="note-pop-title">{d.title}</div>
+                <div className="note-pop-body detail-body">{d.body.split("\n\n").map((para, i) => <p key={i} style={{ margin: i===0?0:"10px 0 0" }}>{para}</p>)}</div>
+                <button className="note-pop-btn" onClick={() => setDetailNote(null)}>{t.got_it}</button>
+              </div>
+            </div>
+          );
+        })()}
         {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
           <VoidGifts gifts={voidGifts} count={8} onPick={scoutGift} portal drift />
@@ -4007,12 +4037,34 @@ export default function App() {
         {soonNote && (
           <div className="note-overlay" onClick={() => setSoonNote(false)}>
             <div className="note-pop" onClick={(e) => e.stopPropagation()}>
-              <div className="note-pop-title">{t.soon_title}</div>
-              <div className="note-pop-body">{t.soon_note}</div>
+              <div className="note-pop-title">Agent API</div>
+              <div className="note-pop-body">APIs built specifically for your agents are coming soon. Stay tuned in our channels for updates.</div>
               <button className="note-pop-btn" onClick={() => setSoonNote(false)}>{t.got_it}</button>
             </div>
           </div>
         )}
+        {detailNote && (() => {
+          const promoPrice = tierInfo?.promo_price || 50;
+          const promoDays = tierInfo?.promo_days || 3;
+          const affPct = tierInfo?.affiliate_pct || 30;
+          const affMin = tierInfo?.affiliate_min || 1000;
+          const DETAILS = {
+            premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
+            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days for a one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results that match your selected criteria — functioning as a direct redirect to your listing.\n\nFees & Revenue\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nCompliance\nGiftTrove reserves the right to remove any promotion. A gift that is not currently listed for sale will not be displayed until it is live.` },
+            affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
+          };
+          const d = DETAILS[detailNote];
+          if (!d) return null;
+          return (
+            <div className="note-overlay" onClick={() => setDetailNote(null)}>
+              <div className="note-pop detail-pop" onClick={(e) => e.stopPropagation()}>
+                <div className="note-pop-title">{d.title}</div>
+                <div className="note-pop-body detail-body">{d.body.split("\n\n").map((para, i) => <p key={i} style={{ margin: i===0?0:"10px 0 0" }}>{para}</p>)}</div>
+                <button className="note-pop-btn" onClick={() => setDetailNote(null)}>{t.got_it}</button>
+              </div>
+            </div>
+          );
+        })()}
         {consentOverlay}
 
         <div className="top-nav">
