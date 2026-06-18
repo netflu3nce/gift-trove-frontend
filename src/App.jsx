@@ -325,6 +325,7 @@ const mktIcon = (market, size = 13) => {
       return null;
   }
 };
+const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 const IconChevronLeft = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconClose = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
@@ -993,7 +994,7 @@ const T = {
     add_alert: "Add Watch Alert", watchlist: "Watchlist",
     no_saved: "No gifts saved yet.",
     community: "Community", support: "Contact Support", comm_chat: "Community Chat", comm_channel: "Community Channel",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", data_cleared: "您的数据已清除", data_clear_failed: "无法清除数据。请在 Telegram 中打开 GiftTrove 后重试。", about_legal: "О приложении и право", data_cleared: "Ваши данные удалены", data_clear_failed: "Не удалось удалить данные. Откройте GiftTrove в Telegram и повторите.", about_legal: "About and legal", data_cleared: "Your data was cleared", data_clear_failed: "Couldn\u2019t clear your data. Open GiftTrove inside Telegram and try again.",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "About and legal", data_cleared: "Your data was cleared", data_clear_failed: "Couldn\u2019t clear your data. Open GiftTrove inside Telegram and try again.",
     support_builder: "Support the Builder", donate: "Donate",
     donate_desc: "GiftTrove was created free. Kindly input the amount of GRAM you'd like to donate.",
     amount_ton: "Amount (GRAM)", verify_tx: "Verify Transaction", tx_id: "Transaction ID",
@@ -1065,7 +1066,7 @@ const T = {
     add_alert: "Добавить алерт", watchlist: "Список наблюдения",
     no_saved: "Пока нет сохранённых подарков.",
     community: "Сообщество", support: "Поддержка", comm_chat: "Чат сообщества", comm_channel: "Канал сообщества",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "О приложении и праве", data_cleared: "Ваши данные удалены", data_clear_failed: "Не удалось удалить данные. Откройте GiftTrove в Telegram и повторите.",
     support_builder: "Поддержать создателя", donate: "Пожертвовать",
     donate_desc: "GiftTrove бесплатен. Введите сумму GRAM для пожертвования.",
     amount_ton: "Сумма (GRAM)", verify_tx: "Проверить транзакцию", tx_id: "ID транзакции",
@@ -1137,7 +1138,7 @@ const T = {
     add_alert: "添加提醒", watchlist: "关注列表",
     no_saved: "暂无收藏的礼物。",
     community: "社区", support: "联系客服", comm_chat: "社区群组", comm_channel: "社区频道",
-    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC",
+    inside_majek: "Inside Majek", gifttrove_otc: "GiftTrove OTC", about_legal: "关于与法律", data_cleared: "您的数据已清除", data_clear_failed: "无法清除数据。请在 Telegram 中打开 GiftTrove 后重试。",
     support_builder: "支持开发者", donate: "捐赠",
     donate_desc: "GiftTrove 是免费的。请输入您想捐赠的 GRAM 数量。",
     amount_ton: "数量 (GRAM)", verify_tx: "验证交易", tx_id: "交易 ID",
@@ -3983,12 +3984,16 @@ export default function App() {
           <span className="dot">|</span>
           <span onClick={() => { haptic(); setActiveSheet("affiliate"); }}>Affiliate Program</span>
           <span className="dot">|</span>
-          <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <IconInfo /></span>
+          <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,verticalAlign:"-0.15em",opacity:0.7}}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
         </div>
         <div className="footer-copy">{"\u00a9"} 2026 GiftTrove {"\u2022"} All Rights Reserved</div>
         <div className="footer-powered" onClick={() => safeOpen("https://gram.org")} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
           {t.footer_powered}
-          <IconGramLogo size={15} />
+          <svg width="15" height="15" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+            <rect width="100" height="100" rx="22" fill="#0098EA"/>
+            <path d="M18 44 L50 16 L82 44 L50 86 Z" fill="white"/>
+            <path d="M50 35 L53.5 45.5 L64 49 L53.5 52.5 L50 63 L46.5 52.5 L36 49 L46.5 45.5 Z" fill="#0098EA"/>
+          </svg>
         </div>
       </div>
     </div>
