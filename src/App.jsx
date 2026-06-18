@@ -867,6 +867,7 @@ const T = {
     promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
     view: "View", tier_pro_short: "Pro",
     promo_tg_note: "GiftTrove finds this gift\u2019s live floor on Telegram and keeps the promoted price current.",
+    promo_num_label: "Gift number (optional)", promo_num_ph: "e.g. 1234 \u2014 links buyers to this exact gift",
     promo_frag_link: "Fragment gift link", promo_bad_link: "That doesn\u2019t look like a fragment.com link.",
     promo_frag_note: "Paste the fragment.com link to your gift. An admin reviews it before it goes live; invalid links are auto-declined and refunded.",
     promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
@@ -934,6 +935,7 @@ const T = {
     promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
     view: "Открыть", tier_pro_short: "Pro",
     promo_tg_note: "GiftTrove находит актуальную цену этого подарка в Telegram и поддерживает её в рекламе.",
+    promo_num_label: "Номер подарка (необязательно)", promo_num_ph: "напр. 1234 — ведёт к этому подарку",
     promo_frag_link: "Ссылка на подарок Fragment", promo_bad_link: "Это не похоже на ссылку fragment.com.",
     promo_frag_note: "Вставьте ссылку fragment.com на ваш подарок. Админ проверит её перед публикацией; неверные ссылки отклоняются и возвращаются.",
     promo_review: "Отправлено — реклама появится после одобрения админом.",
@@ -1001,6 +1003,7 @@ const T = {
     promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
     view: "查看", tier_pro_short: "Pro",
     promo_tg_note: "GiftTrove 会在 Telegram 上获取该礼物的实时地板价并保持推广价格更新。",
+    promo_num_label: "礼物编号（可选）", promo_num_ph: "例如 1234 — 链接到该特定礼物",
     promo_frag_link: "Fragment 礼物链接", promo_bad_link: "这看起来不是 fragment.com 链接。",
     promo_frag_note: "粘贴您礼物的 fragment.com 链接。管理员审核后上线；无效链接将自动拒绝并退款。",
     promo_review: "已提交 — 管理员批准后推广即上线。",
@@ -1671,15 +1674,15 @@ const styles = `
   .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
   .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
   .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
-  .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg); display: flex; flex-direction: column; height: 100vh; height: 100dvh; animation: affSlideIn 0.34s var(--spring); }
+  .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; animation: affSlideIn 0.34s var(--spring); }
   @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); flex-shrink: 0; }
+  .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); flex-shrink: 0; position: relative; z-index: 2; }
   .aff-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-primary); cursor: pointer; }
   .aff-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-input); border: none; color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
   .aff-close:active { background: var(--bg-card); }
   .aff-topbar-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
   .aff-sub { font-size: 14px; color: var(--text-secondary); margin: 0 2px 16px; line-height: 1.45; }
-  .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); position: relative; z-index: 1; }
   .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 2px 10px; }
   .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
   .aff-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
@@ -2244,6 +2247,7 @@ export default function App() {
   const [promoSymbol, setPromoSymbol] = useState("");
   const [promoBackdrop, setPromoBackdrop] = useState("");
   const [promoMarket, setPromoMarket] = useState("Telegram");
+  const [promoNum, setPromoNum] = useState("");           // optional exact gift number (Telegram)
   const [promoAmount, setPromoAmount] = useState("");
   const [promoCurrency, setPromoCurrency] = useState("GRAM");
   const [promoLink, setPromoLink] = useState("");
@@ -2875,6 +2879,7 @@ export default function App() {
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
         gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "", marketplace: promoMarket,
+        num: isFragment ? "" : promoNum.trim(),
         model: promoModel, symbol: promoSymbol, backdrop: promoBackdrop,
         link: isFragment ? promoLink.trim() : "",
       }, timeout: 20000 });
@@ -2887,7 +2892,7 @@ export default function App() {
         setPromoBusy(false);
         if (status === "paid") {
           setPromoMsg(isFragment ? t.promo_review : t.promo_live); haptic("medium");
-          setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop(""); setPromoLink("");
+          setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop(""); setPromoLink(""); setPromoNum("");
           setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 2000);
         } else if (status === "failed") { setPromoMsg(t.promo_failed); }
       });
@@ -2903,6 +2908,8 @@ export default function App() {
     haptic();
     // Prefer the exact listing link the promoter supplied.
     if (promo.link && /^https:\/\//.test(promo.link)) { safeOpen(promo.link); return; }
+    // Telegram promo pinned to a specific gift number -> open that exact gift.
+    if (promo.num && promo.slug) { safeOpen(`https://t.me/nft/${promo.slug}-${promo.num}`); return; }
     if (promo.marketplace === "Fragment" && promo.slug) { safeOpen(`https://fragment.com/gifts/${promo.slug}`); return; }
     // Telegram (or missing slug): open the collection inside GiftTrove so live listings show.
     const col = collections.find((c) => String(c.gift_id) === String(promo.gift_id));
@@ -3017,14 +3024,18 @@ export default function App() {
     promoMatch(selectedBackdrops, p.backdrop));
 
   const renderPromoCard = (promo, i = 0) => {
-    const poster = giftImage(promo.slug, 1);
+    const num = promo.num ? Number(promo.num) : null;
+    const collImg = collections.find((c) => String(c.gift_id) === String(promo.gift_id))?.preview;
+    const poster = num != null ? giftImage(promo.slug, num) : (collImg || giftImage(promo.slug, 1));
+    const anim = giftAnimation(promo.slug, num != null ? num : 1);
     const amt = (promo.amount || "").toString().trim();
     const n = amt ? Number(amt.replace(/,/g, "")) : null;
     const item = {
       id: `promo-${promo.id}`,
       name: promo.collection,
       slug: promo.slug,
-      num: null,
+      num,
+      image: poster,
       price: amt && Number.isFinite(n) ? n : null,
       currency: promo.currency || "GRAM",
       model: promo.model || "",
@@ -3040,13 +3051,13 @@ export default function App() {
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }}
         onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero">
-          <LottieGift src={giftAnimation(promo.slug, 1)} poster={poster} size={132} radius={18} />
+          <LottieGift src={anim} poster={poster} size={132} radius={18} />
           <div className="promo-badge">{t.promoted}</div>
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
             {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
         </div>
-        <div className="result-name">{item.name}</div>
+        <div className="result-name">{item.name}{num != null ? ` #${num}` : ""}</div>
         <div className="result-meta"><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
         {item.model && (
           <div className="result-model"><span className="model-rarity">{item.model}</span></div>
@@ -3134,7 +3145,7 @@ export default function App() {
               <div className="promo-coll-list" onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                 {collMatches.map((c) => (
                   <div key={c.gift_id} className="promo-coll-row" onClick={() => { haptic(); setPromoColl(c); setPromoCollQuery(""); }}>
-                    {c.slug && <img src={giftImage(c.slug, 1)} alt="" loading="lazy" className="promo-coll-img" />}
+                    {c.preview && <img src={c.preview} alt="" loading="lazy" className="promo-coll-img" />}
                     <span>{c.name}</span>
                   </div>
                 ))}
@@ -3143,7 +3154,7 @@ export default function App() {
             </>
           ) : (
             <div className="promo-chosen">
-              {promoColl.slug && <img src={giftImage(promoColl.slug, 1)} alt="" className="promo-coll-img" />}
+              {promoColl.preview && <img src={promoColl.preview} alt="" className="promo-coll-img" />}
               <span style={{ flex: 1, fontWeight: 700 }}>{promoColl.name}</span>
               <button className="promo-change" onClick={() => setPromoColl(null)}>{t.promo_change}</button>
             </div>
@@ -3159,6 +3170,9 @@ export default function App() {
 
           {promoMarket === "Telegram" ? (
             <>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label}</div>
+              <input className="ios-input" inputMode="numeric" value={promoNum}
+                placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
               {promoColl && (promoAttrs.models.length + promoAttrs.symbols.length + promoAttrs.backdrops.length > 0) && (
                 <>
                   <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_attrs_opt}</div>
@@ -3202,6 +3216,7 @@ export default function App() {
       const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
       return (
         <div className="aff-screen">
+          <VoidGifts gifts={collections.filter((c) => c.preview).slice(0, 10)} count={10} />
           <div className="aff-topbar">
             <div className="aff-topbar-title">{t.affiliate_title}</div>
             <button className="aff-close" onClick={() => { haptic(); setActiveSheet(null); }}><IconClose /></button>
