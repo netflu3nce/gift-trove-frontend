@@ -241,7 +241,54 @@ function useIconPlay(trigger) {
 
 const IconSearch = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>;
 const IconBookmarkFilled = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
-const IconChevronRight = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+// ── Marketplace brand icons (traced from official logos) ──────────────────────
+const IconGramLogo = ({size=16}) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#0098EA"/>
+    {/* Gem/diamond body */}
+    <path d="M18 44 L50 16 L82 44 L50 86 Z" fill="white"/>
+    {/* Top facet highlight */}
+    <path d="M18 44 L28 36 L50 28 L72 36 L82 44 L50 44 Z" fill="#0098EA" opacity="0.25"/>
+    {/* 4-pointed sparkle */}
+    <path d="M50 35 L53.5 45.5 L64 49 L53.5 52.5 L50 63 L46.5 52.5 L36 49 L46.5 45.5 Z" fill="#0098EA"/>
+  </svg>
+);
+const IconTelegramBrand = ({size=16}) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#0098EA"/>
+    <path d="M19 49 L76 26 L62 73 L46 60 L68 39 L38 56.5 Z" fill="white"/>
+    <path d="M38 56.5 L46 60 L42 75 Z" fill="white" opacity="0.7"/>
+  </svg>
+);
+const IconFragmentBrand = ({size=16}) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#1C1C1E"/>
+    {/* Three arrows of Fragment logo */}
+    <path d="M50 63 L33 36 L44 36 L50 48 L56 36 L67 36 Z" fill="white"/>
+    <path d="M30 28 L42 28 L30 44 Z" fill="white"/>
+    <path d="M70 28 L58 28 L70 44 Z" fill="white"/>
+  </svg>
+);
+const IconMarketAppBrand = ({size=16}) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#0F87FF"/>
+    {/* MarketApp "m" arch: left pillar + right arch */}
+    <rect x="15" y="38" width="16" height="42" rx="5" fill="white"/>
+    <rect x="15" y="38" width="16" height="28" rx="5" fill="white"/>
+    <rect x="38" y="52" width="16" height="28" rx="5" fill="white"/>
+    <path d="M31 45 Q31 22 54 22 L62 22 Q85 22 85 46 Q85 66 62 66 L54 66" stroke="white" strokeWidth="16" strokeLinecap="round" fill="none"/>
+  </svg>
+);
+
+// Map market name → brand icon component
+function MarketIcon({market, size=13}) {
+  if (!market) return null;
+  const m = market.toLowerCase();
+  if (m === "telegram")  return <IconTelegramBrand size={size} />;
+  if (m === "fragment")  return <IconFragmentBrand size={size} />;
+  if (m === "marketapp") return <IconMarketAppBrand size={size} />;
+  return null;
+}
 const IconChevronLeft = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconClose = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
 const IconFlag = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
@@ -495,42 +542,39 @@ function LaunchLoader({ onDone }) {
 // ─── LEGAL / FAQ CONTENT (English by design; legal text stays canonical) ─────
 const LEGAL = {
   faq: [
-    ["What is GiftTrove?", "GiftTrove is a Telegram Mini App that lets you scout, compare, and track collectible Telegram gifts listed across marketplaces. We show you listings, we do not buy, sell, hold, or custody any gifts or funds on your behalf."],
-    ["Is GiftTrove free to use?", "Yes. Scouting and browsing are completely free. If you choose to purchase a gift through a marketplace, that transaction happens directly between you and that marketplace."],
-    ["Does buying through GiftTrove earn GiftTrove anything?", "No. GiftTrove receives no commission, fee, or credit from any purchase you make. Tapping through to a marketplace is a plain redirect, the full amount of your purchase goes through that marketplace as if you had visited it directly."],
-    ["Are the promoted apps in GiftTrove ads?", "The banners and promoted apps shown in the Profile area are promotional, and some are affiliate links where the operator may earn a referral reward if you sign up or interact with them. They are kept clearly separate from gift scouting, and tapping a gift through to a marketplace stays a plain, commission-free redirect."],
-    ["Do you store my personal data?", "We store an anonymised identifier (not your name, username, or phone number) purely to count unique visitors and keep your saved gifts in sync across devices. We never sell or share this data. See the Privacy Policy for the full picture."],
-    ["Why do some gifts show no listings?", "A gift collection may simply have no active resale listings at the moment you search. Listings update in near real-time, if nothing shows, nothing is listed right now."],
-    ["Are the prices shown accurate?", "Prices reflect active marketplace listings at the time of your search. They are informational only, not advice, valuations, or guarantees, and can change before you complete a purchase."],
-    ["Can I buy a gift directly inside GiftTrove?", "No. GiftTrove is a scouting tool. All purchases happen on the relevant marketplace after you tap through, and we have no control over those transactions."],
-    ["What is the referral system?", "When someone opens GiftTrove through your link, we record the referral. This is currently for tracking only, no financial rewards are offered or implied."],
-    ["What currencies does GiftTrove display?", "Prices are shown in Telegram Stars and GRAM (TON network). GiftTrove does not process or interact with any currency itself."],
-    ["How do I contact support?", "Use the Support row in this Profile tab, or message the builder directly."],
+    ["What is GiftTrove?", "GiftTrove is a Telegram Mini App for scouting, comparing, and tracking collectible Telegram gifts across multiple marketplaces. We display listings — we never buy, sell, hold, or custody any gifts or funds."],
+    ["Is it free?", "Scouting and browsing are fully free. Scout+ and Scout Pro memberships unlock advanced filters and features. Any purchase you make happens directly on the marketplace, not through us."],
+    ["Does GiftTrove earn anything from purchases?", "No. Tapping through to a marketplace is a plain redirect. GiftTrove takes zero commission and receives nothing from your purchases — what you see is what goes to the marketplace."],
+    ["What marketplaces are supported?", "Currently Telegram (native listings), Fragment, and MarketApp. GetGems, Portals, MRKT, and Tonnel are planned as their APIs become available."],
+    ["Are prices accurate?", "Prices reflect live marketplace listings at the time of your search. They are informational only, can change before you complete a purchase, and are not advice or valuations."],
+    ["Why do some gifts show no results?", "No active resale listings exist for that collection at that moment. Listings update in near real-time — check back soon."],
+    ["What is the Promote feature?", "Promote lets you pin a specific gift listing to the top of matching scout results for a fixed number of days. The bot auto-fetches the listing price, model, and attributes. If the gift is sold or de-listed, it is automatically removed and you are notified."],
+    ["What is the Affiliate Program?", "Scout Pro members earn a percentage of each subscription payment from members who sign up through their referral link. Earnings are tracked as Stars and withdrawn in GRAM to your TON wallet."],
+    ["Is my data safe?", "We store only an anonymised identifier, your saved gifts, and your recent searches. No name, username, phone number, or payment info is collected. See the Privacy Policy for the full picture."],
+    ["How do I delete my data?", "Tap Clear my data in the footer of the Profile tab. Your data is deleted immediately."],
+    ["How do I get support?", "Use the Support link in the Community section of the Profile tab."],
   ],
   terms: [
-    ["No affiliation", "GiftTrove is an independent, third-party tool. It is not affiliated with, endorsed by, sponsored by, or officially connected to Telegram, the TON Foundation, Fragment, GetGems, or any other marketplace. All product names, trademarks, gift artwork, and collectible designs belong to their respective owners and are referenced for identification only."],
-    ["Informational service only", "Everything shown in GiftTrove, prices, rarity, supply, trends, is informational only. Nothing in this app constitutes investment, financial, or trading advice. You bear full responsibility for any purchase or trading decision."],
-    ["Data accuracy", "Listing data is retrieved live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and we accept no liability for decisions made based on displayed data."],
-    ["Third-party transactions", "Purchases made after tapping through to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, earns nothing from them, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
-    ["Affiliate and promotional links", "Some areas of GiftTrove feature third-party apps and services through promotional or affiliate links. When you open one, the operator may receive a referral reward or commission from that third party. These placements are separate from gift-marketplace redirects, which remain commission-free as described above. Promotional placement is not an endorsement, and any dealings you have with those third parties are at your own risk and governed by their own terms."],
-    ["Referral program", "You may be given a personal referral link and code. Referrals are recorded for tracking. Any rewards, if introduced, are discretionary and may be changed or withdrawn at any time. Generating referrals through fake, automated, or otherwise abusive accounts is not permitted and may result in removal."],
-    ["Notifications", "GiftTrove may occasionally send you messages through the bot, such as product updates or announcements. You can opt out at any time using Clear my data in the Profile tab, which also stops these messages."],
-    ["No custody", "GiftTrove never holds, transfers, or controls your gifts, TON, Stars, or any digital assets."],
-    ["Donations", "Donations made through the app are voluntary, non-refundable, and carry no expectation of service, reward, or anything in return."],
-    ["Acceptable use", "You agree not to scrape data, disrupt or overload the service, or use GiftTrove for any unlawful purpose."],
+    ["Independence", "GiftTrove is an independent third-party tool. It is not affiliated with, endorsed by, or connected to Telegram, the TON Foundation, Fragment, GetGems, MarketApp, or any other marketplace. All trademarks, gift artwork, and collectible designs belong to their respective owners."],
+    ["Informational only", "Everything shown in GiftTrove — prices, rarity, supply, attributes — is informational only and not financial, investment, or trading advice. You bear full responsibility for any purchase or trading decision."],
+    ["Data accuracy", "Listing data is fetched live from third-party sources. We make reasonable efforts to display accurate data but cannot guarantee completeness, accuracy, or timeliness, and accept no liability for decisions based on displayed data."],
+    ["Third-party purchases", "Purchases made after tapping to a marketplace are entirely between you and that marketplace. GiftTrove is not a party to those transactions, takes no cut, holds no funds, and bears no liability for failed, disputed, or fraudulent transactions."],
+    ["Promoted listings", "Promote placements are paid by users and appear at the top of matching scout results as a direct redirect to the listed gift. GiftTrove takes no commission on promoted gift sales. Promotion fees are non-refundable. GiftTrove reserves the right to remove any promotion at any time. A promoted gift that is de-listed or sold will automatically stop displaying."],
+    ["Affiliate program", "Scout Pro members may earn a percentage of referred subscription payments. Referral rewards are discretionary and subject to change. Fake, automated, or self-referrals forfeit all earnings and may result in removal from the program."],
+    ["Subscriptions", "Scout+ and Scout Pro are billed monthly in Telegram Stars and renew automatically. You can cancel at any time through Telegram. All Star purchases are non-refundable per Telegram's policy."],
+    ["No custody", "GiftTrove never holds, transfers, or controls your gifts, GRAM, TON, Stars, or any digital assets."],
+    ["Acceptable use", "You agree not to scrape data, disrupt the service, or use GiftTrove for any unlawful purpose."],
     ["Availability", "GiftTrove is provided as-is. We may modify, suspend, or discontinue any part of the service at any time without notice."],
-    ["Eligibility", "By using GiftTrove you confirm you are permitted to use Telegram under Telegram's own Terms of Service in your jurisdiction."],
-    ["Disputes", "Any dispute arising from the use of GiftTrove shall first be resolved through good-faith negotiation with the operator before any other process."],
-    ["Acceptance", "By using GiftTrove you agree to these Terms of Service and the Privacy Policy. If you do not agree, please discontinue use."],
+    ["Acceptance", "By using GiftTrove you agree to these Terms and the Privacy Policy. If you do not agree, please stop using the app."],
   ],
   privacy: [
-    ["What we collect", "An anonymised identifier derived from your Telegram ID (for visit counting, saved-gifts sync, and referral tracking), your saved gift list, your recent search terms, and aggregate usage counts (opens, searches, shares) that are never linked to identifiable individuals."],
-    ["What we never collect", "Your name, username, phone number, message content, payment information, location, or any data from your Telegram account beyond the technical launch parameters Telegram provides to every Mini App."],
-    ["How data is processed", "Data is processed on reputable third-party hosting and database infrastructure under industry-standard protections. Marketplace links open third-party platforms governed by their own privacy policies."],
-    ["Retention", "Aggregate, anonymised analytics are retained to improve the product. Your saved gifts and searches persist so they can follow you across devices."],
-    ["Your rights", "You are in control. You can delete your data yourself at any time with the Clear my data option at the bottom of the Profile tab, which removes your synced data instantly. You can also reach Support for anything else."],
-    ["Messaging and opt-out", "If you have interacted with the GiftTrove bot, we may occasionally send you announcements or product updates through it. Using Clear my data removes your synced data and opts you out of any further messages."],
-    ["Changes", "We may update this policy as the product evolves; continued use after an update constitutes acceptance."],
+    ["What we collect", "An anonymised identifier derived from your Telegram ID (for visit counting, saved-gifts sync, and referral tracking), your saved gift list, your recent search terms, and aggregate usage counts. These are never linked to identifiable individuals."],
+    ["What we never collect", "Your name, username, phone number, message content, payment information, location, or any data beyond the technical launch parameters Telegram provides to every Mini App."],
+    ["How it's used", "Your saved gifts and recent searches are synced so they follow you across devices. Aggregate, anonymised analytics are used to improve the product. Referral records are used to attribute earned commissions."],
+    ["Third parties", "Data is processed on reputable hosting and database infrastructure under industry-standard protections. Marketplace links open third-party platforms governed by their own privacy policies."],
+    ["Your rights", "Tap Clear my data in the Profile footer to delete your synced data instantly. You can also contact Support for anything else."],
+    ["Bot messages", "If you have interacted with the GiftTrove bot, we may send you promotion status updates (sold, expired, unlisted) and occasional product announcements. Clearing your data also opts you out of further messages."],
+    ["Changes", "We may update this policy as the product evolves. Continued use after an update constitutes acceptance."],
   ],
 };
 
@@ -1387,11 +1431,16 @@ const styles = `
 
   /* ── Bigger animated result card ─────────────────────────────────────── */
   .result-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,0.28); }
-  .result-gift-hero { position: relative; display: flex; align-items: center; justify-content: center; padding: 12px 0 14px; border-radius: 16px; }
+  .result-gift-hero { position: relative; display: flex; align-items: center; justify-content: center; padding: 12px 0 14px; border-radius: 16px; border: 1px solid var(--border); }
+
   .result-save { position: absolute; top: 4px; right: 4px; cursor: pointer; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); transition: transform .2s var(--bounce); }
   .result-save:active { transform: scale(0.82); }
   .result-name { font-size: 15px; font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 6px; }
-  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .sheet-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .sheet-title-row .sheet-title { margin-bottom: 0; }
+  .sheet-info-btn { background: none; border: none; padding: 4px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; }
+  .sheet-info-btn:active { opacity: 1; color: var(--tg-blue); }
+  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
   .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
   .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .result-price { font-size: 17px; font-weight: 800; color: var(--tg-blue); }
@@ -1791,8 +1840,8 @@ const styles = `
   .mkt-live { background: rgba(48,209,88,0.15); color: #30d158; }
   .mkt-soon { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
   .ios-row-muted { opacity: 0.55; cursor: default; }
-  .profile-footer { text-align: center; margin-top: 36px; padding-bottom: 10px; }
-  .footer-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; font-size: 12.5px; color: var(--text-secondary); padding: 0 8px; }
+  .profile-footer { text-align: center; margin-top: 40px; padding-bottom: 10px; }
+  .footer-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; font-size: 12.5px; color: var(--text-secondary); padding: 0 8px; margin-bottom: 20px; }
   .footer-links span { cursor: pointer; }
   .footer-links span:not(.dot):active { color: var(--tg-blue); }
   .footer-links .dot { opacity: 0.35; cursor: default; font-size: 11px; }
@@ -3046,6 +3095,7 @@ export default function App() {
         <div className="result-name">{item.name}{item.num != null ? ` #${item.num}` : ""}</div>
         <div className="result-meta">
           {dotHex && <span className="color-dot" style={{ width: 11, height: 11, background: dotHex }} />}
+          <MarketIcon market={item.market} size={13} />
           <span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span>
         </div>
         {item.model && (
@@ -3107,7 +3157,7 @@ export default function App() {
           </div>
         </div>
         <div className="result-name">{item.name}{num != null ? ` #${num}` : ""}</div>
-        <div className="result-meta"><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
+        <div className="result-meta"><MarketIcon market={item.market} size={13} /><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
         {item.model && (
           <div className="result-model"><span className="model-rarity">{item.model}</span></div>
         )}
@@ -3150,7 +3200,7 @@ export default function App() {
         <BottomSheet onClose={() => setActiveSheet(null)}>
           <SheetMotion gifts={collections} />
           <div className="sheet-body">
-          <div className="sheet-title">{t.premium_title}</div>
+          <div className="sheet-title-row"><div className="sheet-title">{t.premium_title}</div><button className="sheet-info-btn" onClick={() => setDetailNote("premium")}><IconInfo /></button></div>
           <p className="premium-status">{t.you_are_on} <b>{statusLabel}</b>{isPremium && exp ? ` \u00b7 ${t.renews} ${exp}` : ""}</p>
           <Plan id="plus" name="Scout+" price={prices.plus} accent="#0a84ff" perks={[t.perk_5_filters]} />
           <Plan id="pro" name="Scout Pro" price={prices.pro} accent="#bf5af2" perks={[t.perk_unlimited, t.perk_vanity, t.perk_no_ads]} />
@@ -3188,9 +3238,7 @@ export default function App() {
         <BottomSheet onClose={() => setActiveSheet(null)}>
           <SheetMotion gifts={collections} />
           <div className="sheet-body">
-          <div className="sheet-title">{t.promote_title}</div>
-          <p className="premium-status">{t.promote_sub.replace("{n}", String(price)).replace("{d}", String(days))}</p>
-
+          <div className="sheet-title-row"><div className="sheet-title">{t.promote_title}</div><button className="sheet-info-btn" onClick={() => setDetailNote("promote")}><IconInfo /></button></div>
           <div className="promo-field-label" style={{ marginTop: 4 }}>{t.promo_collection}</div>
           {!promoColl ? (
             <>
@@ -3273,8 +3321,7 @@ export default function App() {
         <BottomSheet onClose={() => setActiveSheet(null)}>
           <SheetMotion gifts={collections} />
           <div className="sheet-body">
-            <div className="sheet-title">{t.affiliate_title}</div>
-            <p className="premium-status">{t.affiliate_sub.replace("{n}", String(pct))}</p>
+            <div className="sheet-title-row"><div className="sheet-title">{t.affiliate_title}</div><button className="sheet-info-btn" onClick={() => setDetailNote("affiliate")}><IconInfo /></button></div>
             {!a ? (
               <p className="vanity-help" style={{ textAlign: "center", padding: "32px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
             ) : !isPro ? (
@@ -3771,24 +3818,18 @@ export default function App() {
       <div className="section-label" style={{ marginTop: 12 }}>{t.premium_label}</div>
       <div className="ios-group">
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("premium"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #0a84ff, #bf5af2)" }}><TGStar size={16} /></div>{t.premium_row}
-            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("premium"); }}><IconInfo /></span>
-          </div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #0a84ff, #bf5af2)" }}><TGStar size={16} /></div>{t.premium_row}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: tier === "free" ? "var(--text-secondary)" : "var(--tg-blue)", fontWeight: 700, fontSize: 14 }}>{tier === "pro" ? "Scout Pro" : tier === "plus" ? "Scout+" : t.tier_free}</span>
             <IconChevronRight />
           </div>
         </div>
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("promote"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}
-            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("promote"); }}><IconInfo /></span>
-          </div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}</div>
           <IconChevronRight />
         </div>
         <div className="ios-row" onClick={() => { haptic(); setActiveSheet("affiliate"); }}>
-          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}
-            <span className="row-detail-mark" onClick={(e) => { e.stopPropagation(); setDetailNote("affiliate"); }}><IconInfo /></span>
-          </div>
+          <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}</div>
           <IconChevronRight />
         </div>
       </div>
@@ -3859,12 +3900,9 @@ export default function App() {
           <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <IconInfo /></span>
         </div>
         <div className="footer-copy">{"\u00a9"} 2026 GiftTrove {"\u2022"} All Rights Reserved</div>
-        <div className="footer-powered" onClick={() => safeOpen("https://gram.org")} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 }}>
+        <div className="footer-powered" onClick={() => safeOpen("https://gram.org")} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
           {t.footer_powered}
-          <svg width="14" height="14" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-            <circle cx="20" cy="20" r="20" fill="#0088CC"/>
-            <path d="M20 8C13.373 8 8 13.373 8 20C8 26.627 13.373 32 20 32C26.627 32 32 26.627 32 20C32 13.373 26.627 8 20 8ZM25.5 15H22V20.5H25.5C25.5 20.5 25.5 23 22 23C18.5 23 17 21.5 17 20C17 18.5 18.5 15 22 15C23.3 15 24.4 15.4 25.5 16V15Z" fill="white"/>
-          </svg>
+          <IconGramLogo size={15} />
         </div>
       </div>
     </div>
@@ -3984,7 +4022,7 @@ export default function App() {
           const affMin = tierInfo?.affiliate_min || 1000;
           const DETAILS = {
             premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
-            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days for a one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results that match your selected criteria — functioning as a direct redirect to your listing.\n\nFees & Revenue\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nCompliance\nGiftTrove reserves the right to remove any promotion. A gift that is not currently listed for sale will not be displayed until it is live.` },
+            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days — one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results matching users\u2019 selected attributes, functioning as a direct redirect to your listing.\n\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nGiftTrove reserves the right to remove any promoted gift. A gift not currently listed for sale will not be displayed.` },
             affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
           };
           const d = DETAILS[detailNote];
@@ -4050,7 +4088,7 @@ export default function App() {
           const affMin = tierInfo?.affiliate_min || 1000;
           const DETAILS = {
             premium: { title: "GiftTrove Premium", body: "Subscriptions are billed monthly in Telegram Stars and renew automatically. You can manage or cancel anytime directly inside Telegram.\n\nAll Star purchases are non-refundable." },
-            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days for a one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results that match your selected criteria — functioning as a direct redirect to your listing.\n\nFees & Revenue\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nCompliance\nGiftTrove reserves the right to remove any promotion. A gift that is not currently listed for sale will not be displayed until it is live.` },
+            promote: { title: "Promote a Gift", body: `Feature your gift at the top of matching search results for ${promoDays} days — one-time fee of ${promoPrice} Stars.\n\nYour promotion appears at the top of results matching users\u2019 selected attributes, functioning as a direct redirect to your listing.\n\nGiftTrove takes no percentage or commission. You keep 100% of your revenue. The Stars fee is non-refundable.\n\nGiftTrove reserves the right to remove any promoted gift. A gift not currently listed for sale will not be displayed.` },
             affiliate: { title: "Affiliate Program", body: `Earn ${affPct}% of every subscription from members you invite — for as long as you hold Scout Pro.\n\nHow It Works\nShare your referral link. When someone subscribes through it, you earn a percentage as tracked Stars earnings.\n\nPayouts\nEarnings accrue only while you are Scout Pro. If your plan lapses, earnings pause. Withdrawn in GRAM to your wallet. Minimum: ${affMin} \u2605.\n\nFair Use\nFake or self-referrals forfeit all earnings and result in removal from the program.` },
           };
           const d = DETAILS[detailNote];
