@@ -883,14 +883,15 @@ const T = {
     promo_failed: "Couldn\u2019t start the promotion. Try again.", promo_live: "Your promotion is live!",
     promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
     view: "View", tier_pro_short: "Pro",
-    promo_tg_note: "GiftTrove finds this gift\u2019s live floor on Telegram and keeps the promoted price current.",
+    promo_tg_note: "Enter the gift\u2019s ID number. The bot will find its price, model, backdrop and symbol automatically.",
+    promo_num_required: "Gift number is required",
     promo_num_label: "Gift number (optional)", promo_num_ph: "e.g. 1234 \u2014 links buyers to this exact gift",
     promo_frag_link: "Fragment gift link", promo_bad_link: "That doesn\u2019t look like a fragment.com link.",
-    promo_frag_note: "Paste the fragment.com link to your gift. An admin reviews it before it goes live; invalid links are auto-declined and refunded.",
+    promo_frag_note: "Enter the gift ID. The bot finds its listing on Fragment automatically.",
     promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
     aff_withdraw_as: "Withdraw as \u2248 {v} GRAM", aff_track_note: "Tracked earnings \u2014 withdrawn as GRAM to your wallet.",
     footer_live: "Live", footer_for_devs: "For Developers", footer_api_agents: "API for Agents", footer_powered: "Powered by GRAM (ex TON)",
-    promo_ma_link: "MarketApp listing link", promo_ma_note: "Paste the marketapp.ws link to your gift listing. An admin reviews it before it goes live.",
+    promo_ma_link: "MarketApp listing link", promo_ma_note: "Enter the gift ID. The bot finds its listing on MarketApp automatically.",
     promo_bad_ma_link: "That doesn\u2019t look like a marketapp.ws link.",
     aff_earnings_30d: "Earnings (30 days)", aff_no_earnings: "No earnings yet", aff_30d_ago: "30d ago", aff_today: "Today",
     aff_history: "Payout history", aff_st_paid: "Paid", aff_st_pending: "Pending", aff_st_declined: "Declined",
@@ -954,14 +955,15 @@ const T = {
     promo_failed: "Не удалось запустить рекламу. Попробуйте снова.", promo_live: "Ваша реклама запущена!",
     promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
     view: "Открыть", tier_pro_short: "Pro",
-    promo_tg_note: "GiftTrove находит актуальную цену этого подарка в Telegram и поддерживает её в рекламе.",
+    promo_tg_note: "Введите номер подарка. Бот автоматически найдёт его цену, модель, фон и символ.",
+    promo_num_required: "Номер подарка обязателен",
     promo_num_label: "Номер подарка (необязательно)", promo_num_ph: "напр. 1234 — ведёт к этому подарку",
     promo_frag_link: "Ссылка на подарок Fragment", promo_bad_link: "Это не похоже на ссылку fragment.com.",
-    promo_frag_note: "Вставьте ссылку fragment.com на ваш подарок. Админ проверит её перед публикацией; неверные ссылки отклоняются и возвращаются.",
+    promo_frag_note: "Введите номер подарка. Бот автоматически найдёт его на Fragment.",
     promo_review: "Отправлено — реклама появится после одобрения админом.",
     aff_withdraw_as: "Вывод ≈ {v} GRAM", aff_track_note: "Отслеживаемый доход — выводится в GRAM на ваш кошелёк.",
     footer_live: "Активно", footer_for_devs: "Разработчикам", footer_api_agents: "API для агентов", footer_powered: "Работает на GRAM (экс TON)",
-    promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Вставьте ссылку marketapp.ws на ваш листинг. Админ проверит её перед публикацией.",
+    promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Введите номер подарка. Бот автоматически найдёт его на MarketApp.",
     promo_bad_ma_link: "Это не похоже на ссылку marketapp.ws.",
     aff_earnings_30d: "Доход (30 дней)", aff_no_earnings: "Пока нет дохода", aff_30d_ago: "30 дн. назад", aff_today: "Сегодня",
     aff_history: "История выплат", aff_st_paid: "Выплачено", aff_st_pending: "В обработке", aff_st_declined: "Отклонено",
@@ -1025,14 +1027,15 @@ const T = {
     promo_failed: "无法启动推广，请重试。", promo_live: "您的推广已上线！",
     promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
     view: "查看", tier_pro_short: "Pro",
-    promo_tg_note: "GiftTrove 会在 Telegram 上获取该礼物的实时地板价并保持推广价格更新。",
+    promo_tg_note: "输入礼物 ID 编号，机器人将自动获取其价格、模型、背景和符号。",
+    promo_num_required: "礼物编号为必填项",
     promo_num_label: "礼物编号（可选）", promo_num_ph: "例如 1234 — 链接到该特定礼物",
     promo_frag_link: "Fragment 礼物链接", promo_bad_link: "这看起来不是 fragment.com 链接。",
-    promo_frag_note: "粘贴您礼物的 fragment.com 链接。管理员审核后上线；无效链接将自动拒绝并退款。",
+    promo_frag_note: "输入礼物 ID，机器人将在 Fragment 上自动查找。",
     promo_review: "已提交 — 管理员批准后推广即上线。",
     aff_withdraw_as: "提现 ≈ {v} GRAM", aff_track_note: "追踪收益 — 以 GRAM 提现至您的钱包。",
     footer_live: "已上线", footer_for_devs: "开发者", footer_api_agents: "智能体 API", footer_powered: "基于 GRAM（原 TON）",
-    promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "粘贴您礼物的 marketapp.ws 链接。管理员审核后上线。",
+    promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "输入礼物 ID，机器人将在 MarketApp 上自动查找。",
     promo_bad_ma_link: "这看起来不是 marketapp.ws 链接。",
     aff_earnings_30d: "收益（30 天）", aff_no_earnings: "暂无收益", aff_30d_ago: "30 天前", aff_today: "今天",
     aff_history: "提现记录", aff_st_paid: "已支付", aff_st_pending: "处理中", aff_st_declined: "已拒绝",
@@ -1784,14 +1787,15 @@ const styles = `
   .mkt-live { background: rgba(48,209,88,0.15); color: #30d158; }
   .mkt-soon { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
   .ios-row-muted { opacity: 0.55; cursor: default; }
-  .footer-powered { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; opacity: 0.8; }
-  .profile-footer { text-align: center; margin-top: 30px; padding-bottom: 10px; }
-  .footer-links { display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 13px; color: var(--text-secondary); }
+  .profile-footer { text-align: center; margin-top: 36px; padding-bottom: 10px; }
+  .footer-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; font-size: 12.5px; color: var(--text-secondary); padding: 0 8px; }
   .footer-links span { cursor: pointer; }
   .footer-links span:not(.dot):active { color: var(--tg-blue); }
-  .footer-links .dot { opacity: 0.45; cursor: default; }
-  .footer-clear { margin-top: 13px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer; }
-  .footer-built { margin-top: 14px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .footer-links .dot { opacity: 0.35; cursor: default; font-size: 11px; }
+  .footer-api-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .footer-api-item svg { opacity: 0.6; }
+  .footer-copy { margin-top: 14px; font-size: 12px; color: var(--text-secondary); font-weight: 600; opacity: 0.7; }
+  .footer-powered { margin-top: 5px; font-size: 11.5px; color: var(--text-secondary); font-weight: 700; opacity: 0.55; }
   /* first-launch consent */
   .consent-wrap { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; padding: 0 14px calc(var(--safe-bottom, 16px) + 14px); }
   .consent-card { width: 100%; max-width: 430px; max-height: calc(100vh - 48px); overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 22px; padding: 20px 18px; box-shadow: 0 18px 60px rgba(0,0,0,0.5); animation: fadeInUp .45s var(--bounce) both; }
@@ -2919,22 +2923,19 @@ export default function App() {
     const isExternal = promoMarket === "Fragment" || promoMarket === "MarketApp";
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
-        gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "", marketplace: promoMarket,
-        num: isExternal ? "" : promoNum.trim(),
-        model: "", symbol: "", backdrop: "",
-        link: isExternal ? promoLink.trim() : "",
+        gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "",
+        marketplace: promoMarket, num: promoNum.trim(),
+        model: "", symbol: "", backdrop: "", link: "",
       }, timeout: 20000 });
       if (!r?.ok || !r.link) {
-        const m = r?.error === "domain"      ? (promoMarket === "MarketApp" ? t.promo_bad_ma_link : t.promo_bad_link)
-                : r?.error === "collection"  ? t.promo_bad_coll
-                : r?.error === "marketplace" ? t.promo_bad_coll
-                : r?.error === "auth"        ? t.open_in_tg : t.promo_failed;
+        const m = r?.error === "collection" ? t.promo_bad_coll
+                : r?.error === "auth"       ? t.open_in_tg : t.promo_failed;
         setPromoMsg(m); setPromoBusy(false); return;
       }
       tg.openInvoice(r.link, (status) => {
         setPromoBusy(false);
         if (status === "paid") {
-          setPromoMsg(isExternal ? t.promo_review : t.promo_live); haptic("medium");
+          setPromoMsg(t.promo_live); haptic("medium");
           setPromoColl(null); setPromoModel(""); setPromoSymbol(""); setPromoBackdrop(""); setPromoLink(""); setPromoNum("");
           setTimeout(() => { setActiveSheet(null); setPromoMsg(""); }, 2000);
         } else if (status === "failed") { setPromoMsg(t.promo_failed); }
@@ -3218,34 +3219,33 @@ export default function App() {
 
           {promoMarket === "Telegram" ? (
             <>
-              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label}</div>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label} <span style={{ color: "#ff3b30" }}>*</span></div>
               <input className="ios-input" inputMode="numeric" value={promoNum}
                 placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
-              <p className="promo-hint" style={{ marginTop: 12 }}>{t.promo_tg_note}</p>
+              <p className="promo-hint" style={{ marginTop: 10 }}>{t.promo_tg_note}</p>
             </>
           ) : promoMarket === "MarketApp" ? (
             <>
-              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_ma_link}</div>
-              <input className="ios-input" value={promoLink} placeholder="https://marketapp.ws/nft/..."
-                onChange={(e) => setPromoLink(e.target.value)} />
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label} <span style={{ color: "#ff3b30" }}>*</span></div>
+              <input className="ios-input" inputMode="numeric" value={promoNum}
+                placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
               <p className="promo-hint">{t.promo_ma_note}</p>
             </>
           ) : (
             <>
-              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_frag_link}</div>
-              <input className="ios-input" value={promoLink} placeholder="https://fragment.com/gift/..."
-                onChange={(e) => setPromoLink(e.target.value)} />
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label} <span style={{ color: "#ff3b30" }}>*</span></div>
+              <input className="ios-input" inputMode="numeric" value={promoNum}
+                placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
               <p className="promo-hint">{t.promo_frag_note}</p>
             </>
           )}
 
           <button className="action-btn" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)", marginTop: 16 }}
-            disabled={!promoColl || promoBusy ||
-              (promoMarket === "Fragment"  && !/^https:\/\/(www\.)?fragment\.com\//i.test(promoLink.trim())) ||
-              (promoMarket === "MarketApp" && !/^https:\/\/(www\.)?marketapp\.ws\//i.test(promoLink.trim()))}
+            disabled={!promoColl || !promoNum.trim() || promoBusy}
             onClick={createPromo}>
             <TGStar size={16} /> &nbsp;{promoBusy ? t.opening : t.promote_cta.replace("{n}", String(price))}
           </button>
+          {!promoNum.trim() && promoColl && <p className="promo-hint" style={{ color: "#ff9f0a", textAlign: "center" }}>{t.promo_num_required}</p>}
           {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
           <p className="premium-fineprint">{t.promote_fineprint}</p>
           </div>
@@ -3832,26 +3832,6 @@ export default function App() {
         </div>
       </div>
 
-      <div className="section-label" style={{ marginTop: 28 }}>{t.marketplaces}</div>
-      <div className="ios-group">
-        {[
-          { name: "Telegram", live: true, url: "https://t.me" },
-          { name: "Fragment", live: true, url: "https://fragment.com/gifts" },
-          { name: "MarketApp", live: true, url: "https://marketapp.ws/gifts/" },
-          { name: "GetGems", live: false },
-          { name: "Portals", live: false },
-          { name: "MRKT", live: false },
-          { name: "Tonnel", live: false },
-        ].map(({ name, live, url }) => (
-          <div key={name} className={`ios-row ${!live ? "ios-row-muted" : ""}`}
-            onClick={live && url ? () => safeOpen(url) : undefined} style={{ cursor: live ? "pointer" : "default" }}>
-            <div className="row-left" style={{ fontWeight: 600 }}>{name}</div>
-            {live ? <span className="mkt-badge mkt-live">{t.footer_live}</span>
-                  : <span className="mkt-badge mkt-soon">{t.soon}</span>}
-          </div>
-        ))}
-      </div>
-
       <div className="section-label" style={{ marginTop: 20 }}>{t.footer_for_devs}</div>
       <div className="ios-group">
         <div className="ios-row" style={{ cursor: "default" }}>
@@ -3861,20 +3841,23 @@ export default function App() {
       </div>
 
       <div className="profile-footer">
-        <div className="footer-powered">{t.footer_powered}</div>
         <div className="footer-links">
-          <span onClick={() => { haptic(); setActiveSheet("faq"); }}>FAQ</span>
-          <span className="dot">·</span>
-          <span onClick={() => { haptic(); setActiveSheet("terms"); }}>Terms</span>
-          <span className="dot">·</span>
-          <span onClick={() => { haptic(); setActiveSheet("privacy"); }}>Privacy</span>
+          <span onClick={() => { haptic(); setActiveSheet("faq"); }}>FAQs</span>
+          <span className="dot">|</span>
+          <span onClick={() => { haptic(); setActiveSheet("terms"); }}>Terms &amp; Conditions</span>
+          <span className="dot">|</span>
+          <span onClick={() => { haptic(); setActiveSheet("privacy"); }}>Privacy Policy</span>
+          <span className="dot">|</span>
+          <span onClick={clearMyData} style={clearArmed ? { color: "#ff3b30", fontWeight: 700 } : undefined}>
+            {clearArmed ? "Confirm clear" : "Clear my data"}
+          </span>
+          <span className="dot">|</span>
+          <span onClick={() => { haptic(); setActiveSheet("affiliate"); }}>Affiliate Program</span>
+          <span className="dot">|</span>
+          <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <IconInfo /></span>
         </div>
-        <div className="footer-clear" onClick={clearMyData}>
-          <span style={clearArmed ? { color: "#ff3b30", fontWeight: 700 } : undefined}>{clearArmed ? "Tap again to confirm" : "Clear my data"}</span>
-        </div>
-        <div className="footer-built">
-          Built by <span onClick={() => safeOpen("https://t.me/insidemajek")} style={{ color: "var(--tg-blue)", cursor: "pointer" }}>@insidemajek</span>
-        </div>
+        <div className="footer-copy">{"\u00a9"} 2026 GiftTrove {"\u2022"} All Rights Reserved</div>
+        <div className="footer-powered">{t.footer_powered}</div>
       </div>
     </div>
   );
