@@ -86,10 +86,10 @@ const FALLBACK_COLLECTIONS = [
   "Homemade Cake", "Snake Box", "Crystal Ball", "Mini Oscar", "Sharp Tongue",
 ];
 
-const MARKETPLACES = ["All", "Telegram", "GetGems", "Portals", "MRKT", "Tonnel", "Fragment"];
-// Markets we have real listing data for (you have a GetGems key; Telegram-native via MTProto).
-// The others get a "view" link only — never a fake price.
-const LIVE_MARKETS = new Set(["Telegram", "Fragment"]);  // live & clickable; others show "soon"
+const MARKETPLACES = ["All", "Telegram", "MarketApp", "GetGems", "Portals", "MRKT", "Tonnel", "Fragment"];
+// Markets we have real listing data for (Telegram-native via MTProto; MarketApp
+// aggregator via API; Fragment via scraper). The others get a "view" link only.
+const LIVE_MARKETS = new Set(["Telegram", "Fragment", "MarketApp"]);  // live & clickable; others greyed
 
 const LANGS = { EN: "English", RU: "Русский", ZH: "中文" };
 
