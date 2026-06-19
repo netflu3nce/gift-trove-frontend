@@ -34,7 +34,6 @@ const FRAGMENT_CDN = "https://nft.fragment.com/gift";
 
 // Brand logo (sits between GIFT and TROVE, the Scout tab icon, and the headline mark).
 const LOGO_URL = "https://i.ibb.co/nMV7Mvfp/Inria-Serif.png";
-const HERO_IMG = "https://i.ibb.co/PsCBq79k/MGGA.png";  // image beside the hero title
 
 // Optional: a Lottie URL for the launch splash. Left empty -> we show real
 // animated gifts (Plush Pepe + 2 others) pulled from the backend instead.
@@ -262,10 +261,9 @@ const mktIcon = (market, size = 13) => {
   switch ((market || "").toLowerCase()) {
     case "telegram":
       return (
-        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="100" rx="22" fill="#0098EA"/>
-          <path d="M19 49 L76 26 L62 73 L46 60 L68 39 L38 56.5 Z" fill="white"/>
-          <path d="M38 56.5 L46 60 L42 75 Z" fill="white" opacity="0.7"/>
+        <svg width={s} height={s} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="112" fill="#0098EA"/>
+          <path d="M74.12,252.09 C180.90,205.77 251.85,175.05 287.44,160.18 C388.87,118.00 410.08,110.69 423.73,110.44 C426.66,110.44 433.48,111.17 437.87,114.59 C441.53,117.51 442.75,121.66 443.23,124.58 C443.72,127.51 444.21,133.85 443.72,138.97 C438.11,196.75 414.47,336.94 402.28,401.79 C397.16,429.09 387.16,438.36 377.41,439.33 C356.20,441.28 339.86,425.19 319.38,411.78 C287.20,390.57 268.92,377.41 237.71,356.93 C201.63,333.04 225.27,320.36 245.75,298.90 C251.12,293.30 344.74,208.21 346.44,200.41 C346.69,199.43 346.93,195.77 344.74,193.82 C342.54,191.87 339.37,192.85 337.18,193.34 C334.01,194.07 282.57,227.96 182.85,295.25 C168.22,305.24 155.30,310.12 143.36,309.87 C130.19,309.63 105.32,302.56 86.55,296.46 C63.63,289.15 45.35,285.01 47.05,272.33 C47.79,265.75 56.81,259.16 74.12,252.09 Z" fill="#FFFFFF"/>
         </svg>
       );
     case "fragment":
@@ -1444,8 +1442,9 @@ const styles = `
   .sheet-title-row .sheet-title { margin-bottom: 0; text-align: center; }
   .sheet-info-btn { background: none; border: none; padding: 2px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; flex-shrink: 0; }
   .sheet-info-btn:active { opacity: 1; color: var(--tg-blue); }
-  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
-  .meta-icon-stack { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .meta-row { display: flex; align-items: center; gap: 6px; }
+  .meta-icon-slot { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; flex-shrink: 0; }
   .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
   .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .result-price { font-size: 17px; font-weight: 800; color: var(--tg-blue); }
@@ -2365,6 +2364,7 @@ export default function App() {
   const [affBusy, setAffBusy] = useState(false);
   const [affMsg, setAffMsg] = useState("");
   const [pendingScout, setPendingScout] = useState("");   // gift_id from a q_ inline deep link
+  const [pendingGiftSlug, setPendingGiftSlug] = useState("");   // slug from a g_ gift deep link — held until access is granted
   const [editingVanity, setEditingVanity] = useState(false);   // inline custom-code editor (Pro)
 
   // Save the current search so it survives a full page reload.
@@ -2675,17 +2675,16 @@ export default function App() {
       if (gid) setPendingScout(gid);
       refCode = "";
     }
-    // Gift deep-link: g_<slug>_<refcode>  ->  open that gift + read the ref code
+    // Gift deep-link: g_<slug>_<refcode>  ->  open that gift once access is granted.
+    // (Don't fetch yet — the access-gate screen fully replaces the render tree
+    // until `access === "granted"`, so firing this now would set state that
+    // never becomes visible and is never retried.)
     if (param.startsWith("g_")) {
       const rest = param.slice(2);
       const u = rest.lastIndexOf("_");
       const slug = u >= 0 ? rest.slice(0, u) : rest;
       refCode = u >= 0 ? rest.slice(u + 1) : "";
-      if (slug) {
-        api(`/api/gift?slug=${encodeURIComponent(slug)}`)
-          .then((g) => { if (g && (g.slug || g.name)) { setSelectedGift(g); setActiveSheet("gift_details"); } })
-          .catch(() => {});
-      }
+      if (slug) setPendingGiftSlug(slug);
     }
     // Send the raw token (friendly code OR legacy link) — the backend resolves it
     // and blocks self-referral, so no client-side decoding is needed.
@@ -2703,6 +2702,19 @@ export default function App() {
     setPendingScout("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingScout, collections]);
+
+  // Open a pending g_<slug> gift deep link once the access gate is passed —
+  // the gate screen fully replaces the render tree until then, so this must
+  // wait rather than fire on mount (see start_param parsing above).
+  useEffect(() => {
+    if (!pendingGiftSlug || access !== "granted") return;
+    const slug = pendingGiftSlug;
+    setPendingGiftSlug("");
+    api(`/api/gift?slug=${encodeURIComponent(slug)}`)
+      .then((g) => { if (g && (g.slug || g.name)) { setSelectedGift(g); setActiveSheet("gift_details"); } })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingGiftSlug, access]);
 
   // ── keyboard detection (hide tab bar) ──
   useEffect(() => {
@@ -3100,6 +3112,7 @@ export default function App() {
         attempted = true;   // backend counts the share on this call
         const r = await api("/api/share", { method: "POST", body: {
           name: item?.name, num: item?.num != null ? String(item.num) : "", market: mkt, price, link,
+          marketUrl: item?.url || "",
         } });
         if (r?.ok && r.id) { tg.shareMessage(r.id); return; }
       }
@@ -3199,11 +3212,10 @@ export default function App() {
         </div>
         <div className="result-name">{item.name}{item.num != null ? ` #${item.num}` : ""}</div>
         <div className="result-meta">
-          <div className="meta-icon-stack">
-            {mktIcon(item.market, 14)}
-            {dotHex && <span className="color-dot" style={{ width: 10, height: 10, background: dotHex }} />}
-          </div>
-          <span>{item.market}{item.backdrop ? ` \u00b7 ${item.backdrop}` : ""}</span>
+          <div className="meta-row"><span className="meta-icon-slot">{mktIcon(item.market, 14)}</span><span>{item.market}</span></div>
+          {dotHex && item.backdrop && (
+            <div className="meta-row"><span className="meta-icon-slot"><span className="color-dot" style={{ width: 10, height: 10, background: dotHex }} /></span><span>{item.backdrop}</span></div>
+          )}
         </div>
         {item.model && (
           <div className="result-model">
@@ -3266,7 +3278,10 @@ export default function App() {
           </div>
         </div>
         <div className="result-name">{item.name}{num != null ? ` #${num}` : ""}</div>
-        <div className="result-meta"><div className="meta-icon-stack">{mktIcon(item.market, 14)}</div><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
+        <div className="result-meta">
+          <div className="meta-row"><span className="meta-icon-slot">{mktIcon(item.market, 14)}</span><span>{item.market}</span></div>
+          {item.backdrop && <div className="meta-row"><span className="meta-icon-slot" /><span>{item.backdrop}</span></div>}
+        </div>
         {item.model && (
           <div className="result-model"><span className="model-rarity">{item.model}</span></div>
         )}
@@ -3740,7 +3755,10 @@ export default function App() {
       <div className="fade-in-up">
         <div className={desktop ? "hero-title desktop" : "hero-title"}>
           {t.fastest_way}
-          <img src={HERO_IMG} alt="" className="hero-title-img" />
+          <svg className="hero-title-img" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <rect width="512" height="512" rx="112" fill="#0098EA"/>
+            <path d="M74.12,252.09 C180.90,205.77 251.85,175.05 287.44,160.18 C388.87,118.00 410.08,110.69 423.73,110.44 C426.66,110.44 433.48,111.17 437.87,114.59 C441.53,117.51 442.75,121.66 443.23,124.58 C443.72,127.51 444.21,133.85 443.72,138.97 C438.11,196.75 414.47,336.94 402.28,401.79 C397.16,429.09 387.16,438.36 377.41,439.33 C356.20,441.28 339.86,425.19 319.38,411.78 C287.20,390.57 268.92,377.41 237.71,356.93 C201.63,333.04 225.27,320.36 245.75,298.90 C251.12,293.30 344.74,208.21 346.44,200.41 C346.69,199.43 346.93,195.77 344.74,193.82 C342.54,191.87 339.37,192.85 337.18,193.34 C334.01,194.07 282.57,227.96 182.85,295.25 C168.22,305.24 155.30,310.12 143.36,309.87 C130.19,309.63 105.32,302.56 86.55,296.46 C63.63,289.15 45.35,285.01 47.05,272.33 C47.79,265.75 56.81,259.16 74.12,252.09 Z" fill="#FFFFFF"/>
+          </svg>
         </div>
 
         <div className="input-group">
