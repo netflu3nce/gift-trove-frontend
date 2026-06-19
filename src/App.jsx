@@ -1124,7 +1124,7 @@ const styles = `
 
   :root {
     --bg-base: #f2f2f7;
-    --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(0, 122, 255, 0.08) 0%, #f2f2f7 100%);
+    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(51,65,85,0.78) 0%, rgba(51,65,85,0.5) 30%, rgba(51,65,85,0.24) 55%, rgba(51,65,85,0.08) 75%, #f2f2f7 95%);
     --bg-sheet: rgba(255, 255, 255, 0.75);
     --bg-card: rgba(255, 255, 255, 0.6);
     --bg-input: rgba(118, 118, 128, 0.12);
