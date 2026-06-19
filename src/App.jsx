@@ -253,44 +253,9 @@ const IconGramLogo = ({size=16}) => (
     <path d="M50 35 L53.5 45.5 L64 49 L53.5 52.5 L50 63 L46.5 52.5 L36 49 L46.5 45.5 Z" fill="#0098EA"/>
   </svg>
 );
-const IconTelegramBrand = ({size=16}) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" rx="22" fill="#0098EA"/>
-    <path d="M19 49 L76 26 L62 73 L46 60 L68 39 L38 56.5 Z" fill="white"/>
-    <path d="M38 56.5 L46 60 L42 75 Z" fill="white" opacity="0.7"/>
-  </svg>
-);
-const IconFragmentBrand = ({size=16}) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" rx="22" fill="#1C1C1E"/>
-    {/* Three arrows of Fragment logo */}
-    <path d="M50 63 L33 36 L44 36 L50 48 L56 36 L67 36 Z" fill="white"/>
-    <path d="M30 28 L42 28 L30 44 Z" fill="white"/>
-    <path d="M70 28 L58 28 L70 44 Z" fill="white"/>
-  </svg>
-);
-const IconMarketAppBrand = ({size=16}) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" rx="22" fill="#0F87FF"/>
-    {/* MarketApp "m" arch: left pillar + right arch */}
-    <rect x="15" y="38" width="16" height="42" rx="5" fill="white"/>
-    <rect x="15" y="38" width="16" height="28" rx="5" fill="white"/>
-    <rect x="38" y="52" width="16" height="28" rx="5" fill="white"/>
-    <path d="M31 45 Q31 22 54 22 L62 22 Q85 22 85 46 Q85 66 62 66 L54 66" stroke="white" strokeWidth="16" strokeLinecap="round" fill="none"/>
-  </svg>
-);
 
-// Map market name → brand icon component
-function MarketIcon({market, size=13}) {
-  if (!market) return null;
-  const m = market.toLowerCase();
-  if (m === "telegram")  return <IconTelegramBrand size={size} />;
-  if (m === "fragment")  return <IconFragmentBrand size={size} />;
-  if (m === "marketapp") return <IconMarketAppBrand size={size} />;
-  return null;
-}
-// Plain (non-component) version safe to call from render helpers like renderGiftCard.
-// Lowercase intentional — React never treats this as a component, avoids reconciliation bugs.
+// mktIcon: lowercase plain function (not a component) so it is always safe to call
+// from inside render helper functions like renderGiftCard / renderPromoCard.
 const mktIcon = (market, size = 13) => {
   if (!market) return null;
   const s = size;
@@ -305,20 +270,20 @@ const mktIcon = (market, size = 13) => {
       );
     case "fragment":
       return (
-        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="100" rx="22" fill="#1C1C1E"/>
-          <path d="M50 63 L33 36 L44 36 L50 48 L56 36 L67 36 Z" fill="white"/>
-          <path d="M30 28 L42 28 L30 44 Z" fill="white"/>
-          <path d="M70 28 L58 28 L70 44 Z" fill="white"/>
+        <svg width={s} height={s} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="112" fill="#1C1C1E"/>
+          <path d="M246.13,210.45 C246.13,210.45 109.05,148.65 109.05,148.65 C99.09,144.16 102.30,129.27 113.22,129.27 C113.22,129.27 399.88,129.27 399.88,129.27 C410.80,129.27 414.00,144.16 404.04,148.65 C404.04,148.65 266.97,210.45 266.97,210.45 C260.35,213.44 252.75,213.44 246.13,210.45 Z" fill="#FFFFFF"/>
+          <path d="M430.52,185.85 C435.99,177.33 426.98,166.94 417.78,171.15 C417.78,171.15 285.64,231.50 285.64,231.50 C276.63,235.62 270.83,244.65 270.83,254.56 C270.83,254.56 270.83,399.74 270.83,399.74 C270.83,409.85 284.02,413.73 289.49,405.22 C289.49,405.22 430.52,185.85 430.52,185.85 Z" fill="#FFFFFF"/>
+          <path d="M95.25,171.15 C86.05,166.94 77.04,177.33 82.51,185.85 C82.51,185.85 223.54,405.23 223.54,405.23 C229.01,413.74 242.20,409.86 242.20,399.74 C242.20,399.74 242.20,254.56 242.20,254.56 C242.20,244.65 236.40,235.62 227.39,231.51 C227.39,231.51 95.25,171.14 95.25,171.14 Z" fill="#FFFFFF"/>
         </svg>
       );
     case "marketapp":
       return (
-        <svg width={s} height={s} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="100" rx="22" fill="#0F87FF"/>
-          <rect x="15" y="38" width="16" height="42" rx="5" fill="white"/>
-          <rect x="38" y="52" width="16" height="28" rx="5" fill="white"/>
-          <path d="M31 45 Q31 22 54 22 L62 22 Q85 22 85 46 Q85 66 62 66 L54 66" stroke="white" strokeWidth="16" strokeLinecap="round" fill="none"/>
+        <svg width={s} height={s} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="112" fill="#007AFF"/>
+          <path d="M220.73,92.40 C322.68,92.40 373.66,92.40 412.60,112.24 C446.86,129.69 474.71,157.54 492.16,191.80 C512.00,230.74 512.00,281.72 512.00,383.67 C512.00,387.91 512.00,390.02 511.44,391.73 C510.32,395.20 507.60,397.92 504.13,399.04 C502.42,399.60 500.31,399.60 496.07,399.60 L427.80,399.60 C421.43,399.60 418.24,399.60 415.81,398.36 C413.67,397.27 411.93,395.53 410.84,393.39 C409.60,390.96 409.60,387.77 409.60,381.39 L409.60,322.23 C409.60,277.62 409.60,255.32 400.92,238.28 C393.28,223.30 381.10,211.11 366.11,203.48 C349.08,194.80 326.78,194.80 282.17,194.80 L120.61,194.80 C114.23,194.80 111.04,194.80 108.61,193.56 C106.47,192.47 104.73,190.73 103.64,188.59 C102.40,186.15 102.40,182.96 102.40,176.59 L102.40,110.60 C102.40,104.23 102.40,101.04 103.64,98.61 C104.73,96.47 106.47,94.73 108.61,93.64 C111.04,92.40 114.23,92.40 120.61,92.40 Z" fill="#FFFFFF"/>
+          <path d="M290.13,268.75 C306.06,268.75 314.03,268.75 320.11,271.86 C325.47,274.58 329.82,278.93 332.54,284.28 C335.64,290.37 335.64,298.33 335.64,314.27 L335.64,381.39 C335.64,387.77 335.64,390.96 334.40,393.39 C333.31,395.53 331.57,397.27 329.43,398.36 C327.00,399.60 323.81,399.60 317.44,399.60 L194.56,399.60 C188.19,399.60 185.00,399.60 182.57,398.36 C180.43,397.27 178.69,395.53 177.59,393.39 C176.35,390.96 176.36,387.77 176.36,381.39 L176.36,286.96 C176.36,280.59 176.35,277.40 177.59,274.97 C178.69,272.82 180.43,271.08 182.57,270.00 C185.00,268.75 188.19,268.75 194.56,268.75 Z" fill="#FFFFFF"/>
+          <path d="M84.19,194.80 C90.57,194.80 93.75,194.80 96.19,196.04 C98.33,197.13 100.07,198.87 101.16,201.01 C102.40,203.44 102.40,206.63 102.40,213.00 L102.40,381.39 C102.40,387.77 102.40,390.96 101.16,393.39 C100.07,395.53 98.33,397.27 96.19,398.36 C93.75,399.60 90.57,399.60 84.19,399.60 L18.21,399.60 C11.83,399.60 8.65,399.60 6.21,398.36 C4.07,397.27 2.33,395.53 1.24,393.39 C0,390.96 0,387.77 0,381.39 L0,213.00 C0,206.63 0,203.44 1.24,201.01 C2.33,198.87 4.07,197.13 6.21,196.04 C8.65,194.80 11.83,194.80 18.21,194.80 Z" fill="#FFFFFF"/>
         </svg>
       );
     default:
@@ -1004,7 +969,7 @@ const T = {
     wallet_redirect: "You'll be redirected to {w} with the address and amount pre-filled — just kindly approve.",
     tg_copy_note: "Telegram Wallet has no transfer link. Tap below to copy the address, then send {amt} GRAM from @wallet.",
     copy_address: "Copy Address", address_copied: "Address copied — send from @wallet",
-    listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", save_gift: "Save Gift", remove_saved: "Remove Saved", share_gift: "Share gift",
+    listed_value: "Listed Value", buy_now: "Buy / View", buy: "Buy", sold: "Sold", save_gift: "Save Gift", remove_saved: "Remove Saved", share_gift: "Share gift",
     floor: "Floor", view_on: "View on Telegram", saved_done: "Saved to your collection", link_copied: "Referral link copied",
   },
   RU: {
@@ -1076,7 +1041,7 @@ const T = {
     wallet_redirect: "Вы будете перенаправлены в {w} с заполненным адресом и суммой — пожалуйста, подтвердите.",
     tg_copy_note: "У Telegram Wallet нет ссылки для перевода. Скопируйте адрес и отправьте {amt} GRAM из @wallet.",
     copy_address: "Копировать адрес", address_copied: "Адрес скопирован — отправьте из @wallet",
-    listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", save_gift: "Сохранить", remove_saved: "Убрать", share_gift: "Поделиться",
+    listed_value: "Цена листинга", buy_now: "Купить / Открыть", buy: "Купить", sold: "Продано", save_gift: "Сохранить", remove_saved: "Убрать", share_gift: "Поделиться",
     floor: "Флор", view_on: "Открыть в Telegram", saved_done: "Добавлено в коллекцию", link_copied: "Ссылка скопирована",
   },
   ZH: {
@@ -1148,7 +1113,7 @@ const T = {
     wallet_redirect: "您将被跳转到 {w}，地址和金额已预填——请确认即可。",
     tg_copy_note: "Telegram 钱包没有转账链接。点击下方复制地址，然后从 @wallet 发送 {amt} GRAM。",
     copy_address: "复制地址", address_copied: "地址已复制——请从 @wallet 发送",
-    listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", save_gift: "收藏", remove_saved: "取消收藏", share_gift: "分享",
+    listed_value: "挂单价", buy_now: "购买 / 查看", buy: "购买", sold: "已售出", save_gift: "收藏", remove_saved: "取消收藏", share_gift: "分享",
     floor: "地板价", view_on: "在 Telegram 中打开", saved_done: "已加入收藏", link_copied: "推荐链接已复制",
   },
 };
@@ -1439,6 +1404,8 @@ const styles = `
   .result-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .result-gift-img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg-input); }
   .badge-buy { background: var(--tg-blue); color: #fff; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer; letter-spacing: 0.5px; white-space: nowrap; }
+  .badge-sold { background: #ff3b30; color: #fff; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer; letter-spacing: 0.5px; white-space: nowrap; }
+  .result-foot .badge-sold { font-size: 12px; padding: 7px 14px; border-radius: 9px; box-shadow: 0 6px 16px rgba(255,59,48,0.35); }
 
   .skeleton { position: relative; overflow: hidden; background: var(--bg-input); }
   .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent); animation: shimmer 1.3s infinite; }
@@ -1477,7 +1444,8 @@ const styles = `
   .sheet-title-row .sheet-title { margin-bottom: 0; text-align: center; }
   .sheet-info-btn { background: none; border: none; padding: 2px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; flex-shrink: 0; }
   .sheet-info-btn:active { opacity: 1; color: var(--tg-blue); }
-  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+  .meta-icon-stack { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
   .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
   .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .result-price { font-size: 17px; font-weight: 800; color: var(--tg-blue); }
@@ -1661,8 +1629,8 @@ const styles = `
   /* ── extra polish / micro-interactions ── */
   .result-card { animation: cardIn .5s var(--ease) both; }
   @keyframes cardIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .badge-buy { transition: transform .16s var(--spring), box-shadow .2s; }
-  .badge-buy:active { transform: scale(0.9); }
+  .badge-buy, .badge-sold { transition: transform .16s var(--spring), box-shadow .2s; }
+  .badge-buy:active, .badge-sold:active { transform: scale(0.9); }
   .ios-row { transition: background .18s; }
   .sheet-list-item, .sheet-model-item { transition: background .18s; }
   .tab-btn:active svg { transform: scale(0.88); }
@@ -2246,6 +2214,7 @@ export default function App() {
   const [savedGifts, setSavedGifts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
   });
+  const [soldMap, setSoldMap] = useState({});   // { [savedItem.id]: true } — populated by /api/check_listings
   const [recentSearches, setRecentSearches] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_recent") || "[]"); } catch { return []; }
   });
@@ -2494,6 +2463,35 @@ export default function App() {
   useEffect(() => { localStorage.setItem("gt_saved", JSON.stringify(savedGifts)); }, [savedGifts]);
   useEffect(() => { localStorage.setItem(refKey, String(referralCount)); }, [referralCount, refKey]);
   useEffect(() => { localStorage.setItem("gt_recent", JSON.stringify(recentSearches)); }, [recentSearches]);
+
+  // Re-check saved gifts' listing status whenever the Saved tab is opened, so a
+  // gift that's been bought/de-listed since saving shows SOLD instead of Buy.
+  const soldCheckedKey = useRef("");
+  useEffect(() => {
+    if (activeTab !== "saved" || savedGifts.length === 0) return;
+    const checkable = savedGifts.filter((g) => g.num != null && g.market);
+    if (checkable.length === 0) return;
+    const key = checkable.map((g) => g.id).join(",");
+    if (soldCheckedKey.current === key) return;   // already checked this exact set
+    soldCheckedKey.current = key;
+    api("/api/check_listings", {
+      method: "POST",
+      body: { items: checkable.map((g) => ({
+        id: g.id, gift_id: g.gift_id || "", slug: g.slug || "",
+        num: g.num, marketplace: g.market, name: g.name || "",
+      })) },
+      timeout: 15000,
+    }).then((r) => {
+      const soldIds = Array.isArray(r?.sold) ? r.sold : [];
+      if (soldIds.length) {
+        setSoldMap((prev) => {
+          const next = { ...prev };
+          soldIds.forEach((id) => { next[id] = true; });
+          return next;
+        });
+      }
+    }).catch(() => {});
+  }, [activeTab, savedGifts]);
 
   // ── cross-device sync: pull saved + searches from the server on launch ──
   useEffect(() => {
@@ -2949,6 +2947,21 @@ export default function App() {
     setIsScouting(false);
   };
 
+  const applyPriceFilter = async () => {
+    if (!hasSearched) return;
+    haptic();
+    setIsScouting(true);
+    setResults([]);
+    setNextOffset("");
+    try {
+      const p = buildSearchParams(sortBy, "");   // uses current minPrice/maxPrice state
+      const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
+      setResults(Array.isArray(d?.results) ? d.results : []);
+      setNextOffset(d?.next_offset || "");
+    } catch { setScoutError("offline"); }
+    setIsScouting(false);
+  };
+
   const exitSearch = () => { setIsSearching(false); setIsScouting(false); setResults([]); setScoutError(null); setHasSearched(false); setNextOffset(""); };
 
   // ── saved ──
@@ -3166,11 +3179,15 @@ export default function App() {
     );
   };
 
-  const renderGiftCard = (item, i = 0, promoted = false) => {
+  const renderGiftCard = (item, i = 0, promoted = false, sold = false) => {
     const poster = item.image || giftImage(item.slug, item.num);
     const anim = giftAnimation(item.slug, item.num);
     const saved = isSavedGift(item);
     const dotHex = item.backdropHex;
+    // item.slug already carries "{collectionSlug}-{num}" (see backend cdn_full),
+    // so this produces the exact t.me/nft/{gift-name}-{gift-ID} format.
+    const giftLink = item.slug ? `https://t.me/nft/${item.slug}` : (item.url || "");
+    const handleSoldClick = (e) => { e?.stopPropagation?.(); haptic(); if (giftLink) safeOpen(giftLink); };
     return (
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
@@ -3182,8 +3199,10 @@ export default function App() {
         </div>
         <div className="result-name">{item.name}{item.num != null ? ` #${item.num}` : ""}</div>
         <div className="result-meta">
-          {dotHex && <span className="color-dot" style={{ width: 11, height: 11, background: dotHex }} />}
-          {mktIcon(item.market, 13)}
+          <div className="meta-icon-stack">
+            {mktIcon(item.market, 14)}
+            {dotHex && <span className="color-dot" style={{ width: 10, height: 10, background: dotHex }} />}
+          </div>
           <span>{item.market}{item.backdrop ? ` \u00b7 ${item.backdrop}` : ""}</span>
         </div>
         {item.model && (
@@ -3193,8 +3212,10 @@ export default function App() {
           </div>
         )}
         <div className="result-foot">
-          <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} exact={isDesktop} /> : <span className="result-view">{t.view_on}</span>}</div>
-          <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy}</div>
+          <div className="result-price">{sold ? null : (item.price != null ? <PriceTag item={item} size={17} exact={isDesktop} /> : <span className="result-view">{t.view_on}</span>)}</div>
+          {sold
+            ? <div className="badge-sold" onClick={handleSoldClick}>{t.sold}</div>
+            : <div className="badge-buy" onClick={(e) => handleBuy(e, item)}>{t.buy}</div>}
         </div>
       </div>
     );
@@ -3245,7 +3266,7 @@ export default function App() {
           </div>
         </div>
         <div className="result-name">{item.name}{num != null ? ` #${num}` : ""}</div>
-        <div className="result-meta">{mktIcon(item.market, 13)}<span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
+        <div className="result-meta"><div className="meta-icon-stack">{mktIcon(item.market, 14)}</div><span>{item.market}{item.backdrop ? ` • ${item.backdrop}` : ""}</span></div>
         {item.model && (
           <div className="result-model"><span className="model-rarity">{item.model}</span></div>
         )}
@@ -3862,7 +3883,7 @@ export default function App() {
             <input className="range-input" inputMode="numeric" placeholder={t.min_label} value={minPrice} onChange={(e) => setMinPrice(e.target.value.replace(/[^\d.]/g, ""))} />
             <span className="range-dash">–</span>
             <input className="range-input" inputMode="numeric" placeholder={t.max_label} value={maxPrice} onChange={(e) => setMaxPrice(e.target.value.replace(/[^\d.]/g, ""))} />
-            <button className="range-go" onClick={handleScout}>{t.apply_filter}</button>
+            <button className="range-go" onClick={applyPriceFilter}>{t.apply_filter}</button>
           </div>
         </div>
 
@@ -3888,7 +3909,7 @@ export default function App() {
         <div className="ios-group" style={{ padding: 20, textAlign: "center", color: "var(--text-secondary)" }}>{t.no_saved}</div>
       ) : (
         <div className={desktop ? "results-grid desktop" : "results-grid"}>
-          {savedGifts.map((item) => renderGiftCard(item))}
+          {savedGifts.map((item) => renderGiftCard(item, 0, false, !!soldMap[item.id]))}
         </div>
       )}
     </div>
