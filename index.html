@@ -9,13 +9,26 @@
     <link rel="preconnect" href="https://nft.fragment.com" crossorigin />
     <link rel="preconnect" href="https://i.ibb.co" crossorigin />
     <link rel="preconnect" href="https://gift-trove-backend.onrender.com" crossorigin />
+    <!-- Critical layout CSS, inline so it applies on the very first paint —
+         before Tailwind's CDN script and React's own injected <style> tag
+         have loaded. Without this, the page briefly renders at its natural
+         (tiny, top-left) size until JS finishes mounting, which looks like
+         the app "jumping" into place. Also matches the app's actual default
+         background (light mode, #f2f2f7) so there's no dark-then-light flash
+         for users who haven't switched to dark mode. -->
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { min-height: 100vh; background: #f2f2f7; overflow: hidden; }
+      #root { min-height: 100vh; }
+    </style>
     <!-- This loads the Tailwind engine instantly via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- This requires the standard Telegram SDK script for Mini Apps -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
-  <body class="bg-[#0f172a] text-white selection:bg-emerald-500/30 antialiased overflow-x-hidden">
+  <body class="text-white selection:bg-emerald-500/30 antialiased overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+
