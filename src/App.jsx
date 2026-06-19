@@ -1473,9 +1473,9 @@ const styles = `
   .result-save { position: absolute; top: 4px; right: 4px; cursor: pointer; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); transition: transform .2s var(--bounce); }
   .result-save:active { transform: scale(0.82); }
   .result-name { font-size: 15px; font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 6px; }
-  .sheet-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .sheet-title-row .sheet-title { margin-bottom: 0; }
-  .sheet-info-btn { background: none; border: none; padding: 4px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; }
+  .sheet-title-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px; }
+  .sheet-title-row .sheet-title { margin-bottom: 0; text-align: center; }
+  .sheet-info-btn { background: none; border: none; padding: 2px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; flex-shrink: 0; }
   .sheet-info-btn:active { opacity: 1; color: var(--tg-blue); }
   .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
   .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
@@ -1800,7 +1800,7 @@ const styles = `
   .aff-topbar-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
   .aff-sub { font-size: 14px; color: var(--text-secondary); margin: 0 2px 16px; line-height: 1.45; }
   .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); position: relative; z-index: 1; }
-  .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 2px 10px; }
+  .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 18px 2px 14px; }
   .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
   .aff-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
   .aff-bar { flex: 1; background: linear-gradient(180deg, #30d158, #0a84ff); border-radius: 3px 3px 0 0; min-height: 2px; transform-origin: bottom; animation: affBarGrow 0.5s var(--spring) both; }
@@ -2264,6 +2264,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [toast, setToast] = useState(null);
   const [soonNote, setSoonNote] = useState(false);
+  const [marketSoonNote, setMarketSoonNote] = useState(false);
   const [detailNote, setDetailNote] = useState(null); // "premium"|"promote"|"affiliate"
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
@@ -3300,8 +3301,6 @@ export default function App() {
             </div>
             <IconChevronRight />
           </div>
-
-          <p className="premium-fineprint">{t.premium_fineprint}</p>
           </div>
         </BottomSheet>
       );
@@ -3387,7 +3386,6 @@ export default function App() {
           </button>
           {!promoNum.trim() && promoColl && <p className="promo-hint" style={{ color: "#ff9f0a", textAlign: "center" }}>{t.promo_num_required}</p>}
           {promoMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{promoMsg}</p>}
-          <p className="premium-fineprint">{t.promote_fineprint}</p>
           </div>
         </BottomSheet>
       );
@@ -3474,7 +3472,6 @@ export default function App() {
                 )}
               </>
             )}
-            <p className="premium-fineprint">{t.aff_fineprint.replace("{n}", String(minW))}</p>
           </div>
         </BottomSheet>
       );
@@ -3768,7 +3765,7 @@ export default function App() {
                   className={`chip ${selectedMarkets.includes(m) ? "active" : ""} ${live ? "" : "chip-soon"}`}
                   onClick={live ? () => handleMarketToggle(m) : undefined}>
                   {m}
-                  {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setSoonNote(true); }}><IconInfo /></span>}
+                  {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setMarketSoonNote(true); }}><IconInfo /></span>}
                 </div>
               );
             })}
@@ -3989,11 +3986,7 @@ export default function App() {
         <div className="footer-copy">{"\u00a9"} 2026 GiftTrove {"\u2022"} All Rights Reserved</div>
         <div className="footer-powered" onClick={() => safeOpen("https://gram.org")} style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
           {t.footer_powered}
-          <svg width="15" height="15" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
-            <rect width="100" height="100" rx="22" fill="#0098EA"/>
-            <path d="M18 44 L50 16 L82 44 L50 86 Z" fill="white"/>
-            <path d="M50 35 L53.5 45.5 L64 49 L53.5 52.5 L50 63 L46.5 52.5 L36 49 L46.5 45.5 Z" fill="#0098EA"/>
-          </svg>
+          <GramMark size={14} />
         </div>
       </div>
     </div>
@@ -4106,6 +4099,15 @@ export default function App() {
             </div>
           </div>
         )}
+        {marketSoonNote && (
+          <div className="note-overlay" onClick={() => setMarketSoonNote(false)}>
+            <div className="note-pop" onClick={(e) => e.stopPropagation()}>
+              <div className="note-pop-title">Coming soon</div>
+              <div className="note-pop-body">This marketplace is still being worked on. We can\u2019t guarantee it will be successfully integrated.</div>
+              <button className="note-pop-btn" onClick={() => setMarketSoonNote(false)}>{t.got_it}</button>
+            </div>
+          </div>
+        )}
         {renderDetailNote()}
         {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
@@ -4148,6 +4150,15 @@ export default function App() {
               <div className="note-pop-title">Agent API</div>
               <div className="note-pop-body">APIs built specifically for your agents are coming soon. Stay tuned in our channels for updates.</div>
               <button className="note-pop-btn" onClick={() => setSoonNote(false)}>{t.got_it}</button>
+            </div>
+          </div>
+        )}
+        {marketSoonNote && (
+          <div className="note-overlay" onClick={() => setMarketSoonNote(false)}>
+            <div className="note-pop" onClick={(e) => e.stopPropagation()}>
+              <div className="note-pop-title">Coming soon</div>
+              <div className="note-pop-body">This marketplace is still being worked on. We can\u2019t guarantee it will be successfully integrated.</div>
+              <button className="note-pop-btn" onClick={() => setMarketSoonNote(false)}>{t.got_it}</button>
             </div>
           </div>
         )}
