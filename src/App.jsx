@@ -497,69 +497,29 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
   );
 }
 
-// ─── LAUNCH SPLASH (iOS glassmorphism + motion; real animated gifts) ──────────
-function LaunchLoader({ onDone }) {
-  const [leaving, setLeaving] = useState(false);
-  // Instant brand moment: hydrate from the last session's featured gifts so
-  // returning users see animated gifts immediately, then revalidate.
-  const [gifts, setGifts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("gt_featured") || "[]").slice(0, 3); } catch { return []; }
-  });
-
-  useEffect(() => {
-    let alive = true;
-    api("/api/featured").then((d) => {
-      if (alive && d?.gifts?.length) {
-        setGifts(d.gifts.slice(0, 3));
-        try { localStorage.setItem("gt_featured", JSON.stringify(d.gifts.slice(0, 6))); } catch { /* noop */ }
-      }
-    }).catch(() => {});
-    const t1 = setTimeout(() => setLeaving(true), 1650); // short, predictable splash
-    const t2 = setTimeout(() => onDone?.(), 2050);
-    return () => { alive = false; clearTimeout(t1); clearTimeout(t2); };
-  }, [onDone]);
-
-  // distinct gifts so the three slots never repeat the same gift
-  const uniq = [];
-  const seen = new Set();
-  for (const g of gifts) {
-    const key = (g && (g.name || g.slug)) || "";
-    if (key && !seen.has(key)) { seen.add(key); uniq.push(g); }
-  }
-  const hero = uniq[0] || null;
-  const left = uniq[1] || uniq[0] || null;
-  const right = uniq[2] || uniq[1] || uniq[0] || null;
-
-  return (
-    <div className={`splash ${leaving ? "splash-leaving" : ""}`}>
-      <div className="splash-glow" />
-      <div className="splash-card">
-        {SPLASH_LOTTIE_URL ? (
-          <LottieGift src={SPLASH_LOTTIE_URL} size={150} radius={28} eager />
-        ) : (
-          <div className="splash-gifts">
-            <div className="splash-gift sg-left">
-              {left ? <LottieGift src={left.animation} poster={left.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
-            </div>
-            <div className="splash-gift sg-hero">
-              {hero ? <LottieGift src={hero.animation} poster={hero.image} size={116} radius={24} eager /> : <div className="splash-gift-ph big skeleton" />}
-            </div>
-            <div className="splash-gift sg-right">
-              {right ? <LottieGift src={right.animation} poster={right.image} size={74} radius={18} eager /> : <div className="splash-gift-ph skeleton" />}
-            </div>
-          </div>
-        )}
-        <div className="splash-brand">
-          GIFT<span className="splash-logo"><GiftTroveLogo size={26} /></span>TROVE
-        </div>
-        <div className="splash-tagline">unearthing the rarest gifts</div>
-        <div className="splash-bar"><span /></div>
-      </div>
-    </div>
-  );
-}
 
 // ─── LEGAL / FAQ CONTENT (English by design; legal text stays canonical) ─────
+// Per-marketplace "coming soon" detail text shown via the ⓘ on greyed-out
+// chips. Plain straight apostrophes only — no \u escapes — to avoid any risk
+// of a literal "\u2019" rendering in the UI.
+const MARKET_SOON_TEXT = {
+  GetGems: [
+    "This marketplace is still being worked on. We cannot guarantee it will be successfully integrated.",
+    "Using MarketApp would give you available listings from GetGems.",
+  ],
+  Portals: [
+    "This marketplace is still being worked on. We cannot guarantee it will be successfully integrated.",
+    "Using MarketApp would give you available listings from Portals.",
+  ],
+  Tonnel: [
+    "This marketplace is still being worked on. We cannot guarantee it will be successfully integrated.",
+    "Using MarketApp would give you available listings from Tonnel.",
+  ],
+  MRKT: [
+    "This marketplace is still being worked on. We cannot guarantee it will be successfully integrated.",
+  ],
+};
+
 const LEGAL = {
   faq: [
     ["What is GiftTrove?", "GiftTrove is a Telegram Mini App for scouting, comparing, and tracking collectible Telegram gifts across multiple marketplaces. We display listings — we never buy, sell, hold, or custody any gifts or funds."],
@@ -947,7 +907,7 @@ const T = {
     promo_failed: "Couldn\u2019t start the promotion. Try again.", promo_live: "Your promotion is live!",
     promo_reported: "Reported \u2014 thanks.", promo_report: "Report this promotion",
     view: "View", tier_pro_short: "Pro",
-    promo_tg_note: "Enter the gift\u2019s ID number. The bot will find its price, model, backdrop and symbol automatically.",
+    promo_tg_note: "Enter the gift ID. The bot finds its listing on Telegram automatically.",
     promo_num_required: "Gift number is required",
     promo_num_label: "Gift number", promo_num_ph: "e.g. 1234",
     promo_frag_link: "Fragment gift link", promo_bad_link: "That doesn\u2019t look like a fragment.com link.",
@@ -1019,7 +979,7 @@ const T = {
     promo_failed: "Не удалось запустить рекламу. Попробуйте снова.", promo_live: "Ваша реклама запущена!",
     promo_reported: "Жалоба отправлена — спасибо.", promo_report: "Пожаловаться на рекламу",
     view: "Открыть", tier_pro_short: "Pro",
-    promo_tg_note: "Введите номер подарка. Бот автоматически найдёт его цену, модель, фон и символ.",
+    promo_tg_note: "Введите номер подарка. Бот автоматически найдёт его на Telegram.",
     promo_num_required: "Номер подарка обязателен",
     promo_num_label: "Номер подарка", promo_num_ph: "напр. 1234",
     promo_frag_link: "Ссылка на подарок Fragment", promo_bad_link: "Это не похоже на ссылку fragment.com.",
@@ -1091,7 +1051,7 @@ const T = {
     promo_failed: "无法启动推广，请重试。", promo_live: "您的推广已上线！",
     promo_reported: "已举报 — 谢谢。", promo_report: "举报此推广",
     view: "查看", tier_pro_short: "Pro",
-    promo_tg_note: "输入礼物 ID 编号，机器人将自动获取其价格、模型、背景和符号。",
+    promo_tg_note: "输入礼物 ID，机器人将在 Telegram 上自动查找。",
     promo_num_required: "礼物编号为必填项",
     promo_num_label: "礼物编号", promo_num_ph: "例如 1234",
     promo_frag_link: "Fragment 礼物链接", promo_bad_link: "这看起来不是 fragment.com 链接。",
@@ -1144,10 +1104,11 @@ const styles = `
 
   :root {
     --bg-base: #f2f2f7;
-    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(51,65,85,0.78) 0%, rgba(51,65,85,0.5) 30%, rgba(51,65,85,0.24) 55%, rgba(51,65,85,0.08) 75%, #f2f2f7 95%);
+    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(51,65,85,0.92) 0%, rgba(51,65,85,0.68) 30%, rgba(51,65,85,0.40) 55%, rgba(51,65,85,0.18) 75%, #f2f2f7 95%);
     --bg-sheet: rgba(255, 255, 255, 0.75);
     --bg-card: rgba(255, 255, 255, 0.6);
     --bg-input: rgba(118, 118, 128, 0.12);
+    --bg-input-strong: rgba(255, 255, 255, 0.55);
     --bg-hover: rgba(0, 0, 0, 0.05);
     --text-primary: #000000;
     --text-secondary: rgba(60, 60, 67, 0.6);
@@ -1166,10 +1127,11 @@ const styles = `
 
   [data-theme="dark"] {
     --bg-base: #000000;
-    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(10,132,255,0.38) 0%, rgba(10,132,255,0.22) 30%, rgba(10,132,255,0.10) 55%, rgba(10,132,255,0.03) 75%, #000000 95%);
+    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(10,132,255,0.48) 0%, rgba(10,132,255,0.32) 30%, rgba(10,132,255,0.18) 55%, rgba(10,132,255,0.07) 75%, #000000 95%);
     --bg-sheet: rgba(28, 28, 30, 0.75);
     --bg-card: rgba(28, 28, 30, 0.5);
     --bg-input: rgba(44, 44, 46, 0.6);
+    --bg-input-strong: rgba(44, 44, 46, 0.85);
     --bg-hover: rgba(58, 58, 60, 0.8);
     --text-primary: #ffffff;
     --text-secondary: rgba(235, 235, 245, 0.6);
@@ -1335,8 +1297,8 @@ const styles = `
   .promo-banner::after { content: ""; position: absolute; inset: 0; border-radius: 20px; z-index: 5; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%, rgba(0,0,0,0.08) 100%); border: 1px solid rgba(255,255,255,0.2); }
 
   /* ─── HERO TITLE (bolder; image at end, text-height) ─── */
-  .hero-title { font-size: 27px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.18; margin-bottom: 24px; color: #ffffff; }
-  .hero-title.desktop { font-size: 38px; letter-spacing: -1px; }
+  .hero-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
+  .hero-title.desktop { font-size: 40px; letter-spacing: -1px; }
   .hero-title-img { display: inline-block; height: 1.18em; width: auto; vertical-align: -0.24em; margin-left: 10px; border-radius: 9px; }
 
   .section-label { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
@@ -1472,17 +1434,17 @@ const styles = `
 
   /* ── Results header + filter bar ─────────────────────────────────────── */
   .results-head { display: flex; align-items: baseline; justify-content: space-between; margin: 2px 2px 12px; }
-  .results-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); }
+  .results-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; color: #ffffff; }
   .results-count { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
   .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .sort-toggle { display: inline-flex; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; padding: 4px; gap: 4px; }
   .sort-pill { border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 13px; padding: 7px 14px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .25s var(--bounce); }
   .sort-pill.active { background: var(--tg-blue); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.35); }
   .range-mini { display: inline-flex; align-items: center; gap: 6px; }
-  .range-input { width: 64px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font-size: 13px; font-family: var(--font); outline: none; }
+  .range-input { width: 64px; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-input-strong); color: var(--text-primary); font-size: 13px; font-family: var(--font); outline: none; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .range-input:focus { border-color: var(--tg-blue); }
   .range-dash { color: var(--text-secondary); }
-  .range-go { border: none; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 12px; cursor: pointer; font-family: var(--font); }
+  .range-go { border: none; background: var(--bg-input-strong); border: 1px solid var(--border); color: var(--text-primary); font-weight: 700; font-size: 13px; padding: 9px 14px; border-radius: 12px; cursor: pointer; font-family: var(--font); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
   .range-go:active { transform: scale(0.95); }
   .load-more-btn { width: 100%; margin-top: 18px; padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font); display: flex; align-items: center; justify-content: center; transition: all .2s var(--bounce); }
   .load-more-btn:hover { border-color: var(--tg-blue); }
@@ -1617,7 +1579,8 @@ const styles = `
   /* results header / filter polish */
   .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .results-grid.desktop { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .results-title { letter-spacing: -0.6px; }
+  .results-title { letter-spacing: -1px; }
+  .results-title.desktop { font-size: 40px; }
   .sort-pill { display: inline-flex; align-items: center; gap: 5px; }
   .sort-pill.active { background: var(--accent-grad); box-shadow: 0 4px 12px rgba(10,132,255,0.3); }
   .load-more-btn { border-radius: var(--radius-md); transition: transform .18s var(--spring), border-color .2s, background .2s; }
@@ -1851,6 +1814,7 @@ const styles = `
   .admin-showall:hover { border-color: var(--accent); background: var(--bg-hover); }
   /* legal sheets */
   .legal-body { max-height: 58vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; overscroll-behavior: contain; touch-action: pan-y; }
+  .attr-scroll { max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; overscroll-behavior: contain; touch-action: pan-y; }
   .legal-item { margin-bottom: 16px; }
   .legal-q { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
   .legal-a { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); }
@@ -2228,7 +2192,7 @@ export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const t = T[lang] || T.EN;
 
-  const [booting, setBooting] = useState(true);
+  const [booting, setBooting] = useState(false);   // launch splash removed — app renders immediately
 
   const [savedGifts, setSavedGifts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("gt_saved") || "[]"); } catch { return []; }
@@ -2252,7 +2216,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [toast, setToast] = useState(null);
   const [soonNote, setSoonNote] = useState(false);
-  const [marketSoonNote, setMarketSoonNote] = useState(false);
+  const [marketSoonNote, setMarketSoonNote] = useState("");   // "" | "GetGems" | "Portals" | "MRKT" | "Tonnel"
   const [detailNote, setDetailNote] = useState(null); // "premium"|"promote"|"affiliate"
   const [isSearching, setIsSearching] = useState(false);
   const [isScouting, setIsScouting] = useState(false);
@@ -3704,30 +3668,32 @@ export default function App() {
             {attrCap > 1
               ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
               : <div className="filter-cap-note upsell" onClick={() => setActiveSheet("premium")}>{t.filter_upsell}<IconChevronRight /></div>}
-            {list.length === 0 && (
-              <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
-                {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${isModel ? t.model.toLowerCase() : t.symbol.toLowerCase()}`}
-              </p>
-            )}
-            <div className="ios-group" style={{ margin: 0 }}>
-              <div className="sheet-model-item" onClick={() => clearAttr(typ)}>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>{t.any}</span>
-                {arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
-              </div>
-              {list.map((m) => (
-                <div key={m.name} className="sheet-model-item" onClick={() => toggleAttr(typ, m.name)}>
-                  <div className="model-left">
-                    {m.img
-                      ? <img src={m.img} alt="" className={isModel ? "opt-thumb" : "opt-thumb sym"} onError={(e) => { e.target.style.display = "none"; }} />
-                      : <span className="gift-tile"><IconGiftBox /></span>}
-                    <div className="model-info">
-                      <span className="model-name">{m.name}</span>
-                      {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}>{fmtRarity(m.rarity)} {t.rarity}</span>}
-                    </div>
-                  </div>
-                  {arr.includes(m.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+            <div className="attr-scroll" onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+              {list.length === 0 && (
+                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
+                  {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${isModel ? t.model.toLowerCase() : t.symbol.toLowerCase()}`}
+                </p>
+              )}
+              <div className="ios-group" style={{ margin: 0 }}>
+                <div className="sheet-model-item" onClick={() => clearAttr(typ)}>
+                  <span style={{ fontSize: 15, fontWeight: 600 }}>{t.any}</span>
+                  {arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
-              ))}
+                {list.map((m) => (
+                  <div key={m.name} className="sheet-model-item" onClick={() => toggleAttr(typ, m.name)}>
+                    <div className="model-left">
+                      {m.img
+                        ? <img src={m.img} alt="" className={isModel ? "opt-thumb" : "opt-thumb sym"} onError={(e) => { e.target.style.display = "none"; }} />
+                        : <span className="gift-tile"><IconGiftBox /></span>}
+                      <div className="model-info">
+                        <span className="model-name">{m.name}</span>
+                        {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}>{fmtRarity(m.rarity)} {t.rarity}</span>}
+                      </div>
+                    </div>
+                    {arr.includes(m.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                  </div>
+                ))}
+              </div>
             </div>
             <button className="action-btn" style={{ marginTop: 16 }} onClick={() => setActiveSheet(null)}>{t.done}</button>
         </BottomSheet>
@@ -3754,24 +3720,26 @@ export default function App() {
             {attrCap > 1
               ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
               : <div className="filter-cap-note upsell" onClick={() => setActiveSheet("premium")}>{t.filter_upsell}<IconChevronRight /></div>}
-            {list.length === 0 && (
-              <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
-                {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${t.backdrop.toLowerCase()}`}
-              </p>
-            )}
-            <div className="ios-group" style={{ margin: 0 }}>
-              <div className="sheet-list-item" onClick={() => clearAttr("backdrop")}>
-                <span>{t.any}</span>{arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
-              </div>
-              {list.map((c) => (
-                <div key={c.name} className="sheet-list-item" onClick={() => toggleAttr("backdrop", c.name)}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {c.hex && <span className="backdrop-swatch" style={{ background: c.edge ? `radial-gradient(circle at 50% 35%, ${c.hex}, ${c.edge})` : c.hex }} />}{c.name}
-                    {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}>{fmtRarity(c.rarity)}</span>}
-                  </span>
-                  {arr.includes(c.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+            <div className="attr-scroll" onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+              {list.length === 0 && (
+                <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
+                  {selectedCollection ? t.attrs_loading : `${t.select_gift_first} ${t.backdrop.toLowerCase()}`}
+                </p>
+              )}
+              <div className="ios-group" style={{ margin: 0 }}>
+                <div className="sheet-list-item" onClick={() => clearAttr("backdrop")}>
+                  <span>{t.any}</span>{arr.length === 0 && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                 </div>
-              ))}
+                {list.map((c) => (
+                  <div key={c.name} className="sheet-list-item" onClick={() => toggleAttr("backdrop", c.name)}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {c.hex && <span className="backdrop-swatch" style={{ background: c.edge ? `radial-gradient(circle at 50% 35%, ${c.hex}, ${c.edge})` : c.hex }} />}{c.name}
+                      {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}>{fmtRarity(c.rarity)}</span>}
+                    </span>
+                    {arr.includes(c.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
+                  </div>
+                ))}
+              </div>
             </div>
             <button className="action-btn" style={{ marginTop: 16 }} onClick={() => setActiveSheet(null)}>{t.done}</button>
         </BottomSheet>
@@ -3837,7 +3805,7 @@ export default function App() {
                   className={`chip ${selectedMarkets.includes(m) ? "active" : ""} ${live ? "" : "chip-soon"}`}
                   onClick={live ? () => handleMarketToggle(m) : undefined}>
                   {m}
-                  {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setMarketSoonNote(true); }}><IconInfo /></span>}
+                  {!live && <span className="chip-info" onClick={(e) => { e.stopPropagation(); haptic(); setMarketSoonNote(m); }}><IconInfo /></span>}
                 </div>
               );
             })}
@@ -3919,7 +3887,7 @@ export default function App() {
     return (
       <div className="fade-in-up" style={{ marginTop: 4 }}>
         <div className="results-head">
-          <div className="results-title">{t.results}</div>
+          <div className={desktop ? "results-title desktop" : "results-title"}>{t.results}</div>
           <div className="results-count">{t.showing_n.replace("{n}", results.length)}</div>
         </div>
 
@@ -4083,17 +4051,6 @@ export default function App() {
     }
   };
 
-  // ── BOOT SPLASH ──
-  if (booting) {
-    return (
-      <>
-        <style>{styles}</style>
-        <GoldDefs />
-        <div data-theme={theme}><LaunchLoader onDone={() => setBooting(false)} /></div>
-      </>
-    );
-  }
-
   // ── ACCESS GATE (non-admins need the code; admins pass automatically) ──
   if (access !== "granted") {
     const voidGifts = collections.filter((c) => c.preview).slice(0, 12);
@@ -4181,11 +4138,15 @@ export default function App() {
           </div>
         )}
         {marketSoonNote && (
-          <div className="note-overlay" onClick={() => setMarketSoonNote(false)}>
+          <div className="note-overlay" onClick={() => setMarketSoonNote("")}>
             <div className="note-pop" onClick={(e) => e.stopPropagation()}>
-              <div className="note-pop-title">Coming soon</div>
-              <div className="note-pop-body">This marketplace is still being worked on. We can\u2019t guarantee it will be successfully integrated.</div>
-              <button className="note-pop-btn" onClick={() => setMarketSoonNote(false)}>{t.got_it}</button>
+              <div className="note-pop-title">{marketSoonNote}</div>
+              <div className="note-pop-body">
+                {(MARKET_SOON_TEXT[marketSoonNote] || []).map((p, i) => (
+                  <p key={i} style={{ marginTop: i === 0 ? "0" : "10px", marginBottom: 0 }}>{p}</p>
+                ))}
+              </div>
+              <button className="note-pop-btn" onClick={() => setMarketSoonNote("")}>{t.got_it}</button>
             </div>
           </div>
         )}
@@ -4235,11 +4196,15 @@ export default function App() {
           </div>
         )}
         {marketSoonNote && (
-          <div className="note-overlay" onClick={() => setMarketSoonNote(false)}>
+          <div className="note-overlay" onClick={() => setMarketSoonNote("")}>
             <div className="note-pop" onClick={(e) => e.stopPropagation()}>
-              <div className="note-pop-title">Coming soon</div>
-              <div className="note-pop-body">This marketplace is still being worked on. We can\u2019t guarantee it will be successfully integrated.</div>
-              <button className="note-pop-btn" onClick={() => setMarketSoonNote(false)}>{t.got_it}</button>
+              <div className="note-pop-title">{marketSoonNote}</div>
+              <div className="note-pop-body">
+                {(MARKET_SOON_TEXT[marketSoonNote] || []).map((p, i) => (
+                  <p key={i} style={{ marginTop: i === 0 ? "0" : "10px", marginBottom: 0 }}>{p}</p>
+                ))}
+              </div>
+              <button className="note-pop-btn" onClick={() => setMarketSoonNote("")}>{t.got_it}</button>
             </div>
           </div>
         )}
