@@ -390,6 +390,28 @@ const IconTrash = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 // ─── LOTTIE GIFT (loads lottie-web from CDN on demand; falls back to static jpg) ─
 let _lottiePromise = null;
 const _animCache = {};   // cache fetched animation JSON by src (avoids refetch)
+
+// Lottie instantiation (fetch JSON + parse + build SVG) is heavy and runs on
+// the main thread. During a fast scroll fling, many cards become "visible" at
+// once; without a gate they'd all call loadAnimation simultaneously and jank
+// the scroll. This tiny FIFO gate lets only a few build concurrently — the
+// rest wait their turn (cards still show their poster image meanwhile, so
+// nothing looks blank).
+const _LOTTIE_MAX_CONCURRENT = 4;
+let _lottieActive = 0;
+const _lottieQueue = [];
+function _lottieGateAcquire() {
+  return new Promise((resolve) => {
+    if (_lottieActive < _LOTTIE_MAX_CONCURRENT) { _lottieActive++; resolve(); }
+    else _lottieQueue.push(resolve);
+  });
+}
+function _lottieGateRelease() {
+  _lottieActive = Math.max(0, _lottieActive - 1);
+  const next = _lottieQueue.shift();
+  if (next) { _lottieActive++; next(); }
+}
+
 // Warm the lottie-web library the moment the app boots, so the splash's
 // animations don't wait on the CDN round-trip.
 if (typeof window !== "undefined") {
@@ -445,7 +467,7 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
     if (!el || typeof IntersectionObserver === "undefined") { setVisible(true); return; }
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => setVisible(e.isIntersecting)),
-      { rootMargin: "800px" }
+      { rootMargin: "300px" }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -457,10 +479,13 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
       return;
     }
     let cancelled = false;
+    let gated = false;
     setFailed(false); setReady(false);
     (async () => {
       try {
         const lottie = await loadLottie();
+        // Pre-fetch the JSON BEFORE taking a concurrency slot — network waits
+        // shouldn't hold the gate. Cached hits resolve instantly.
         let data = _animCache[src];
         if (!data) {
           const res = await fetch(src);
@@ -469,27 +494,45 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
           if (Object.keys(_animCache).length < 80) _animCache[src] = data;
         }
         if (cancelled || !wrapRef.current) return;
+        // Small settle delay: if the user is flinging past, this card unmounts
+        // (cancelled) before it ever claims a build slot, keeping the gate free
+        // for cards that actually come to rest on screen.
+        await new Promise((r) => setTimeout(r, 90));
+        if (cancelled || !wrapRef.current) return;
+        await _lottieGateAcquire();
+        gated = true;
+        if (cancelled || !wrapRef.current) { _lottieGateRelease(); gated = false; return; }
         const container = wrapRef.current.querySelector(".lg-anim");
-        if (!container) return;
+        if (!container) { _lottieGateRelease(); gated = false; return; }
         animRef.current = lottie.loadAnimation({
           container, renderer: "svg", loop: true, autoplay: true, animationData: data,
           rendererSettings: { progressiveLoad: true, hideOnTransparent: true },
         });
         try { animRef.current.setSubframe(false); } catch { /* noop */ }
         setReady(true);
+        _lottieGateRelease(); gated = false;
       } catch {
+        if (gated) { _lottieGateRelease(); gated = false; }
         if (!cancelled) setFailed(true);
       }
     })();
-    return () => { cancelled = true; if (animRef.current) { try { animRef.current.destroy(); } catch { /* noop */ } animRef.current = null; } };
+    return () => {
+      cancelled = true;
+      if (gated) { _lottieGateRelease(); gated = false; }
+      if (animRef.current) { try { animRef.current.destroy(); } catch { /* noop */ } animRef.current = null; }
+    };
   }, [src, visible]);
 
-  // Poster (static .jpg) paints INSTANTLY; the Lottie fades in over it when ready.
+  // Poster (static .jpg) paints fast and stays UNDERNEATH the Lottie as a
+  // permanent backing layer, so a card is never blank — even mid fast-scroll
+  // when the animation is still parsing/instantiating. The Lottie simply fades
+  // in on top once ready. eager loading + sync decode get the poster on screen
+  // as quickly as possible.
   return (
     <div ref={wrapRef} style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: "var(--bg-input)", position: "relative" }}>
       {poster && (
-        <img src={poster} alt="" loading="lazy" decoding="async"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: ready ? 0 : 1, transition: "opacity .3s" }}
+        <img src={poster} alt="" loading="eager" decoding="async"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           onError={(e) => { e.target.style.opacity = 0; }} />
       )}
       {!failed && <div className="lg-anim" style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transition: "opacity .3s" }} />}
@@ -1127,7 +1170,7 @@ const styles = `
 
   [data-theme="dark"] {
     --bg-base: #000000;
-    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(10,132,255,0.48) 0%, rgba(10,132,255,0.32) 30%, rgba(10,132,255,0.18) 55%, rgba(10,132,255,0.07) 75%, #000000 95%);
+    --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
     --bg-sheet: rgba(28, 28, 30, 0.75);
     --bg-card: rgba(28, 28, 30, 0.5);
     --bg-input: rgba(44, 44, 46, 0.6);
