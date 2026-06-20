@@ -410,6 +410,26 @@ function loadLottie() {
   return _lottiePromise;
 }
 
+// Sits a comfortable distance below the bottom of the currently-rendered
+// chunk. Its huge rootMargin means it fires while it's still far off-screen,
+// so the next chunk is already mounted by the time the user actually scrolls
+// there — content waits for the user, not the other way around.
+function RevealSentinel({ onReveal }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") { onReveal(); return; }
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) onReveal(); },
+      { rootMargin: "1600px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <div ref={ref} style={{ height: 1 }} aria-hidden="true" />;
+}
+
 function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
   const wrapRef = useRef(null);
   const animRef = useRef(null);
@@ -425,7 +445,7 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
     if (!el || typeof IntersectionObserver === "undefined") { setVisible(true); return; }
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => setVisible(e.isIntersecting)),
-      { rootMargin: "250px" }
+      { rootMargin: "800px" }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -1146,7 +1166,7 @@ const styles = `
 
   [data-theme="dark"] {
     --bg-base: #000000;
-    --bg-gradient: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
+    --bg-gradient: radial-gradient(130% 140% at 50% -15%, rgba(10,132,255,0.38) 0%, rgba(10,132,255,0.22) 30%, rgba(10,132,255,0.10) 55%, rgba(10,132,255,0.03) 75%, #000000 95%);
     --bg-sheet: rgba(28, 28, 30, 0.75);
     --bg-card: rgba(28, 28, 30, 0.5);
     --bg-input: rgba(44, 44, 46, 0.6);
@@ -2293,6 +2313,13 @@ export default function App() {
   const [sortBy, setSortBy] = useState(savedSearch.sortBy || "default");        // default (general) | price_asc | price_desc
   const [nextOffset, setNextOffset] = useState(savedSearch.nextOffset || "");
   const [loadingMore, setLoadingMore] = useState(false);
+  // Only this many result/saved cards are actually mounted in the DOM at once.
+  // Growing it is a pure state update against data already in memory — no
+  // network wait — so it can stay well ahead of scroll position instead of
+  // the user scrolling into empty space while content "catches up".
+  const RENDER_CHUNK = 24;
+  const [renderCount, setRenderCount] = useState(RENDER_CHUNK);
+  const [savedRenderCount, setSavedRenderCount] = useState(RENDER_CHUNK);
   const [hasSearched, setHasSearched] = useState(!!savedSearch.hasSearched);
   const [minPrice, setMinPrice] = useState(savedSearch.minPrice || "");
   const [maxPrice, setMaxPrice] = useState(savedSearch.maxPrice || "");
@@ -2859,6 +2886,7 @@ export default function App() {
     setResults([]);            // cancel/replace any previous search
     setPromos([]);             // promos re-fetched for the new collection
     setNextOffset("");
+    setRenderCount(RENDER_CHUNK);
     setIsScouting(true);
     setActiveTab("results");   // results pop up in the next tab
     const newSort = "default"; // a brand-new search always starts in General
@@ -2898,6 +2926,7 @@ export default function App() {
     setGiftId(""); setSelectedModels([]); setSelectedSymbols([]);
     setSelectedBackdrops([]); setSelectedMarkets(["All"]); setMinPrice(""); setMaxPrice("");
     setScoutError(null); setHasSearched(true); setResults([]); setNextOffset("");
+    setRenderCount(RENDER_CHUNK);
     setIsScouting(true); setActiveTab("results");
     recordSearch(col.name);
     const newSort = "default"; // a brand-new search always starts in General
@@ -2934,7 +2963,9 @@ export default function App() {
       const more = Array.isArray(d?.results) ? d.results : [];
       setResults((prev) => {
         const seen = new Set(prev.map((x) => x.id));
-        return [...prev, ...more.filter((x) => !seen.has(x.id))];
+        const merged = [...prev, ...more.filter((x) => !seen.has(x.id))];
+        setRenderCount((c) => Math.max(c, merged.length));   // new page is immediately visible
+        return merged;
       });
       setNextOffset(d?.next_offset || "");
     } catch { /* keep what we have */ }
@@ -2950,6 +2981,7 @@ export default function App() {
     setIsScouting(true);
     setResults([]);
     setNextOffset("");
+    setRenderCount(RENDER_CHUNK);
     try {
       const p = buildSearchParams(sort, "");
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
@@ -2965,6 +2997,7 @@ export default function App() {
     setIsScouting(true);
     setResults([]);
     setNextOffset("");
+    setRenderCount(RENDER_CHUNK);
     try {
       const p = buildSearchParams(sortBy, "");   // uses current minPrice/maxPrice state
       const d = await api(`/api/search?${p.toString()}`, { timeout: 20000 });
@@ -3907,13 +3940,17 @@ export default function App() {
 
         <div className={desktop ? "results-grid desktop" : "results-grid"}>
           {visiblePromos.map((p, i) => renderPromoCard(p, i))}
-          {results.map((item, i) => renderGiftCard(item, i))}
+          {results.slice(0, renderCount).map((item, i) => renderGiftCard(item, i))}
         </div>
 
-        {nextOffset && (
-          <button className="load-more-btn" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? <span className="lm-spin" /> : t.load_more}
-          </button>
+        {renderCount < results.length && (
+          <RevealSentinel onReveal={() => setRenderCount((c) => Math.min(results.length, c + RENDER_CHUNK))} />
+        )}
+
+        {nextOffset && renderCount >= results.length && (
+          loadingMore
+            ? <div className="load-more-btn" style={{ pointerEvents: "none" }}><span className="lm-spin" /></div>
+            : <RevealSentinel onReveal={loadMore} />
         )}
       </div>
     );
@@ -3926,9 +3963,14 @@ export default function App() {
       {savedGifts.length === 0 ? (
         <div className="ios-group" style={{ padding: 20, textAlign: "center", color: "var(--text-secondary)" }}>{t.no_saved}</div>
       ) : (
-        <div className={desktop ? "results-grid desktop" : "results-grid"}>
-          {savedGifts.map((item) => renderGiftCard(item, 0, false, !!soldMap[item.id]))}
-        </div>
+        <>
+          <div className={desktop ? "results-grid desktop" : "results-grid"}>
+            {savedGifts.slice(0, savedRenderCount).map((item) => renderGiftCard(item, 0, false, !!soldMap[item.id]))}
+          </div>
+          {savedRenderCount < savedGifts.length && (
+            <RevealSentinel onReveal={() => setSavedRenderCount((c) => Math.min(savedGifts.length, c + RENDER_CHUNK))} />
+          )}
+        </>
       )}
     </div>
   );
