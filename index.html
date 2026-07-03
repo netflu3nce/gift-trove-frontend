@@ -8,21 +8,22 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
     <link rel="preconnect" href="https://nft.fragment.com" crossorigin />
     <link rel="preconnect" href="https://i.ibb.co" crossorigin />
-    <link rel="preconnect" href="https://gift-trove-backend.onrender.com" crossorigin />
+    <link rel="preconnect" href="https://betatest-rjhx.onrender.com" crossorigin />
     <!-- Apply the user's last-chosen theme to <html> synchronously, before any
          paint happens, so the static background below (and anything else
          keyed off [data-theme]) matches their actual preference immediately
          instead of always assuming light mode. -->
     <script>
       try {
-        // Mirrors App.jsx's exact theme-resolution logic (including the one-time
-        // gt_theme_v2 migration that forces existing users back to light once)
-        // so this synchronous pre-paint check never disagrees with what React
-        // decides a moment later.
-        if (localStorage.getItem("gt_theme_v2") && localStorage.getItem("gt_theme") === "dark") {
-          document.documentElement.setAttribute("data-theme", "dark");
-        }
-      } catch (e) {}
+        // Mirrors App.jsx: dark is the default now (gt_theme_v3). Use light only
+        // if the user explicitly chose it; otherwise dark — applied synchronously
+        // before first paint so there's no flash of the wrong theme.
+        var t = localStorage.getItem("gt_theme");
+        if (!localStorage.getItem("gt_theme_v3")) t = "dark";
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
     </script>
     <!-- Critical layout + background CSS, inline so it applies on the very
          first paint — before Tailwind's CDN script and React's own injected
@@ -37,13 +38,13 @@
       html, body { height: 100%; margin: 0; }
       body {
         min-height: 100vh; overflow: hidden;
-        background-color: #f2f2f7;
-        background-image: radial-gradient(130% 140% at 50% -15%, rgba(51,65,85,0.92) 0%, rgba(51,65,85,0.68) 30%, rgba(51,65,85,0.40) 55%, rgba(51,65,85,0.18) 75%, #f2f2f7 95%);
-        background-attachment: fixed;
-      }
-      html[data-theme="dark"] body {
         background-color: #000000;
         background-image: radial-gradient(120% 120% at 50% -20%, rgba(10, 132, 255, 0.15) 0%, #000000 100%);
+        background-attachment: fixed;
+      }
+      html[data-theme="light"] body {
+        background-color: #f2f2f7;
+        background-image: radial-gradient(130% 140% at 50% -15%, rgba(51,65,85,0.92) 0%, rgba(51,65,85,0.68) 30%, rgba(51,65,85,0.40) 55%, rgba(51,65,85,0.18) 75%, #f2f2f7 95%);
       }
       #root { min-height: 100vh; }
     </style>
@@ -57,4 +58,3 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-
