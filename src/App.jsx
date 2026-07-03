@@ -1492,67 +1492,82 @@ const styles = `
     height: 100vh; overflow: hidden;
   }
 
-  /* ─── LAUNCH SPLASH ─── */
+  /* ─── LAUNCH SPLASH — Apple Liquid Glass ─── */
   .splash {
-    position: fixed; inset: 0; z-index: 9999;
+    position: fixed; inset: 0; z-index: 9999; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     background: #000;
-    background-image: radial-gradient(110% 70% at 50% 100%, rgba(10,132,255,0.32) 0%, rgba(10,60,180,0.12) 50%, #000 100%);
-    opacity: 1; transition: opacity 0.45s ease;
+    opacity: 1; transition: opacity 0.5s ease;
   }
-  [data-theme="light"] .splash {
-    background: #f2f2f7;
-    background-image: radial-gradient(130% 120% at 50% -10%, rgba(51,65,85,0.88) 0%, rgba(51,65,85,0.44) 45%, #f2f2f7 80%);
+  [data-theme="light"] .splash { background: #eef1f6; }
+  .splash-leaving { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+
+  /* aurora — soft drifting color fields for the glass panel to catch and refract */
+  .splash-aurora { position: absolute; inset: -10%; pointer-events: none; }
+  .splash-aurora span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; animation: auroraDrift 12s ease-in-out infinite; }
+  .splash-aurora .a1 { width: 46vh; height: 46vh; left: 6%; top: 8%; background: radial-gradient(circle, rgba(10,132,255,0.55), transparent 70%); animation-duration: 11s; }
+  .splash-aurora .a2 { width: 42vh; height: 42vh; right: 4%; top: 18%; background: radial-gradient(circle, rgba(191,90,242,0.42), transparent 70%); animation-duration: 14s; animation-delay: -3s; }
+  .splash-aurora .a3 { width: 50vh; height: 50vh; left: 22%; bottom: -8%; background: radial-gradient(circle, rgba(255,171,0,0.34), transparent 70%); animation-duration: 16s; animation-delay: -6s; }
+  [data-theme="light"] .splash-aurora span { opacity: 0.4; }
+  @keyframes auroraDrift {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    33% { transform: translate3d(4%, -6%, 0) scale(1.08); }
+    66% { transform: translate3d(-5%, 4%, 0) scale(0.96); }
   }
-  .splash-leaving { opacity: 0; pointer-events: none; transition: opacity 0.45s ease; }
-  .splash-glow {
-    position: absolute; width: 400px; height: 400px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(10,132,255,0.30) 0%, transparent 65%);
-    filter: blur(52px); animation: splashGlow 3.2s ease-in-out infinite;
-  }
-  @keyframes splashGlow { 0%,100% { transform: scale(0.88); opacity: 0.6; } 50% { transform: scale(1.14); opacity: 1; } }
-  .splash::after { content: ""; position: absolute; width: 320px; height: 320px; border-radius: 50%;
-    right: -80px; top: 10%; pointer-events: none;
-    background: radial-gradient(circle, rgba(255,171,0,0.18) 0%, transparent 68%);
-    filter: blur(44px); animation: splashGlow 4.2s ease-in-out 1.1s infinite; }
-  .splash-rings { position: absolute; width: 360px; height: 360px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .splash-rings span { position: absolute; width: 220px; height: 220px; border-radius: 50%; border: 1.5px solid rgba(10,132,255,0.55); opacity: 0; animation: splashRing 3.4s ease-out infinite; }
-  .splash-rings span:nth-child(2) { animation-delay: 1.12s; width: 290px; height: 290px; border-color: rgba(255,171,0,0.45); }
-  .splash-rings span:nth-child(3) { animation-delay: 2.24s; width: 360px; height: 360px; }
-  @keyframes splashRing { 0% { transform: scale(0.68); opacity: 0.65; } 100% { transform: scale(1.04); opacity: 0; } }
-  .splash-sparks { position: absolute; inset: 0; pointer-events: none; }
-  .splash-sparks i { position: absolute; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--tg-blue); opacity: 0; animation: sparkFloat 4.2s ease-in-out infinite; }
-  .splash-sparks i:nth-child(1) { left: 18%; top: 28%; animation-delay: 0.2s; }
-  .splash-sparks i:nth-child(2) { left: 78%; top: 24%; background: #FFAB00; width: 5px; height: 5px; animation-delay: 1.1s; }
-  .splash-sparks i:nth-child(3) { left: 14%; top: 70%; background: #FFAB00; animation-delay: 2s; }
-  .splash-sparks i:nth-child(4) { left: 84%; top: 66%; animation-delay: 2.8s; }
-  .splash-sparks i:nth-child(5) { left: 50%; top: 12%; width: 4px; height: 4px; animation-delay: 3.4s; }
-  @keyframes sparkFloat { 0%,100% { transform: translateY(6px) scale(0.6); opacity: 0; }
-    20% { opacity: 0.85; } 50% { transform: translateY(-12px) scale(1); opacity: 0.9; } 80% { opacity: 0; } }
+
   .splash-center { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
-  .splash-mascot-wrap { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
-  .splash-mascot-wrap::after { content: ""; position: absolute; bottom: -10px; width: 116px; height: 20px; border-radius: 50%;
-    background: radial-gradient(ellipse, rgba(0,0,0,0.30), transparent 70%); filter: blur(5px);
+
+  /* the glass stage: a floating liquid-glass tile that houses the mascot */
+  .glass-stage { position: relative; width: 208px; height: 208px; margin-bottom: 22px;
+    animation: panelIn .7s var(--spring) both; }
+  .glass-panel {
+    position: absolute; inset: 0; border-radius: 56px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(155deg, rgba(255,255,255,0.24), rgba(255,255,255,0.05) 55%, rgba(255,255,255,0.10));
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(28px) saturate(190%); -webkit-backdrop-filter: blur(28px) saturate(190%);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -18px 30px rgba(0,0,0,0.18);
+    animation: panelFloat 4.4s ease-in-out infinite;
+  }
+  [data-theme="light"] .glass-panel {
+    background: linear-gradient(155deg, rgba(255,255,255,0.72), rgba(255,255,255,0.32) 55%, rgba(255,255,255,0.5));
+    border-color: rgba(255,255,255,0.75);
+    box-shadow: 0 26px 54px rgba(51,65,85,0.28), inset 0 2px 0 rgba(255,255,255,0.7), inset 0 -16px 26px rgba(51,65,85,0.10);
+  }
+  @keyframes panelFloat { 0%,100% { transform: translateY(0) rotate(-0.6deg); } 50% { transform: translateY(-10px) rotate(0.6deg); } }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(26px) scale(0.86); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  /* specular sheen sweeping across the glass — the signature Liquid Glass "light catch" */
+  .glass-sheen { position: absolute; inset: -40% -60%; background: linear-gradient(75deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%); transform: translateX(-60%); animation: sheenSweep 3.6s ease-in-out infinite; mix-blend-mode: screen; pointer-events: none; }
+  [data-theme="light"] .glass-sheen { background: linear-gradient(75deg, transparent 38%, rgba(255,255,255,0.85) 50%, transparent 62%); }
+  @keyframes sheenSweep { 0%, 15% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
+
+  .glass-floor { position: absolute; left: 50%; bottom: 10px; width: 108px; height: 18px; border-radius: 50%; transform: translateX(-50%);
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 72%); filter: blur(4px);
     animation: splashShadow 2.6s ease-in-out infinite; }
-  @keyframes splashShadow { 0%,100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(0.78); opacity: 0.28; } }
-  .splash-orbit { position: absolute; inset: -26px; animation: orbitSpin 8s linear infinite; pointer-events: none; z-index: 2; }
-  .splash-orbit .orb { position: absolute; display: flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 12px;
-    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.20);
-    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-    animation: orbitCounter 8s linear infinite; }
-  .splash-orbit .orb-gram { top: 4px; right: -10px; }
-  .splash-orbit .orb-star { bottom: 18px; left: -12px; }
+  @keyframes splashShadow { 0%,100% { transform: translateX(-50%) scale(1); opacity: 0.55; } 50% { transform: translateX(-50%) scale(0.76); opacity: 0.26; } }
+
+  /* orbiting glass chips (GRAM + Star) — independent satellites around the panel */
+  .glass-orbit { position: absolute; inset: -22px; animation: orbitSpin 9s linear infinite; pointer-events: none; z-index: 2; }
+  .glass-orbit .orb { position: absolute; display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 13px;
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(14px) saturate(180%); -webkit-backdrop-filter: blur(14px) saturate(180%);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.4);
+    animation: orbitCounter 9s linear infinite; }
+  [data-theme="light"] .glass-orbit .orb { background: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.8); box-shadow: 0 8px 20px rgba(51,65,85,0.2), inset 0 1px 0 rgba(255,255,255,0.9); }
+  .glass-orbit .orb-gram { top: 0; right: -8px; }
+  .glass-orbit .orb-star { bottom: 12px; left: -14px; }
   @keyframes orbitSpin { to { transform: rotate(360deg); } }
   @keyframes orbitCounter { to { transform: rotate(-360deg); } }
-  .splash-mascot { width: 190px; height: 190px; object-fit: contain;
-    filter: drop-shadow(0 22px 40px rgba(0,0,0,0.32));
+
+  .splash-mascot { position: relative; z-index: 1; width: 148px; height: 148px; object-fit: contain;
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,0.35));
     animation: splashBob 2.6s ease-in-out infinite; }
-  @keyframes splashBob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-14px) rotate(1.5deg); } }
+  @keyframes splashBob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-11px) rotate(1.5deg); } }
+
   .splash-brand {
-    font-size: 32px; font-weight: 800; letter-spacing: -0.8px; color: #fff; margin-bottom: 6px;
+    font-size: 33px; font-weight: 800; letter-spacing: -0.8px; color: #fff; margin-bottom: 6px;
     animation: splashRise 0.55s var(--bounce) 0.12s both;
   }
   @supports (-webkit-background-clip: text) {
@@ -1566,19 +1581,25 @@ const styles = `
   @keyframes brandSweep { 0% { background-position: 130% 0; } 100% { background-position: -130% 0; } }
   @keyframes splashRise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
   .splash-tagline { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.62); letter-spacing: 0.3px;
-    margin-bottom: 18px; animation: splashRise 0.55s var(--bounce) 0.2s both; }
+    margin-bottom: 22px; animation: splashRise 0.55s var(--bounce) 0.2s both; }
   [data-theme="light"] .splash-tagline { color: var(--text-secondary); }
-  .splash-bar { position: relative; width: 140px; height: 4px; border-radius: 100px; background: rgba(255,255,255,0.15); overflow: hidden;
+
+  /* progress: a frosted glass pill track with a glowing gradient fill + roaming sheen */
+  .glass-progress { position: relative; width: 148px; height: 8px; border-radius: 100px; overflow: hidden;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
     animation: splashRise 0.55s var(--bounce) 0.28s both; }
-  [data-theme="light"] .splash-bar { background: rgba(0,0,0,0.12); }
-  .splash-bar span { display: block; height: 100%; width: 100%; border-radius: 100px;
-    background: linear-gradient(90deg, var(--tg-blue), #38b0ff 60%, #FFAB00);
-    transform: scaleX(0.06); transform-origin: left center;
+  [data-theme="light"] .glass-progress { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
+  .glass-progress span { display: block; height: 100%; width: 100%; border-radius: 100px;
+    background: linear-gradient(90deg, var(--tg-blue), #38b0ff 55%, #FFAB00);
+    box-shadow: 0 0 12px rgba(10,132,255,0.65);
+    transform: scaleX(0.05); transform-origin: left center;
     animation: splashFill var(--splash-ms, 3000ms) cubic-bezier(0.22, 0.68, 0.3, 1) forwards; }
   @keyframes splashFill { to { transform: scaleX(1); } }
-  .splash-bar::after { content: ""; position: absolute; inset: 0; border-radius: 100px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
-    transform: translateX(-130%); animation: splashBar 1.4s ease-in-out 0.35s infinite; }
+  .glass-progress::after { content: ""; position: absolute; inset: 0; border-radius: 100px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    transform: translateX(-130%); animation: splashBar 1.5s ease-in-out 0.35s infinite; }
   @keyframes splashBar { 0% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
   /* profile identity header — brand banner, big centered avatar, white name */
   .profile-hero { display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -1591,22 +1612,6 @@ const styles = `
   .profile-hero-name { font-size: 25px; font-weight: 800; color: #ffffff;
     letter-spacing: -0.5px; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,0.16); }
   .profile-hero-joined { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.88); }
-
-  /* splash gift tiles (Plush Pepe hero + 2 sides) */
-  .splash-gifts { display: flex; align-items: center; justify-content: center; gap: 14px; height: 132px; margin-bottom: 2px; }
-  .splash-gift { display: flex; align-items: center; justify-content: center; border-radius: 22px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.14); }
-  .splash-gift.sg-hero { width: 124px; height: 124px; animation: sgHero 3s ease-in-out infinite, sgIn 0.6s var(--bounce) both; z-index: 2; }
-  .splash-gift.sg-left, .splash-gift.sg-right { width: 84px; height: 84px; opacity: 0.96; }
-  .splash-gift.sg-left { animation: sgFloat 3.2s ease-in-out infinite, sgIn 0.6s var(--bounce) 0.08s both; transform-origin: center; }
-  .splash-gift.sg-right { animation: sgFloat 3.2s ease-in-out infinite 0.4s, sgIn 0.6s var(--bounce) 0.16s both; }
-  @keyframes sgHero { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7px) scale(1.03); } }
-  @keyframes sgFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  @keyframes sgIn { from { opacity: 0; transform: translateY(16px) scale(0.85); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .splash-gift-ph { width: 100%; height: 100%; border-radius: 20px; }
-  .splash-gift-ph.big { border-radius: 22px; }
 
   /* ─── ANIMATED ICON KEYFRAMES (dependency-free) ─── */
   .ai { display: block; }
@@ -2329,7 +2334,7 @@ const styles = `
   @media (min-width: 768px) and (min-height: 700px) {
     .splash-center { transform: scale(1.18); }
     .splash-leaving .splash-center { transform: scale(1.08); }
-    .splash-glow { opacity: 0.9; }
+    .splash-aurora span { opacity: 0.72; }
   }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
@@ -2346,6 +2351,62 @@ const styles = `
     .admin-screen.desk .admin-tabs { max-width: 460px; }
     .admin-screen.desk .admin-bars { height: 200px; }
     .admin-screen.desk .admin-2col { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ═══════════════════ UI v3 — Liquid Glass depth pass (motion + specular polish) ═══════════════════ */
+  /* consistent top-edge "light catch" sheen for glass surfaces that didn't have one yet */
+  .sheet-content, .gate-card, .plan-card, .aff-balance, .hoton-cta, .promo-chosen,
+  .admin-tool-card, .consent-card, .star-balance-card, .aff-locked, .cancel-confirm, .scouting-strip {
+    position: relative;
+  }
+  .sheet-content::before, .gate-card::before, .plan-card::before, .aff-balance::before,
+  .hoton-cta::before, .promo-chosen::before, .admin-tool-card::before, .consent-card::before,
+  .star-balance-card::before {
+    content: ""; position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-hi), transparent);
+    pointer-events: none; border-radius: 1px;
+  }
+
+  /* icon buttons: layered frosted glass with a soft specular ring + springier tap */
+  .icon-btn {
+    background: linear-gradient(155deg, var(--bg-card), transparent);
+    transition: transform .22s var(--spring), box-shadow .22s var(--ease), background .2s;
+  }
+  .icon-btn:active { transform: scale(0.86); box-shadow: inset 0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 var(--glass-hi); }
+  .logo-tile, .gate-logo { transition: transform .3s var(--spring); }
+  .logo-tile:active { transform: scale(0.92); }
+
+  /* buttons: a brief glass "compress" glow when pressed, on top of the existing spring scale */
+  .action-btn { transition: transform .18s var(--spring), box-shadow .3s var(--ease), opacity .2s; }
+  .action-btn:active::after { background: linear-gradient(180deg, rgba(255,255,255,0.42), transparent 60%); transition: background .08s; }
+
+  /* select rows / chips: tiny brightness lift on press for tactile "glass" feedback */
+  .select-btn:active:not(:disabled), .chip:active, .desktop-nav-btn:active, .sort-pill:active,
+  .promo-market-btn:active, .admin-tab:active, .admin-range-btn:active {
+    filter: brightness(1.06);
+  }
+
+  /* result / admin cards: slightly deeper, cooler ambient shadow for more perceived depth */
+  .result-card, .admin-card, .skel-card {
+    box-shadow: var(--shadow-card), 0 1px 0 rgba(255,255,255,0.04) inset;
+    transition: transform .3s var(--spring), box-shadow .3s var(--ease);
+  }
+
+  /* sheet drag handle: subtle glass pill with its own highlight */
+  .sheet-grab { background: linear-gradient(180deg, var(--text-secondary), var(--text-secondary)); box-shadow: 0 1px 0 var(--glass-hi); }
+
+  /* tab bar icons: a touch more spring on the lift so it reads as "liquid" rather than mechanical */
+  .tab-icon { transition: transform .42s var(--spring); }
+  .tab-icon-active { transform: translateY(-3px) scale(1.14); }
+
+  /* promo / badge chips: soft glass glow instead of a flat drop shadow */
+  .promo-badge { box-shadow: 0 4px 14px rgba(255,90,30,0.4), inset 0 1px 0 rgba(255,255,255,0.35); }
+  .badge-buy { box-shadow: 0 2px 8px rgba(10,132,255,0.28); }
+
+  /* respect reduced-motion: keep the launch readable without disabling the progress fill */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-panel, .splash-mascot, .glass-floor, .glass-orbit, .glass-orbit .orb,
+    .splash-aurora span, .glass-sheen, .glass-progress::after { animation: none; }
   }
 `;
 
@@ -4849,21 +4910,23 @@ export default function App() {
         <GoldDefs />
         <div className={`splash${splashLeaving ? " splash-leaving" : ""}`} data-theme={theme}
           style={{ "--splash-ms": `${splashMs}ms` }}>
-          <div className="splash-glow" />
-          <div className="splash-rings"><span /><span /><span /></div>
-          <div className="splash-sparks"><i /><i /><i /><i /><i /></div>
+          <div className="splash-aurora" aria-hidden="true"><span className="a1" /><span className="a2" /><span className="a3" /></div>
           <div className="splash-center">
-            <div className="splash-mascot-wrap">
-              <div className="splash-orbit" aria-hidden="true">
-                <span className="orb orb-gram"><GramMark size={20} /></span>
-                <span className="orb orb-star"><TGStar size={18} /></span>
+            <div className="glass-stage">
+              <div className="glass-panel">
+                <div className="glass-sheen" />
+                <img src={MASCOT_URL} alt="" className="splash-mascot"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                <div className="glass-floor" />
               </div>
-              <img src={MASCOT_URL} alt="" className="splash-mascot"
-                onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              <div className="glass-orbit" aria-hidden="true">
+                <span className="orb orb-gram"><GramMark size={18} /></span>
+                <span className="orb orb-star"><TGStar size={16} /></span>
+              </div>
             </div>
             <div className="splash-brand">GiftTrove</div>
             <div className="splash-tagline">{t.fastest_way}</div>
-            <div className="splash-bar"><span /></div>
+            <div className="glass-progress"><span /></div>
           </div>
         </div>
       </>
