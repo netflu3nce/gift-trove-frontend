@@ -8,8 +8,10 @@ import { createPortal } from "react-dom";
 // overriding body inline kills it.
 try {
   if (typeof document !== "undefined") {
-    let _th = "dark";
-    try { _th = localStorage.getItem("gt_theme") || "dark"; } catch { /* noop */ }
+    let _th = "light";
+    try {
+      _th = localStorage.getItem("gt_theme_v4") ? (localStorage.getItem("gt_theme") || "light") : "light";
+    } catch { /* noop */ }
     document.documentElement.setAttribute("data-theme", _th);
     document.documentElement.style.background = _th === "light" ? "#f2f2f7" : "#000000";
   }
@@ -1771,7 +1773,17 @@ const styles = `
   .profile-hero { display: flex; flex-direction: column; align-items: center; text-align: center;
     gap: 5px; margin: 0 0 18px; padding: 30px 20px 26px; border-radius: 26px;
     background: linear-gradient(155deg, #1FA8F0 0%, #0A84FF 70%, #0061d1 100%);
-    box-shadow: 0 16px 40px rgba(10,132,255,0.28); }
+    box-shadow: 0 16px 40px rgba(10,132,255,0.28);
+    position: relative; overflow: hidden; }
+  .profile-hero-content { display: flex; flex-direction: column; align-items: center; gap: 5px;
+    position: relative; z-index: 1; }
+  /* Decorative brand mark — big, flipped, rotated "upward", anchored past the
+     bottom-right corner so the container's own overflow:hidden crops it down
+     to just the half facing back into the card. Pure decoration: aria-hidden,
+     no pointer events, low opacity so it never competes with the real content. */
+  .profile-hero-logo-deco { position: absolute; z-index: 0; pointer-events: none;
+    width: 220px; height: 220px; right: -70px; bottom: -70px;
+    opacity: 0.16; transform: scaleX(-1) rotate(-56deg); filter: brightness(0) invert(1); }
   .profile-hero-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
     background: rgba(255,255,255,0.18); border: 4px solid rgba(255,255,255,0.92);
     box-shadow: 0 10px 26px rgba(0,0,0,0.22); margin-bottom: 12px; }
@@ -3013,12 +3025,13 @@ export default function App() {
 
   const [theme, setTheme] = useState(() => {
     try {
-      // One-time migration: dark is now the default. Bump the flag to v3 so the
-      // new default applies once even to users who were defaulted to light before
-      // (their explicit choice, if any, is preserved under gt_theme).
-      if (!localStorage.getItem("gt_theme_v3")) { localStorage.setItem("gt_theme_v3", "1"); localStorage.setItem("gt_theme", "dark"); return "dark"; }
-      return localStorage.getItem("gt_theme") || "dark";
-    } catch { return "dark"; }
+      // One-time migration: light is now the default again. Bump the flag to
+      // v4 so this new default applies once even to users who were
+      // auto-defaulted to dark by the v3 migration (an explicit choice a user
+      // makes AFTER this point is still preserved under gt_theme as always).
+      if (!localStorage.getItem("gt_theme_v4")) { localStorage.setItem("gt_theme_v4", "1"); localStorage.setItem("gt_theme", "light"); return "light"; }
+      return localStorage.getItem("gt_theme") || "light";
+    } catch { return "light"; }
   });
   const [lang, setLang] = useState(() => localStorage.getItem("gt_lang") || "EN");
   const t = T[lang] || T.EN;
@@ -4947,13 +4960,16 @@ export default function App() {
       {/* Profile header — a brand banner with a big centered avatar, the name in
           white (reads in both themes against the gradient), and the join date. */}
       <div className="profile-hero">
-        <img className="profile-hero-avatar" src={avatarSrc} alt="" />
-        <div className="profile-hero-name">
-          {[tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(" ") || "Scout"}
-        </div>
-        <div className="profile-hero-joined">
-          {t.joined_label || "Joined"}{" "}
-          {new Date(joinedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+        <img className="profile-hero-logo-deco" src={LOGO_URL} alt="" aria-hidden="true" />
+        <div className="profile-hero-content">
+          <img className="profile-hero-avatar" src={avatarSrc} alt="" />
+          <div className="profile-hero-name">
+            {[tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(" ") || "Scout"}
+          </div>
+          <div className="profile-hero-joined">
+            {t.joined_label || "Joined"}{" "}
+            {new Date(joinedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+          </div>
         </div>
       </div>
 
@@ -5467,7 +5483,8 @@ export default function App() {
         {renderDetailNote()}
         {consentOverlay}
 
-        <div className="top-nav" style={{ justifyContent: "flex-end" }}>
+        <div className="top-nav" style={{ justifyContent: activeTab === "profile" ? "flex-end" : "space-between" }}>
+          {activeTab !== "profile" && <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>}
           <div className="top-icons">
             <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
             <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
