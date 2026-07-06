@@ -531,6 +531,7 @@ const IconXLogo = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="cu
 const IconInfo = ({ size = 15 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>;
 const IconBack = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const IconCheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IconLock = ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>;
 const IconCopy = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
 const IconTrash = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
 
@@ -616,8 +617,73 @@ function RevealSentinel({ onReveal }) {
 //   ② name line (full-width-ish)
 //   ③④ two meta rows (market + backdrop, shorter)
 //   ⑤ foot: price stub left, buy-button stub right
-function SkeletonCard() {
+// Clean line/area earnings graph -- smooth curve, no bars, no candle-like
+// rectangles. Colored green when the period trended up overall, red when
+// down, matching a typical portfolio value chart rather than a trading chart.
+function AffEarningsChart({ series }) {
+  const data = (series || []).map((d) => d.v || 0);
+  const [hover, setHover] = React.useState(null);
+  if (!data.length) return null;
+  const W = 200, H = 80, pad = 8;
+  const maxV = Math.max(1, ...data);
+  const stepX = data.length > 1 ? (W - pad * 2) / (data.length - 1) : 0;
+  const yp = (v) => H - pad - (v / maxV) * (H - pad * 2);
+  const xp = (i) => pad + i * stepX;
+  const pts = data.map((v, i) => [xp(i), yp(v)]);
+  let linePath = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const mx = (x0 + x1) / 2;
+    linePath += ` Q ${x0} ${y0} ${mx} ${(y0 + y1) / 2} Q ${x1} ${y1} ${x1} ${y1}`;
+  }
+  const fillPath = `${linePath} L ${pts[pts.length - 1][0]} ${H} L ${pts[0][0]} ${H} Z`;
+  const trendUp = (data[data.length - 1] || 0) >= (data[0] || 0);
+  const tone = trendUp ? "#30d158" : "#ff453a";
+  const STAR = "\u2605";
+  const onMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = ((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / rect.width;
+    setHover(Math.max(0, Math.min(data.length - 1, Math.round(cx * (data.length - 1)))));
+  };
+  // Only show the floating readout for a day that actually earned something —
+  // a "0 [star]" bubble floating over empty chart is just noise, not information.
+  const showTip = hover !== null && data[hover] > 0;
   return (
+    <div style={{ position: "relative", userSelect: "none" }}
+      onMouseMove={onMove} onTouchMove={onMove} onMouseLeave={() => setHover(null)} onTouchEnd={() => setHover(null)}>
+      {showTip && (
+        <div style={{ position: "absolute", top: 0, left: `${(hover / (data.length - 1 || 1)) * 100}%`, transform: "translateX(-50%)",
+          background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 8,
+          fontSize: 11, fontWeight: 800, padding: "3px 8px", color: "var(--text-primary)", whiteSpace: "nowrap", zIndex: 2, pointerEvents: "none" }}>
+          {data[hover].toLocaleString()} {STAR}
+        </div>
+      )}
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: 140, display: "block" }}>
+        <defs>
+          <linearGradient id="affAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={tone} stopOpacity="0.30" />
+            <stop offset="100%" stopColor={tone} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75].map((v) => (
+          <line key={v} x1={0} y1={H * v} x2={W} y2={H * v}
+            stroke="rgba(255,255,255,0.07)" strokeWidth="0.6" strokeDasharray="3 3" />
+        ))}
+        <path d={fillPath} fill="url(#affAreaGrad)" />
+        <path d={linePath} fill="none" stroke={tone} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        {hover !== null && (
+          <>
+            <line x1={xp(hover)} y1={0} x2={xp(hover)} y2={H} stroke="rgba(255,255,255,0.22)" strokeWidth="0.8" />
+            <circle cx={xp(hover)} cy={yp(data[hover])} r="3" fill={tone} stroke="var(--bg-card)" strokeWidth="1.5" />
+          </>
+        )}
+        {hover === null && <circle cx={xp(data.length - 1)} cy={yp(data[data.length - 1])} r="2.5" fill={tone} />}
+      </svg>
+    </div>
+  );
+}
+
+function SkeletonCard() {  return (
     <div className="skel-card">
       <div className="skel-hero" />
       <div className="skel-name" />
@@ -638,15 +704,43 @@ function SkeletonCards({ n = 6, desktop = false }) {
   );
 }
 
-function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
+function LottieGift({ src, fallbackSrc, poster, fallbackPoster, backdropColor, symbolPattern, size = 96, radius = 18, eager = false }) {
   const wrapRef = useRef(null);
   const animRef = useRef(null);
+  const loadedRef = useRef(false);   // true once an animation has actually been built for the current effective src
   const [visible, setVisible] = useState(eager);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(!src);
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const [posterSrc, setPosterSrc] = useState(poster);
+  const [posterFailed, setPosterFailed] = useState(false);
+  // fallbackPoster may be a single URL or an ARRAY of candidates tried in
+  // order (e.g. [our exact Telegram model image, the generic collection
+  // preview]) — normalized here so callers can pass either shape.
+  const fallbackChain = Array.isArray(fallbackPoster) ? fallbackPoster.filter(Boolean) : [fallbackPoster].filter(Boolean);
+  const fallbackIdxRef = useRef(0);
+  // Animation fallback chain: try `src` (Fragment's guess) first; if that
+  // fails to fetch/parse, fall back ONCE to `fallbackSrc` (our Telegram-
+  // sourced version). Fragment stays preferred — once it's properly crawled
+  // and composited a collection, that's a better render than our bare model-
+  // only one, and this means results switch over to Fragment automatically
+  // the moment it catches up, with no extra logic needed.
+  const [animSrc, setAnimSrc] = useState(src);
+  const triedAnimFallbackRef = useRef(false);
 
-  // Lazy: only animate while on (or near) screen — this is what keeps a long
-  // results list smooth. Animations are torn down when scrolled away.
+  // If the primary poster prop changes (new item), reset the fallback chain.
+  useEffect(() => {
+    setPosterSrc(poster); setPosterLoaded(false); setPosterFailed(false); fallbackIdxRef.current = 0;
+  }, [poster]);
+
+  // Same reset, for the animation source, whenever the underlying gift's
+  // PRIMARY src actually changes (not on a mere fallback swap).
+  useEffect(() => {
+    setAnimSrc(src); triedAnimFallbackRef.current = false; setFailed(!src);
+  }, [src]);
+
+  // Lazy: only start building the animation once the card first comes on (or
+  // near) screen — this is what keeps a long results list smooth to load.
   useEffect(() => {
     if (eager) { setVisible(true); return; }
     const el = wrapRef.current;
@@ -659,25 +753,36 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
     return () => io.disconnect();
   }, [eager]);
 
+  // Reset the "already built" flag whenever the EFFECTIVE animation source
+  // changes (a different gift, OR a fallback swap) — NOT when visibility
+  // merely toggles.
+  useEffect(() => { loadedRef.current = false; setReady(false); }, [animSrc]);
+
+  // Build the animation the first time this card is visible. On every LATER
+  // visibility change we just pause/resume the SAME instance — no re-fetch,
+  // no re-parse, no concurrency-gate wait. Previously this whole thing was
+  // torn down and rebuilt from scratch on every single scroll in/out, which
+  // is exactly what caused already-loaded cards to flash blank again on
+  // scroll-back-up, and — under a fast scroll re-triggering many cards at
+  // once — genuinely visible stalling.
   useEffect(() => {
-    if (!src || !visible) {
-      if (animRef.current) { _liveAnims.delete(animRef.current); try { animRef.current.destroy(); } catch { /* noop */ } animRef.current = null; setReady(false); }
+    if (!animSrc || !visible) return;
+    if (loadedRef.current) {
+      // Already built for this src — just resume it, instantly, no reload.
+      try { animRef.current?.play(); } catch { /* noop */ }
       return;
     }
     let cancelled = false;
     let gated = false;
-    setFailed(false); setReady(false);
     (async () => {
       try {
         const lottie = await loadLottie();
-        // Pre-fetch the JSON BEFORE taking a concurrency slot — network waits
-        // shouldn't hold the gate. Cached hits resolve instantly.
-        let data = _animCache[src];
+        let data = _animCache[animSrc];
         if (!data) {
-          const res = await fetch(src);
+          const res = await fetch(animSrc);
           if (!res.ok) throw new Error("no anim");
           data = await res.json();
-          if (Object.keys(_animCache).length < 80) _animCache[src] = data;
+          if (Object.keys(_animCache).length < 80) _animCache[animSrc] = data;
         }
         if (cancelled || !wrapRef.current) return;
         // Very brief settle: if the user is mid-fling this card may unmount
@@ -696,19 +801,51 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
         try { animRef.current.setSubframe(false); } catch { /* noop */ }
         _liveAnims.add(animRef.current);
         if (document.hidden) { try { animRef.current.pause(); } catch { /* noop */ } }
+        loadedRef.current = true;
         setReady(true);
         _lottieGateRelease(); gated = false;
       } catch {
         if (gated) { _lottieGateRelease(); gated = false; }
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        // Fragment's guess failed — try our Telegram-sourced fallback ONCE
+        // before giving up entirely.
+        if (!triedAnimFallbackRef.current && fallbackSrc && fallbackSrc !== animSrc) {
+          triedAnimFallbackRef.current = true;
+          setAnimSrc(fallbackSrc);
+        } else {
+          setFailed(true);
+        }
       }
     })();
     return () => {
       cancelled = true;
       if (gated) { _lottieGateRelease(); gated = false; }
-      if (animRef.current) { _liveAnims.delete(animRef.current); try { animRef.current.destroy(); } catch { /* noop */ } animRef.current = null; }
+      // NOTE: deliberately NOT destroying animRef here — this cleanup also
+      // runs on ordinary visibility toggles (dependency includes `visible`),
+      // and destroying on every scroll-away is exactly the bug this rewrite
+      // removes. Real teardown happens only in the effect below, keyed to
+      // `src` and unmount alone.
     };
-  }, [src, visible]);
+  }, [animSrc, visible]);
+
+  // Cheap pause/resume of an EXISTING instance as the card scrolls off/back
+  // on screen — no rebuild, so nothing flashes blank on scroll-back-up.
+  useEffect(() => {
+    if (!animRef.current) return;
+    try { visible ? animRef.current.play() : animRef.current.pause(); } catch { /* noop */ }
+  }, [visible]);
+
+  // True teardown: only on unmount, or when the src actually changes to a
+  // different gift (not on a mere scroll-driven visibility toggle).
+  useEffect(() => {
+    return () => {
+      if (animRef.current) {
+        _liveAnims.delete(animRef.current);
+        try { animRef.current.destroy(); } catch { /* noop */ }
+        animRef.current = null;
+      }
+    };
+  }, [animSrc]);
 
   // Poster (static .jpg) paints fast and stays UNDERNEATH the Lottie as a
   // permanent backing layer, so a card is never blank — even mid fast-scroll
@@ -716,13 +853,44 @@ function LottieGift({ src, poster, size = 96, radius = 18, eager = false }) {
   // in on top once ready. eager loading + sync decode get the poster on screen
   // as quickly as possible.
   return (
-    <div ref={wrapRef} style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: "var(--bg-input)", position: "relative" }}>
-      {poster && (
-        <img src={poster} alt="" loading="eager" decoding="async"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          onError={(e) => { e.target.style.opacity = 0; }} />
+    <div ref={wrapRef} style={{ width: size, height: size, borderRadius: radius, overflow: "hidden", background: backdropColor || "var(--bg-input)", position: "relative" }}>
+      {/* Shimmer stays visible until the poster actually paints — same sweep
+          language as SkeletonCards, so a still-loading hero reads as "loading",
+          never as a flat dead box. */}
+      {!posterLoaded && !posterFailed && <div className="lg-shimmer" aria-hidden="true" />}
+      {symbolPattern && (
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0,
+          backgroundImage: `url(${symbolPattern})`, backgroundSize: "14%",
+          backgroundRepeat: "repeat", opacity: ready ? 0.14 : 0,
+          transition: "opacity .3s",
+        }} />
       )}
-      {!failed && <div className="lg-anim" style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transition: "opacity .3s" }} />}
+      {posterSrc && !posterFailed && (
+        <img src={posterSrc} alt="" loading="eager" decoding="async"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: (posterLoaded && !ready) ? 1 : 0, transition: "opacity .3s" }}
+          onLoad={() => setPosterLoaded(true)}
+          onError={() => {
+            // Fragment's CDN hasn't crawled this collection yet (common for
+            // anything Telegram released in the last day or two), or this
+            // specific image 404s for some other reason — walk down the
+            // fallback chain (our exact Telegram model image, then the
+            // generic collection preview) before giving up entirely.
+            const next = fallbackChain[fallbackIdxRef.current];
+            if (next && next !== posterSrc) {
+              fallbackIdxRef.current += 1;
+              setPosterSrc(next); setPosterLoaded(false);
+            } else {
+              setPosterFailed(true); setPosterLoaded(true);
+            }
+          }} />
+      )}
+      {posterFailed && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}>
+          <IconGiftBox />
+        </div>
+      )}
+      {!failed && !posterFailed && <div className="lg-anim" style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transition: "opacity .3s", transform: "scale(1.12)" }} />}
     </div>
   );
 }
@@ -1213,7 +1381,7 @@ const T = {
   EN: {
     scout_tab: "Scout", results_tab: "Results", alerts_tab: "Alerts", saved_tab: "Saved", profile_tab: "Profile",
     sort_general: "General", sort_low: "Lowest", sort_high: "Highest", load_more: "Load more", price_range: "Price range", min_label: "Min", max_label: "Max", apply_filter: "Apply", results_empty_title: "No results yet", results_empty_sub: "Search a gift in Scout to see listings here.", showing_n: "Showing {n}", gate_a: "GiftTrove isn't available for public use yet. Reach out to ", gate_link: "majek", gate_b: " for an access code — or wait until the mini app goes live.", gate_checking: "Checking access…", gate_code_ph: "ACCESS CODE", gate_unlock: "Unlock", gate_connecting: "Connecting…", gate_neterr: "Couldn't reach the server (it may be waking up). Try again in a moment.", gate_admin: "Admins are let in automatically.", gate_join: "Join the GiftTrove channel", unknown_gift_title: "Hmm, no such gift", unknown_gift_sub: "We couldn't find a Telegram gift called “{q}”. Check the spelling, or pick one from the suggestions.", no_listings_sub: "No live listings match these filters right now. Try removing a filter or checking back soon.",
-    fastest_way: "The fastest way to find any Telegram Gift",
+    fastest_way: "The fastest way to find any Telegram Gift", splash_eyebrow: "Telegram Gift Scout",
     gift_name: "Gift Name", specific_id: "Specific ID", optional: "(Optional)",
     marketplaces: "Marketplaces", attributes: "Attributes", model: "Model", backdrop: "Backdrop", symbol: "Symbol",
     scout_gift: "Scout Gift", results: "Results", found: "found",
@@ -1258,10 +1426,10 @@ const T = {
     promo_link_help: "Paste the exact Telegram or Fragment listing so taps go straight to it.",
     affiliate_row: "Affiliate program", affiliate_title: "Affiliate program",
     affiliate_sub: "Earn {n}% of every subscription from members you invite \u2014 for as long as you stay Scout Pro.",
-    aff_locked_title: "A Scout Pro perk", aff_locked_sub: "Upgrade to Scout Pro to earn {n}% of every subscription from members you invite.",
+    aff_locked_title: "A Scout Pro perk", aff_locked_sub: "Upgrade to Scout Pro to earn {n}% of every subscription from members you invite.", aff_locked_perk1: "{n}% commission on every subscription you refer", aff_locked_perk2: "Paid out in GRAM, straight to your own wallet", aff_locked_perk3: "Track referrals and payouts in real time", aff_locked_preview: "A live look at your dashboard",
     aff_upgrade: "Upgrade to Scout Pro", aff_available: "Available to withdraw", aff_earned: "Earned", aff_pending: "Pending",
-    aff_referred: "Referred", aff_payers: "Paying", aff_ton_addr: "TON wallet address", aff_addr_ph: "Your TON address",
-    aff_withdraw: "Request payout", aff_min: "Withdraw at {n}\u2605", aff_need_addr: "Enter your TON wallet address.",
+    aff_referred: "Referred", aff_payers: "Paying", aff_ton_addr: "GRAM address or TON DNS", aff_addr_ph: "Address or .ton domain",
+    aff_withdraw: "Request payout", aff_min: "Withdraw at {n}\u2605", aff_need_addr: "Enter your GRAM address or TON DNS.", aff_withdraw_earnings: "Withdraw Earnings", aff_amount: "Amount", aff_amount_ph: "0", aff_max: "Max", aff_amount_range: "Minimum {min}\u2605", aff_need_amount: "Enter an amount to withdraw.", aff_amount_invalid: "Enter a valid amount.",
     aff_requested: "Payout request submitted \u2014 you\u2019ll get a confirmation in chat.", aff_pro_only: "Scout Pro only.", aff_failed: "Couldn\u2019t load. Try again.",
     aff_fineprint: "Earnings accrue only while you\u2019re Scout Pro and pause if your plan lapses. Minimum payout {n}\u2605, settled in TON to your wallet. Fake or self-referrals forfeit earnings.",
     scouting_title: "Scouting marketplaces…", scouting_sub: "Finding gems so you don't have to",
@@ -1288,7 +1456,7 @@ const T = {
   RU: {
     scout_tab: "Поиск", results_tab: "Итоги", alerts_tab: "Алерты", saved_tab: "Сохр.", profile_tab: "Профиль",
     sort_general: "Обычный", sort_low: "Дешевле", sort_high: "Дороже", load_more: "Ещё", price_range: "Диапазон цен", min_label: "Мин", max_label: "Макс", apply_filter: "Применить", results_empty_title: "Пока нет результатов", results_empty_sub: "Найдите подарок во вкладке Поиск.", showing_n: "Показано {n}", gate_a: "GiftTrove пока недоступен публично. Напишите ", gate_link: "majek", gate_b: ", чтобы получить код доступа.", gate_checking: "Проверка доступа…", gate_code_ph: "КОД ДОСТУПА", gate_unlock: "Разблокировать", gate_connecting: "Подключение…", gate_neterr: "Не удалось связаться с сервером (возможно, он просыпается). Повторите попытку.", gate_admin: "Админы входят автоматически.", gate_join: "Подпишитесь на канал GiftTrove", unknown_gift_title: "Такого подарка нет", unknown_gift_sub: "Не нашли подарок «{q}». Проверьте написание или выберите из подсказок.", no_listings_sub: "По этим фильтрам пока нет листингов. Уберите фильтр или зайдите позже.",
-    fastest_way: "Самый быстрый способ найти любой Telegram подарок",
+    fastest_way: "Самый быстрый способ найти любой Telegram подарок", splash_eyebrow: "Скаут Telegram-подарков",
     gift_name: "Имя подарка", specific_id: "Конкретный ID", optional: "(Необязательно)",
     marketplaces: "Маркетплейсы", attributes: "Атрибуты", model: "Модель", backdrop: "Фон", symbol: "Символ",
     scout_gift: "Искать подарок", results: "Результаты", found: "найдено",
@@ -1333,10 +1501,10 @@ const T = {
     promo_link_help: "Вставьте точную ссылку на Telegram или Fragment, чтобы переход вёл сразу к ней.",
     affiliate_row: "Партнёрская программа", affiliate_title: "Партнёрская программа",
     affiliate_sub: "Получайте {n}% с каждой подписки приглашённых вами участников — пока у вас активен Scout Pro.",
-    aff_locked_title: "Привилегия Scout Pro", aff_locked_sub: "Оформите Scout Pro, чтобы получать {n}% с каждой подписки приглашённых участников.",
+    aff_locked_title: "Привилегия Scout Pro", aff_locked_sub: "Оформите Scout Pro, чтобы получать {n}% с каждой подписки приглашённых участников.", aff_locked_perk1: "{n}% комиссия с каждой подписки по вашей ссылке", aff_locked_perk2: "Выплата в GRAM прямо на ваш кошелёк", aff_locked_perk3: "Отслеживайте рефералов и выплаты в реальном времени", aff_locked_preview: "Так выглядит ваш кабинет",
     aff_upgrade: "Оформить Scout Pro", aff_available: "Доступно к выводу", aff_earned: "Заработано", aff_pending: "В ожидании",
-    aff_referred: "Приглашено", aff_payers: "Платящих", aff_ton_addr: "Адрес TON-кошелька", aff_addr_ph: "Ваш TON-адрес",
-    aff_withdraw: "Запросить выплату", aff_min: "Вывод от {n}\u2605", aff_need_addr: "Укажите адрес TON-кошелька.",
+    aff_referred: "Приглашено", aff_payers: "Платящих", aff_ton_addr: "Адрес GRAM или TON DNS", aff_addr_ph: "Адрес или домен .ton",
+    aff_withdraw: "Запросить выплату", aff_min: "Вывод от {n}\u2605", aff_need_addr: "Укажите адрес GRAM или TON DNS.", aff_withdraw_earnings: "Вывести доход", aff_amount: "Сумма", aff_amount_ph: "0", aff_max: "Макс", aff_amount_range: "Минимум {min}\u2605", aff_need_amount: "Введите сумму для вывода.", aff_amount_invalid: "Введите корректную сумму.",
     aff_requested: "Запрос на выплату отправлен — подтверждение придёт в чат.", aff_pro_only: "Только для Scout Pro.", aff_failed: "Не удалось загрузить. Попробуйте снова.",
     aff_fineprint: "Начисления идут только при активном Scout Pro и приостанавливаются, если подписка истекает. Минимальная выплата {n}\u2605, переводится в TON на ваш кошелёк. Фейковые или само-рефералы аннулируют начисления.",
     scouting_title: "Сканируем маркетплейсы…", scouting_sub: "Находим самоцветы за вас",
@@ -1363,7 +1531,7 @@ const T = {
   ZH: {
     scout_tab: "侦测", results_tab: "结果", alerts_tab: "提醒", saved_tab: "收藏", profile_tab: "我的",
     sort_general: "综合", sort_low: "最低", sort_high: "最高", load_more: "加载更多", price_range: "价格范围", min_label: "最低", max_label: "最高", apply_filter: "应用", results_empty_title: "暂无结果", results_empty_sub: "在“侦测”中搜索礼物以查看结果。", showing_n: "显示 {n}", gate_a: "GiftTrove 暂未对公众开放。请联系 ", gate_link: "majek", gate_b: " 获取访问码，或等待小程序上线。", gate_checking: "正在检查访问权限…", gate_code_ph: "访问码", gate_unlock: "解锁", gate_connecting: "连接中…", gate_neterr: "无法连接服务器（可能正在唤醒）。请稍后重试。", gate_admin: "管理员自动进入。", gate_join: "加入 GiftTrove 频道", unknown_gift_title: "没有这个礼物", unknown_gift_sub: "找不到名为“{q}”的礼物。请检查拼写，或从建议中选择。", no_listings_sub: "当前没有符合这些筛选的在售挂单。请移除筛选或稍后再试。",
-    fastest_way: "查找任何 Telegram 礼物的最快方法",
+    fastest_way: "查找任何 Telegram 礼物的最快方法", splash_eyebrow: "Telegram 礼物侦测",
     gift_name: "礼物名称", specific_id: "特定 ID", optional: "（可选）",
     marketplaces: "市场", attributes: "属性", model: "模型", backdrop: "背景", symbol: "符号",
     scout_gift: "侦测礼物", results: "结果", found: "已找到",
@@ -1408,10 +1576,10 @@ const T = {
     promo_link_help: "粘贴确切的 Telegram 或 Fragment 链接，点击即可直达。",
     affiliate_row: "推广联盟", affiliate_title: "推广联盟",
     affiliate_sub: "邀请的会员每次订阅，您可赚取 {n}% — 只要您保持 Scout Pro。",
-    aff_locked_title: "Scout Pro 专属", aff_locked_sub: "升级 Scout Pro，邀请会员订阅即可赚取 {n}%。",
+    aff_locked_title: "Scout Pro 专属", aff_locked_sub: "升级 Scout Pro，邀请会员订阅即可赚取 {n}%。", aff_locked_perk1: "每笔推荐订阅赚取 {n}% 佣金", aff_locked_perk2: "以 GRAM 直接提现至您的钱包", aff_locked_perk3: "实时追踪推荐与提现记录", aff_locked_preview: "您的仪表盘预览",
     aff_upgrade: "升级 Scout Pro", aff_available: "可提现", aff_earned: "已赚取", aff_pending: "待处理",
-    aff_referred: "已邀请", aff_payers: "付费", aff_ton_addr: "TON 钱包地址", aff_addr_ph: "您的 TON 地址",
-    aff_withdraw: "申请提现", aff_min: "满 {n}\u2605 可提现", aff_need_addr: "请输入您的 TON 钱包地址。",
+    aff_referred: "已邀请", aff_payers: "付费", aff_ton_addr: "GRAM 地址或 TON DNS", aff_addr_ph: "地址或 .ton 域名",
+    aff_withdraw: "申请提现", aff_min: "满 {n}\u2605 可提现", aff_need_addr: "请输入 GRAM 地址或 TON DNS。", aff_withdraw_earnings: "提现收益", aff_amount: "金额", aff_amount_ph: "0", aff_max: "最大", aff_amount_range: "最低 {min}\u2605", aff_need_amount: "请输入提现金额。", aff_amount_invalid: "请输入有效金额。",
     aff_requested: "提现申请已提交 — 确认信息将发送到聊天。", aff_pro_only: "仅限 Scout Pro。", aff_failed: "加载失败，请重试。",
     aff_fineprint: "仅在 Scout Pro 有效期间累积收益，订阅失效则暂停。最低提现 {n}\u2605，以 TON 结算至您的钱包。虚假或自我推荐将取消收益。",
     scouting_title: "正在扫描市场…", scouting_sub: "替你淘到珍宝",
@@ -1492,114 +1660,112 @@ const styles = `
     height: 100vh; overflow: hidden;
   }
 
-  /* ─── LAUNCH SPLASH — Apple Liquid Glass ─── */
+  /* ─── LAUNCH SPLASH ─── */
   .splash {
-    position: fixed; inset: 0; z-index: 9999; overflow: hidden;
+    position: fixed; inset: 0; z-index: 9999;
     display: flex; align-items: center; justify-content: center;
-    background: #000;
-    opacity: 1; transition: opacity 0.5s ease;
+    background: #0a0e1a;
+    background-image: radial-gradient(120% 75% at 50% 105%, rgba(10,132,255,0.42) 0%, rgba(15,45,110,0.22) 45%, #0a0e1a 82%);
+    opacity: 1; transition: opacity 0.45s ease;
   }
-  [data-theme="light"] .splash { background: #eef1f6; }
-  .splash-leaving { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-
-  /* aurora — soft drifting color fields for the glass panel to catch and refract */
-  .splash-aurora { position: absolute; inset: -10%; pointer-events: none; }
-  .splash-aurora span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; animation: auroraDrift 12s ease-in-out infinite; }
-  .splash-aurora .a1 { width: 46vh; height: 46vh; left: 6%; top: 8%; background: radial-gradient(circle, rgba(10,132,255,0.55), transparent 70%); animation-duration: 11s; }
-  .splash-aurora .a2 { width: 42vh; height: 42vh; right: 4%; top: 18%; background: radial-gradient(circle, rgba(191,90,242,0.42), transparent 70%); animation-duration: 14s; animation-delay: -3s; }
-  .splash-aurora .a3 { width: 50vh; height: 50vh; left: 22%; bottom: -8%; background: radial-gradient(circle, rgba(255,171,0,0.34), transparent 70%); animation-duration: 16s; animation-delay: -6s; }
-  [data-theme="light"] .splash-aurora span { opacity: 0.4; }
-  @keyframes auroraDrift {
-    0%, 100% { transform: translate3d(0,0,0) scale(1); }
-    33% { transform: translate3d(4%, -6%, 0) scale(1.08); }
-    66% { transform: translate3d(-5%, 4%, 0) scale(0.96); }
+  [data-theme="light"] .splash {
+    background: #f2f2f7;
+    background-image: radial-gradient(130% 120% at 50% -10%, rgba(51,65,85,0.88) 0%, rgba(51,65,85,0.44) 45%, #f2f2f7 80%);
   }
-
-  .splash-center { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
-
-  /* the glass stage: a floating liquid-glass tile that houses the mascot */
-  .glass-stage { position: relative; width: 208px; height: 208px; margin-bottom: 22px;
-    animation: panelIn .7s var(--spring) both; }
-  .glass-panel {
-    position: absolute; inset: 0; border-radius: 56px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(155deg, rgba(255,255,255,0.24), rgba(255,255,255,0.05) 55%, rgba(255,255,255,0.10));
-    border: 1px solid rgba(255,255,255,0.35);
-    backdrop-filter: blur(28px) saturate(190%); -webkit-backdrop-filter: blur(28px) saturate(190%);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -18px 30px rgba(0,0,0,0.18);
-    animation: panelFloat 4.4s ease-in-out infinite;
+  .splash-leaving { opacity: 0; pointer-events: none; transition: opacity 0.45s ease; }
+  .splash-glow {
+    position: absolute; width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(10,132,255,0.30) 0%, transparent 65%);
+    filter: blur(52px); animation: splashGlow 3.2s ease-in-out infinite;
   }
-  [data-theme="light"] .glass-panel {
-    background: linear-gradient(155deg, rgba(255,255,255,0.72), rgba(255,255,255,0.32) 55%, rgba(255,255,255,0.5));
-    border-color: rgba(255,255,255,0.75);
-    box-shadow: 0 26px 54px rgba(51,65,85,0.28), inset 0 2px 0 rgba(255,255,255,0.7), inset 0 -16px 26px rgba(51,65,85,0.10);
-  }
-  @keyframes panelFloat { 0%,100% { transform: translateY(0) rotate(-0.6deg); } 50% { transform: translateY(-10px) rotate(0.6deg); } }
-  @keyframes panelIn { from { opacity: 0; transform: translateY(26px) scale(0.86); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-  /* specular sheen sweeping across the glass — the signature Liquid Glass "light catch" */
-  .glass-sheen { position: absolute; inset: -40% -60%; background: linear-gradient(75deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%); transform: translateX(-60%); animation: sheenSweep 3.6s ease-in-out infinite; mix-blend-mode: screen; pointer-events: none; }
-  [data-theme="light"] .glass-sheen { background: linear-gradient(75deg, transparent 38%, rgba(255,255,255,0.85) 50%, transparent 62%); }
-  @keyframes sheenSweep { 0%, 15% { transform: translateX(-60%); } 60%, 100% { transform: translateX(60%); } }
-
-  .glass-floor { position: absolute; left: 50%; bottom: 10px; width: 108px; height: 18px; border-radius: 50%; transform: translateX(-50%);
-    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 72%); filter: blur(4px);
-    animation: splashShadow 2.6s ease-in-out infinite; }
-  @keyframes splashShadow { 0%,100% { transform: translateX(-50%) scale(1); opacity: 0.55; } 50% { transform: translateX(-50%) scale(0.76); opacity: 0.26; } }
-
-  /* orbiting glass chips (GRAM + Star) — independent satellites around the panel */
-  .glass-orbit { position: absolute; inset: -22px; animation: orbitSpin 9s linear infinite; pointer-events: none; z-index: 2; }
-  .glass-orbit .orb { position: absolute; display: flex; align-items: center; justify-content: center;
-    width: 38px; height: 38px; border-radius: 13px;
-    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35);
-    backdrop-filter: blur(14px) saturate(180%); -webkit-backdrop-filter: blur(14px) saturate(180%);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.4);
-    animation: orbitCounter 9s linear infinite; }
-  [data-theme="light"] .glass-orbit .orb { background: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.8); box-shadow: 0 8px 20px rgba(51,65,85,0.2), inset 0 1px 0 rgba(255,255,255,0.9); }
-  .glass-orbit .orb-gram { top: 0; right: -8px; }
-  .glass-orbit .orb-star { bottom: 12px; left: -14px; }
-  @keyframes orbitSpin { to { transform: rotate(360deg); } }
-  @keyframes orbitCounter { to { transform: rotate(-360deg); } }
-
-  .splash-mascot { position: relative; z-index: 1; width: 148px; height: 148px; object-fit: contain;
-    filter: drop-shadow(0 14px 22px rgba(0,0,0,0.35));
-    animation: splashBob 2.6s ease-in-out infinite; }
-  @keyframes splashBob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-11px) rotate(1.5deg); } }
-
-  .splash-brand {
-    font-size: 33px; font-weight: 800; letter-spacing: -0.8px; color: #fff; margin-bottom: 6px;
+  @keyframes splashGlow { 0%,100% { transform: scale(0.88); opacity: 0.6; } 50% { transform: scale(1.14); opacity: 1; } }
+  /* Full-height layout: eyebrow+hero cluster near the top; mascot+bar docked
+     low, just above the tagline — a plain, calm composition with a single
+     ambient glow behind it. No rings, sparks, beam, or watermark. */
+  .splash-layout { position: relative; z-index: 1; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: calc(64px + var(--safe-top, 0px)) clamp(16px, 5vw, 24px) calc(40px + var(--safe-bottom, 16px)); box-sizing: border-box; }
+  .splash-top { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .splash-eyebrow { font-size: clamp(8.5px, 2.8vw, 12px); font-weight: 800; letter-spacing: clamp(1.5px, 0.6vw, 3px); text-transform: uppercase;
+    color: rgba(255,255,255,0.42); margin-bottom: 3px; animation: splashRise 0.5s var(--bounce) 0.05s both; }
+  [data-theme="light"] .splash-eyebrow { color: var(--text-secondary); }
+  .splash-hero {
+    font-size: clamp(32px, 12vw, 52px); font-weight: 900; letter-spacing: -1.2px; text-transform: uppercase;
+    color: #fff; line-height: 1; text-shadow: 0 4px 32px rgba(10,132,255,0.55);
     animation: splashRise 0.55s var(--bounce) 0.12s both;
   }
+  [data-theme="light"] .splash-hero { color: #14171f; text-shadow: 0 2px 16px rgba(51,65,85,0.25); }
   @supports (-webkit-background-clip: text) {
-    .splash-brand {
-      background: linear-gradient(100deg, #fff 32%, #FFAB00 46%, var(--tg-blue) 58%, #fff 72%);
+    .splash-hero {
+      background: linear-gradient(100deg, #fff 26%, #FFAB00 42%, #54c5f8 58%, #fff 78%);
       background-size: 240% 100%;
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-      animation: splashRise 0.55s var(--bounce) 0.12s both, brandSweep 3s ease-in-out 0.6s infinite;
+      animation: splashRise 0.55s var(--bounce) 0.12s both, brandSweep 3.2s ease-in-out 0.7s infinite;
     }
   }
   @keyframes brandSweep { 0% { background-position: 130% 0; } 100% { background-position: -130% 0; } }
   @keyframes splashRise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
-  .splash-tagline { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.62); letter-spacing: 0.3px;
-    margin-bottom: 22px; animation: splashRise 0.55s var(--bounce) 0.2s both; }
+  /* Subject docks toward the bottom (margin-top: auto eats the leftover space
+     above it) so the mascot sits low, right above the tagline — not centred
+     in the middle of the screen. */
+  .splash-subject { display: flex; flex-direction: column; align-items: center; margin-top: auto; }
+  .splash-footer { display: flex; flex-direction: column; align-items: center; margin-top: 18px; }
+  /* Fixed-size stage the mascot + badges live in — absolute positions inside it
+     are the same on every device, which is what keeps the cluster looking
+     deliberate instead of shifting around with viewport width. */
+  .splash-orbit-wrap { position: relative; width: 290px; height: 290px; display: flex; align-items: center; justify-content: center;
+    /* Self-adjusting safety valve: on any viewport narrower than the ~332px
+       this cluster (290px stage + badge/charm overflow) needs, shrink the
+       WHOLE thing proportionally instead of letting badges/stickers clip
+       off-screen. Reference math is exact, not a guessed breakpoint, so it
+       holds for any device width rather than only the ones this got tested
+       against. */
+    --orbit-scale: min(1, (100vw - 56px) / 332px);
+    transform: scale(var(--orbit-scale)); }
+  .splash-mascot { width: 204px; height: 204px; object-fit: contain; position: relative; z-index: 2;
+    filter: drop-shadow(0 16px 28px rgba(0,0,0,0.32));
+    animation: splashBob 2.6s ease-in-out infinite; }
+  @keyframes splashBob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-12px) rotate(1.5deg); } }
+  /* Marketplace badges — inner triangle, the visual anchors. Dark glass so the
+     white Telegram/Fragment marks and the blue MarketApp mark all read clearly. */
+  .splash-badge { position: absolute; z-index: 3; width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(12,18,32,0.72); border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.14);
+    opacity: 0; animation: badgeIn 0.5s var(--bounce) forwards, badgeFloat 3.4s ease-in-out 0.5s infinite; }
+  .splash-badge img { width: 24px; height: 24px; object-fit: contain; }
+  .b-tg   { top: 4px;   left: -8px; }
+  .b-frag { top: 24px;  right: -12px; }
+  .b-ma   { bottom: -4px; left: 50%; margin-left: -23px; }
+  @keyframes badgeIn { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+  @keyframes badgeFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  /* Gift-sticker charms — outer triangle, interleaved in the gaps between the
+     badges. Smaller and unbadged (no backing) so they stay secondary. */
+  .splash-charm { position: absolute; z-index: 1; opacity: 0; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.25));
+    animation: charmIn 0.5s var(--bounce) forwards, charmFloat 3.8s ease-in-out 0.5s infinite; }
+  [data-theme="light"] .splash-charm { filter: none; }
+  .splash-charm-img { display: block; width: 50px; height: 50px; object-fit: contain; }
+  .c-durov { top: -24px; left: 46%; margin-left: -30px; }
+  .c-durov .splash-charm-img { width: 60px; height: 60px; }
+  .c-cat   { top: 100px; left: -22px; }
+  .c-cream { top: 140px; right: -20px; }
+  @keyframes charmIn { from { opacity: 0; transform: scale(0.3); } to { opacity: 0.92; transform: scale(1); } }
+  .splash-tagline { font-size: clamp(9.5px, 3.3vw, 13px); font-weight: 700; color: rgba(255,255,255,0.7); letter-spacing: 0.2px;
+    max-width: 92vw; text-align: center; animation: splashRise 0.5s var(--bounce) 0.24s both; }
   [data-theme="light"] .splash-tagline { color: var(--text-secondary); }
-
-  /* progress: a frosted glass pill track with a glowing gradient fill + roaming sheen */
-  .glass-progress { position: relative; width: 148px; height: 8px; border-radius: 100px; overflow: hidden;
-    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
-    animation: splashRise 0.55s var(--bounce) 0.28s both; }
-  [data-theme="light"] .glass-progress { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.08); }
-  .glass-progress span { display: block; height: 100%; width: 100%; border-radius: 100px;
-    background: linear-gradient(90deg, var(--tg-blue), #38b0ff 55%, #FFAB00);
-    box-shadow: 0 0 12px rgba(10,132,255,0.65);
-    transform: scaleX(0.05); transform-origin: left center;
+  /* Single solid brand-blue bar — no multi-colour gradient. */
+  .splash-bar { position: relative; width: 140px; height: 4px; border-radius: 100px; background: rgba(255,255,255,0.15); overflow: hidden;
+    margin-top: 26px; animation: splashRise 0.55s var(--bounce) 0.28s both; }
+  [data-theme="light"] .splash-bar { background: rgba(0,0,0,0.12); }
+  .splash-bar span { display: block; height: 100%; width: 100%; border-radius: 100px;
+    background: var(--tg-blue);
+    transform: scaleX(0.06); transform-origin: left center;
     animation: splashFill var(--splash-ms, 3000ms) cubic-bezier(0.22, 0.68, 0.3, 1) forwards; }
   @keyframes splashFill { to { transform: scaleX(1); } }
-  .glass-progress::after { content: ""; position: absolute; inset: 0; border-radius: 100px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
-    transform: translateX(-130%); animation: splashBar 1.5s ease-in-out 0.35s infinite; }
+  .splash-bar::after { content: ""; position: absolute; inset: 0; border-radius: 100px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    transform: translateX(-130%); animation: splashBar 1.4s ease-in-out 0.35s infinite; }
   @keyframes splashBar { 0% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
   /* profile identity header — brand banner, big centered avatar, white name */
   .profile-hero { display: flex; flex-direction: column; align-items: center; text-align: center;
@@ -1612,6 +1778,22 @@ const styles = `
   .profile-hero-name { font-size: 25px; font-weight: 800; color: #ffffff;
     letter-spacing: -0.5px; line-height: 1.15; text-shadow: 0 1px 8px rgba(0,0,0,0.16); }
   .profile-hero-joined { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.88); }
+
+  /* splash gift tiles (Plush Pepe hero + 2 sides) */
+  .splash-gifts { display: flex; align-items: center; justify-content: center; gap: 14px; height: 132px; margin-bottom: 2px; }
+  .splash-gift { display: flex; align-items: center; justify-content: center; border-radius: 22px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.14); }
+  .splash-gift.sg-hero { width: 124px; height: 124px; animation: sgHero 3s ease-in-out infinite, sgIn 0.6s var(--bounce) both; z-index: 2; }
+  .splash-gift.sg-left, .splash-gift.sg-right { width: 84px; height: 84px; opacity: 0.96; }
+  .splash-gift.sg-left { animation: sgFloat 3.2s ease-in-out infinite, sgIn 0.6s var(--bounce) 0.08s both; transform-origin: center; }
+  .splash-gift.sg-right { animation: sgFloat 3.2s ease-in-out infinite 0.4s, sgIn 0.6s var(--bounce) 0.16s both; }
+  @keyframes sgHero { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7px) scale(1.03); } }
+  @keyframes sgFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes sgIn { from { opacity: 0; transform: translateY(16px) scale(0.85); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .splash-gift-ph { width: 100%; height: 100%; border-radius: 20px; }
+  .splash-gift-ph.big { border-radius: 22px; }
 
   /* ─── ANIMATED ICON KEYFRAMES (dependency-free) ─── */
   .ai { display: block; }
@@ -1684,9 +1866,11 @@ const styles = `
   .scouting-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; text-align: center; animation: fadeInUp 0.4s var(--bounce) forwards; }
   .scouting-spinner { width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.22); border-top-color: #fff; border-right-color: #fff; animation: iosSpin 0.7s cubic-bezier(0.4,0,0.2,1) infinite; margin-bottom: 26px; }
   .scouting-title { font-size: 19px; font-weight: 700; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.2px; }
+  [data-theme="light"] .scouting-title { color: var(--text-primary); }
   .scouting-sub { font-size: 15px; font-weight: 700; color: #ffffff; opacity: 0.82; line-height: 1.4; }
   .scouting-markets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 26px; }
   .scouting-market-chip { padding: 6px 14px; border-radius: 100px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: #fff; animation: scoutChipPulse 1.5s ease-in-out infinite; }
+  [data-theme="light"] .scouting-market-chip { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: var(--text-primary); }
   .scouting-market-chip:nth-child(2){animation-delay:.2s}.scouting-market-chip:nth-child(3){animation-delay:.4s}.scouting-market-chip:nth-child(4){animation-delay:.6s}.scouting-market-chip:nth-child(5){animation-delay:.8s}
   @keyframes scoutChipPulse { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); background: rgba(255,255,255,0.22); } }
 
@@ -1752,14 +1936,17 @@ const styles = `
   .back-to-top {
     position: fixed; z-index: 39;
     right: 28px; bottom: calc(var(--safe-bottom) + var(--tab-h) + 14px);
-    width: 46px; height: 46px; border-radius: 18px;
-    background: linear-gradient(150deg, #ffcc44 0%, #FFAB00 100%);
-    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 24px rgba(255,171,0,0.52), 0 2px 8px rgba(255,171,0,0.28);
-    animation: bttIn 0.35s var(--bounce) both;
-    transition: transform 0.2s var(--bounce), box-shadow 0.2s;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--bg-sheet);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.22), inset 0 1px 0 var(--glass-hi), 0 0 0 1px rgba(10,132,255,0.18);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--tg-blue);
+    animation: bttIn 0.32s var(--bounce) both;
+    transition: transform 0.18s var(--bounce), box-shadow 0.18s;
   }
-  .back-to-top:active { transform: scale(0.92); box-shadow: 0 4px 14px rgba(255,171,0,0.44); }
+  .back-to-top:active { transform: scale(0.88); box-shadow: 0 4px 14px rgba(0,0,0,0.18); }
   @keyframes bttIn { from { opacity: 0; transform: scale(0.6) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   .ios-tab-bar { display: flex; align-items: stretch; height: 72px; border-radius: 36px; padding: 6px; gap: 2px; background: var(--bg-sheet); border: 1px solid var(--border); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: 0 12px 44px rgba(0,0,0,0.20), inset 0 1px 0 var(--glass-hi); position: relative; }
   .tab-active-pill { position: absolute; top: 6px; bottom: 6px; border-radius: 28px; background: rgba(0,122,255,0.14); border: 1px solid rgba(0,122,255,0.22); backdrop-filter: blur(20px) saturate(200%); -webkit-backdrop-filter: blur(20px) saturate(200%); transition: left 0.38s var(--bounce), width 0.38s var(--bounce); pointer-events: none; z-index: 0; box-shadow: 0 4px 14px rgba(0,122,255,0.18); }
@@ -1775,7 +1962,7 @@ const styles = `
   .sheet-content { width: 100%; max-height: 82vh; border-radius: 32px 32px 0 0; padding: 12px 24px calc(40px + var(--safe-bottom)); background: var(--bg-sheet); border-top: 1px solid var(--border); backdrop-filter: blur(50px) saturate(200%); -webkit-backdrop-filter: blur(50px) saturate(200%); transform: translateY(100%); animation: slideUp 0.4s var(--bounce) forwards; overflow-y: auto; color: var(--text-primary); box-shadow: 0 -18px 60px rgba(0,0,0,0.30), inset 0 1px 0 var(--glass-hi); }
   .sheet-content::-webkit-scrollbar { display: none; }
   .sheet-handle { width: 40px; height: 5px; border-radius: 100px; background: var(--text-secondary); margin: 0 auto 24px; opacity: 0.5; }
-  .sheet-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
+  .sheet-title { font-size: clamp(17px, 5.5vw, 22px); font-weight: 800; margin-bottom: 20px; text-align: center; color: var(--text-primary); }
 
   .ios-group { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); margin-bottom: 24px; box-shadow: inset 0 1px 0 var(--glass-hi); }
   .ios-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); cursor: pointer; color: var(--text-primary); font-size: 16px; font-weight: 500; }
@@ -1801,7 +1988,7 @@ const styles = `
   /* ─── RESULT CARDS ─── */
   .results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
   .results-grid.desktop { grid-template-columns: repeat(3, 1fr); }
-  .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; position: relative; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); display: flex; flex-direction: column; transition: transform 0.2s var(--bounce); cursor: pointer; color: var(--text-primary); animation: cardIn 0.45s var(--bounce) both; }
+  .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(10px, 4vw, 16px); position: relative; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); display: flex; flex-direction: column; transition: transform 0.2s var(--bounce); cursor: pointer; color: var(--text-primary); animation: cardIn 0.45s var(--bounce) both; }
   .result-card:active { transform: scale(0.96); }
   @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .result-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
@@ -1821,7 +2008,7 @@ const styles = `
   .desktop-content .empty-state { min-height: 56vh; }
   .empty-state .es-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 14px 0 6px; }
 
-  .page-header { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
+  .page-header { font-size: clamp(24px, 8vw, 34px); font-weight: 800; letter-spacing: -0.6px; line-height: 1.15; margin-bottom: 24px; color: #ffffff; }
   .page-header.desktop { font-size: 40px; }
 
   .toast { position: fixed; top: calc(20px + var(--safe-top)); left: 50%; transform: translateX(-50%); white-space: nowrap; max-width: calc(100vw - 32px); background: rgba(0,0,0,0.85); color: #fff; padding: 12px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; z-index: 9998; backdrop-filter: blur(10px); animation: toastIn 0.3s var(--bounce); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
@@ -1842,17 +2029,17 @@ const styles = `
 
   .result-save { position: absolute; top: 4px; right: 4px; cursor: pointer; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); transition: transform .2s var(--bounce); }
   .result-save:active { transform: scale(0.82); }
-  .result-name { font-size: 15px; font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 6px; }
+  .result-name { font-size: clamp(12.5px, 3.6vw, 15px); font-weight: 800; line-height: 1.2; color: var(--text-primary); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .sheet-title-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px; }
   .sheet-title-row .sheet-title { margin-bottom: 0; text-align: center; }
   .sheet-info-btn { background: none; border: none; padding: 2px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; opacity: 0.7; flex-shrink: 0; }
   .sheet-info-btn:active { opacity: 1; color: var(--tg-blue); }
-  .result-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .result-meta { font-size: clamp(10.5px, 3vw, 12px); color: var(--text-secondary); margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; }
   .meta-row { display: flex; align-items: center; gap: 6px; }
   .meta-icon-slot { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; flex-shrink: 0; }
   .result-model { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
-  .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .result-price { font-size: 17px; font-weight: 800; color: var(--tg-blue); }
+  .result-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+  .result-price { font-size: clamp(14px, 4vw, 17px); font-weight: 800; color: var(--tg-blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .result-foot .badge-buy { font-size: 12px; padding: 7px 14px; border-radius: 9px; box-shadow: 0 6px 16px rgba(10,132,255,0.35); }
 
   /* ── Results header + filter bar ─────────────────────────────────────── */
@@ -1979,6 +2166,13 @@ const styles = `
     background: linear-gradient(90deg, transparent 0%, var(--glass-hi) 50%, transparent 100%);
     animation: skelSweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
   @keyframes skelSweep { to { transform: translateX(100%); } }
+  /* LottieGift hero shimmer — same sweep as SkeletonCards, shown until the
+     poster image actually paints so a still-loading real card never reads as
+     a flat dead box (this was misread as "lag"). */
+  .lg-shimmer { position: absolute; inset: 0; background: var(--bg-input); overflow: hidden; }
+  .lg-shimmer::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, var(--glass-hi) 50%, transparent 100%);
+    animation: skelSweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
   /* old skel-line aliases kept for safety */
   .skel-line { height: 12px; border-radius: 6px; background: var(--bg-input); margin-top: 10px; }
   .skel-line.w70 { width: 70%; } .skel-line.w45 { width: 45%; }
@@ -1991,7 +2185,7 @@ const styles = `
   .scouting-strip .scouting-spinner { width: 26px; height: 26px; margin: 0; flex-shrink: 0; border-width: 2.5px;
     border-color: rgba(10,132,255,0.25); border-top-color: var(--tg-blue); border-right-color: var(--tg-blue); }
   .scouting-strip .scouting-title { font-size: 15px; }
-  .scouting-strip .scouting-markets { display: flex; gap: 6px; margin: 6px 0 0; }
+  .scouting-strip .scouting-markets { display: flex; gap: 6px; margin: 6px 0 0; justify-content: flex-start; }
   .scouting-strip .scouting-market-chip { padding: 3px 9px; font-size: 11px; }
   .result-card::after { content: ""; position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(90deg, transparent, var(--glass-hi), transparent); pointer-events: none; }
   .result-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-pop); }
@@ -2187,37 +2381,54 @@ const styles = `
   .promo-amt { color: var(--text-primary); font-weight: 800; font-size: 15px; }
   .promo-amount-row { display: flex; gap: 10px; align-items: stretch; }
   .promo-hint { font-size: 11.5px; color: var(--text-secondary); opacity: 0.85; margin: 6px 2px 0; line-height: 1.45; }
-  /* affiliate sheet */
-  .aff-locked { text-align: center; padding: 18px 0 6px; }
-  .aff-locked-icon { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a84ff, #bf5af2); box-shadow: 0 8px 24px rgba(10,132,255,0.35); }
-  .aff-locked-title { font-size: 17px; font-weight: 800; color: var(--text-primary); }
-  .aff-locked-sub { font-size: 13.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; padding: 0 8px; }
-  .aff-balance { text-align: center; padding: 18px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(48,209,88,0.16), rgba(10,132,255,0.10)); border: 1px solid rgba(48,209,88,0.4); margin-bottom: 14px; }
-  .aff-bal-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
-  .aff-bal-value { font-size: 30px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 4px; }
-  .aff-bal-ton { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
-  .aff-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center; }
+  /* ── affiliate full-screen page ── */
+  .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg-base); background-image: var(--bg-gradient);
+    display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; animation: affSlideIn 0.34s var(--spring); }
+  @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  .aff-screen-leaving { animation: affSlideOut 0.26s ease forwards; }
+  @keyframes affSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(6%); opacity: 0; } }
+  .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: calc(14px + var(--safe-top, 0px)) 16px 14px;
+    background: var(--bg-sheet);
+    backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--border), 0 8px 24px rgba(0,0,0,0.08);
+    flex-shrink: 0; position: relative; z-index: 2; }
+  .aff-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--tg-blue); cursor: pointer; font-size: 18px; }
+  .aff-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-input); border: none; color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
+  .aff-close:active { background: var(--bg-card); }
+  .aff-topbar-title { font-size: clamp(15px, 5vw, 19px); font-weight: 800; color: var(--text-primary); }
+  .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 20px 16px calc(48px + env(safe-area-inset-bottom, 0px)); position: relative; z-index: 1; }
+  /* hero balance card — richer than the old .aff-balance */
+  .aff-hero-card { position: relative; padding: 22px 20px 18px; border-radius: 22px; margin-bottom: 16px; overflow: hidden;
+    background: linear-gradient(135deg, rgba(48,209,88,0.18) 0%, rgba(10,132,255,0.12) 100%);
+    border: 1px solid rgba(48,209,88,0.32); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+  .aff-hero-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .aff-hero-value { font-size: clamp(26px, 8vw, 36px); font-weight: 900; color: var(--text-primary); display: flex; align-items: center; gap: 10px; letter-spacing: -0.6px; }
+  .aff-hero-sub { font-size: 14px; color: var(--text-secondary); margin-top: 5px; }
+  /* section headers */
+  .aff-section-head { font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;
+    letter-spacing: 0.06em; margin: 0 2px 10px; }
+  .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 18px 2px 14px; }
+  /* stats grid */
+  .aff-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .aff-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 12px 4px; text-align: center;
+    box-shadow: inset 0 1px 0 var(--glass-hi); }
   .aff-stat-n { font-size: 18px; font-weight: 800; color: var(--text-primary); }
   .aff-stat-l { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
-  .aff-motion { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; border-radius: inherit; }
-  .aff-body { position: relative; z-index: 1; }
-  .aff-screen { position: fixed; inset: 0; z-index: 1400; background: var(--bg); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; animation: affSlideIn 0.34s var(--spring); }
-  @keyframes affSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .aff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--separator); background: var(--bg); flex-shrink: 0; position: relative; z-index: 2; }
-  .aff-back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-primary); cursor: pointer; }
-  .aff-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-input); border: none; color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
-  .aff-close:active { background: var(--bg-card); }
-  .aff-topbar-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
-  .aff-sub { font-size: 14px; color: var(--text-secondary); margin: 0 2px 16px; line-height: 1.45; }
-  .aff-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(48px + env(safe-area-inset-bottom, 0px)); position: relative; z-index: 1; }
-  .aff-card-title { font-size: 12.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 18px 2px 14px; }
-  .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
-  .aff-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
-  .aff-bar { flex: 1; background: linear-gradient(180deg, #30d158, #0a84ff); border-radius: 3px 3px 0 0; min-height: 2px; transform-origin: bottom; animation: affBarGrow 0.5s var(--spring) both; }
-  @keyframes affBarGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-  .aff-chart-empty { height: 120px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
-  .aff-chart-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-secondary); }
+  /* chart wrapper */
+  .aff-chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 12px 10px; box-shadow: inset 0 1px 0 var(--glass-hi); }
+  .aff-chart-empty { height: 140px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
+  .aff-chart-axis { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-secondary); }
+  .aff-table { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--separator); }
+  .aff-table-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 2px; font-size: 13px; }
+  .aff-table-day { color: var(--text-secondary); font-weight: 600; }
+  .aff-table-v { color: var(--text-secondary); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .aff-table-v.pos { color: #30d158; }
+  /* payout rows */
   .aff-payout-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--separator); }
   .aff-payout-row:last-child { border-bottom: none; }
   .aff-payout-amt { font-weight: 700; font-size: 15px; color: var(--text-primary); }
@@ -2226,6 +2437,28 @@ const styles = `
   .st-paid { background: rgba(48,209,88,0.15); color: #30d158; }
   .st-requested { background: rgba(255,159,10,0.15); color: #ff9f0a; }
   .st-declined, .st-rejected { background: rgba(255,69,58,0.15); color: #ff453a; }
+  .aff-locked-hero { text-align: center; padding: 22px 0 6px; }
+  .aff-locked-icon { width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a84ff, #bf5af2); box-shadow: 0 10px 28px rgba(10,132,255,0.38); }
+  .aff-locked-title { font-size: 19px; font-weight: 800; color: var(--text-primary); }
+  .aff-locked-sub { font-size: 14px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5; padding: 0 8px; }
+  .aff-perk-row { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--separator); font-size: 14px; color: var(--text-primary); line-height: 1.4; }
+  .aff-perk-row:last-child { border-bottom: none; }
+  .aff-perk-check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: rgba(48,209,88,0.16); color: #30d158; margin-top: 1px; }
+  .aff-perk-check svg { width: 13px; height: 13px; }
+  .aff-preview-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; }
+  .aff-preview-blur { filter: blur(5px); opacity: 0.55; pointer-events: none; user-select: none; transform: scale(1.02); }
+  .aff-preview-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--text-primary); }
+  .aff-preview-lock svg { padding: 14px; border-radius: 50%; background: var(--bg-sheet); border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), inset 0 1px 0 var(--glass-hi); }
+  .aff-amount-row { display: flex; align-items: center; gap: 8px; }
+  .aff-amount-row .ios-input { flex: 1; }
+  .aff-max-btn { flex-shrink: 0; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border);
+    background: var(--bg-input); color: var(--tg-blue); font-weight: 800; font-size: 13px;
+    font-family: var(--font); cursor: pointer; }
+  .aff-max-btn:active { background: var(--bg-card); }
+  .aff-hint { font-size: 12.5px; color: var(--text-secondary); margin-top: 8px; padding: 0 2px; }
   .bc-wrap { display: flex; flex-direction: column; gap: 12px; }
   .cancel-link { display: block; width: 100%; margin-top: 18px; background: none; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 600; font-family: var(--font); cursor: pointer; padding: 8px 0; text-align: center; opacity: 0.75; }
   .cancel-link:active { opacity: 1; color: #ff453a; }
@@ -2330,11 +2563,11 @@ const styles = `
   .consent-text { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 14px; }
   .consent-link { color: var(--tg-blue); font-weight: 700; cursor: pointer; }
   .consent-btn { width: 100%; }
-  /* desktop launch: scale the no-card centre column slightly */
+  /* desktop launch: scale the whole layout up so it doesn't look tiny on a big screen */
   @media (min-width: 768px) and (min-height: 700px) {
-    .splash-center { transform: scale(1.18); }
-    .splash-leaving .splash-center { transform: scale(1.08); }
-    .splash-aurora span { opacity: 0.72; }
+    .splash-layout { transform: scale(1.35); }
+    .splash-leaving .splash-layout { transform: scale(1.25); }
+    .splash-glow { opacity: 0.9; }
   }
   .admin-range-btn { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-secondary); font-weight: 700; font-size: 12px; padding: 7px 13px; border-radius: 100px; cursor: pointer; font-family: var(--font); transition: all .2s var(--spring); }
   .admin-range-btn:hover { border-color: var(--accent); color: var(--text-primary); }
@@ -2351,62 +2584,6 @@ const styles = `
     .admin-screen.desk .admin-tabs { max-width: 460px; }
     .admin-screen.desk .admin-bars { height: 200px; }
     .admin-screen.desk .admin-2col { grid-template-columns: 1fr 1fr; }
-  }
-
-  /* ═══════════════════ UI v3 — Liquid Glass depth pass (motion + specular polish) ═══════════════════ */
-  /* consistent top-edge "light catch" sheen for glass surfaces that didn't have one yet */
-  .sheet-content, .gate-card, .plan-card, .aff-balance, .hoton-cta, .promo-chosen,
-  .admin-tool-card, .consent-card, .star-balance-card, .aff-locked, .cancel-confirm, .scouting-strip {
-    position: relative;
-  }
-  .sheet-content::before, .gate-card::before, .plan-card::before, .aff-balance::before,
-  .hoton-cta::before, .promo-chosen::before, .admin-tool-card::before, .consent-card::before,
-  .star-balance-card::before {
-    content: ""; position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--glass-hi), transparent);
-    pointer-events: none; border-radius: 1px;
-  }
-
-  /* icon buttons: layered frosted glass with a soft specular ring + springier tap */
-  .icon-btn {
-    background: linear-gradient(155deg, var(--bg-card), transparent);
-    transition: transform .22s var(--spring), box-shadow .22s var(--ease), background .2s;
-  }
-  .icon-btn:active { transform: scale(0.86); box-shadow: inset 0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 var(--glass-hi); }
-  .logo-tile, .gate-logo { transition: transform .3s var(--spring); }
-  .logo-tile:active { transform: scale(0.92); }
-
-  /* buttons: a brief glass "compress" glow when pressed, on top of the existing spring scale */
-  .action-btn { transition: transform .18s var(--spring), box-shadow .3s var(--ease), opacity .2s; }
-  .action-btn:active::after { background: linear-gradient(180deg, rgba(255,255,255,0.42), transparent 60%); transition: background .08s; }
-
-  /* select rows / chips: tiny brightness lift on press for tactile "glass" feedback */
-  .select-btn:active:not(:disabled), .chip:active, .desktop-nav-btn:active, .sort-pill:active,
-  .promo-market-btn:active, .admin-tab:active, .admin-range-btn:active {
-    filter: brightness(1.06);
-  }
-
-  /* result / admin cards: slightly deeper, cooler ambient shadow for more perceived depth */
-  .result-card, .admin-card, .skel-card {
-    box-shadow: var(--shadow-card), 0 1px 0 rgba(255,255,255,0.04) inset;
-    transition: transform .3s var(--spring), box-shadow .3s var(--ease);
-  }
-
-  /* sheet drag handle: subtle glass pill with its own highlight */
-  .sheet-grab { background: linear-gradient(180deg, var(--text-secondary), var(--text-secondary)); box-shadow: 0 1px 0 var(--glass-hi); }
-
-  /* tab bar icons: a touch more spring on the lift so it reads as "liquid" rather than mechanical */
-  .tab-icon { transition: transform .42s var(--spring); }
-  .tab-icon-active { transform: translateY(-3px) scale(1.14); }
-
-  /* promo / badge chips: soft glass glow instead of a flat drop shadow */
-  .promo-badge { box-shadow: 0 4px 14px rgba(255,90,30,0.4), inset 0 1px 0 rgba(255,255,255,0.35); }
-  .badge-buy { box-shadow: 0 2px 8px rgba(10,132,255,0.28); }
-
-  /* respect reduced-motion: keep the launch readable without disabling the progress fill */
-  @media (prefers-reduced-motion: reduce) {
-    .glass-panel, .splash-mascot, .glass-floor, .glass-orbit, .glass-orbit .orb,
-    .splash-aurora span, .glass-sheen, .glass-progress::after { animation: none; }
   }
 `;
 
@@ -2861,7 +3038,7 @@ export default function App() {
     // quick 0.65s splash so returning never replays the whole launch.
     let warm = false;
     try { warm = sessionStorage.getItem("gt_booted") === "1"; sessionStorage.setItem("gt_booted", "1"); } catch { /* noop */ }
-    const ms = warm ? 650 : 3000;
+    const ms = warm ? 650 : 6500;
     setSplashMs(ms);
     const fade = setTimeout(() => setSplashLeaving(true), Math.max(0, ms - 450));
     const tmr = setTimeout(() => setBooting(false), ms);
@@ -2986,7 +3163,12 @@ export default function App() {
   // Growing it is a pure state update against data already in memory — no
   // network wait — so it can stay well ahead of scroll position instead of
   // the user scrolling into empty space while content "catches up".
-  const RENDER_CHUNK = 24;
+  // Cards revealed per step. This was 24 — every sentinel trigger fired 24
+  // simultaneous poster-image requests at the external Fragment CDN, which
+  // blew past the browser's per-host connection limit and left a visible wave
+  // of blank/grey cards mid-scroll ("lag"). Smaller, more frequent chunks (paired
+  // with the 2600px early-trigger rootMargin) keep the pipe from ever backing up.
+  const RENDER_CHUNK = 8;
   const [renderCount, setRenderCount] = useState(RENDER_CHUNK);
   const [savedRenderCount, setSavedRenderCount] = useState(RENDER_CHUNK);
   const [hasSearched, setHasSearched] = useState(!!savedSearch.hasSearched);
@@ -3057,8 +3239,25 @@ export default function App() {
   // affiliate program (Scout Pro)
   const [affInfo, setAffInfo] = useState(null);
   const [affAddr, setAffAddr] = useState("");
+  const [affAmount, setAffAmount] = useState("");
   const [affBusy, setAffBusy] = useState(false);
   const [affMsg, setAffMsg] = useState("");
+  const [affPage, setAffPage] = useState(null); // null | "main" | "history" | "withdraw"
+  const [affClosing, setAffClosing] = useState(false);
+  const affLoadedRef = useRef(false);
+  // Closing the WHOLE affiliate section (not just stepping between its own
+  // sub-pages) used to unmount .aff-screen instantly, hard-cutting straight to
+  // whatever tab was underneath (often the Profile tab's blue hero banner) —
+  // that hard cut is what read as a "flash". This plays the reverse slide
+  // first, then actually clears affPage once the animation has had time to run.
+  const closeAffiliate = (thenOpenSheet) => {
+    haptic();
+    setAffClosing(true);
+    setTimeout(() => {
+      setAffPage(null); setAffClosing(false);
+      if (thenOpenSheet) setActiveSheet(thenOpenSheet);   // deferred: only opens once the affiliate screen is truly gone
+    }, 260);
+  };
   const [pendingScout, setPendingScout] = useState("");   // gift_id from a q_ inline deep link
   const [pendingGiftSlug, setPendingGiftSlug] = useState("");   // slug from a g_ gift deep link — held until access is granted
   const [editingVanity, setEditingVanity] = useState(false);   // inline custom-code editor (Pro)
@@ -3081,7 +3280,13 @@ export default function App() {
   const [pullY, setPullY] = useState(0);
   const touchStartY = useRef(0);
   const contentRef = useRef(null);
-  const [scrollDepth, setScrollDepth] = useState(0);
+  // Boolean, not a raw pixel value — updates ONLY when crossing the back-to-top
+  // threshold, rAF-throttled. The previous version stored the live scrollTop in
+  // state and updated it on every scroll event, which forced a full re-render of
+  // the entire results tree (100+ cards) on every pixel of scroll — that was the
+  // real cause of the scroll lag, not image loading.
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const scrollRaf = useRef(null);
 
   // tab pill measuring
   const tabRefs = useRef({});
@@ -3367,13 +3572,36 @@ export default function App() {
     return () => { alive = false; };
   }, [promoGiftId]);
 
-  // Affiliate dashboard: load when the sheet opens.
+  // Affiliate dashboard: load ONCE per visit to the affiliate section, not every
+  // time the user returns to "main" from history/withdraw — re-fetching (and
+  // blanking affInfo) on every sub-page return was what made it feel slow.
   useEffect(() => {
-    if (activeSheet === "affiliate" && window.Telegram?.WebApp?.initData) {
+    if (affPage !== null && !affLoadedRef.current) {
+      affLoadedRef.current = true;
       setAffMsg("");
       api("/api/affiliate").then((d) => setAffInfo(d || { ok: false })).catch(() => setAffInfo({ ok: false }));
     }
-  }, [activeSheet]);
+    if (affPage === null) {
+      affLoadedRef.current = false;   // next open fetches fresh
+    }
+  }, [affPage]);
+
+  // Telegram's own chrome shows a native back/close control whenever a Mini App
+  // is open. Without hooking BackButton, tapping it EXITS the whole app instead
+  // of stepping back within our affiliate flow. Show it exactly while we're on
+  // a sub-page and route its click through the same in-app back logic as our
+  // own arrow, so both controls behave identically.
+  useEffect(() => {
+    const bb = tg?.BackButton;
+    if (!bb) return;
+    if (affPage === null) { try { bb.hide(); } catch { /* noop */ } return; }
+    const onBack = () => {
+      if (affPage === "history" || affPage === "withdraw") { haptic(); setAffPage("main"); }
+      else { closeAffiliate(); }
+    };
+    try { bb.show(); bb.onClick(onBack); } catch { /* noop */ }
+    return () => { try { bb.offClick(onBack); } catch { /* noop */ } };
+  }, [affPage, tg]);
 
   // ── referral + deep-link handling on launch ──
   useEffect(() => {
@@ -3869,16 +4097,20 @@ export default function App() {
   };
   const withdrawAffiliate = async () => {
     const addr = affAddr.trim();
+    const amt = parseInt(affAmount, 10);
     if (!addr) { setAffMsg(t.aff_need_addr); return; }
+    if (!amt || amt <= 0) { setAffMsg(t.aff_need_amount); return; }
     setAffBusy(true); setAffMsg("");
     try {
-      const r = await api("/api/affiliate/withdraw", { method: "POST", body: { ton_address: addr }, timeout: 20000 });
+      const r = await api("/api/affiliate/withdraw", { method: "POST", body: { ton_address: addr, amount: amt }, timeout: 20000 });
       if (r?.ok) {
-        setAffMsg(t.aff_requested); haptic("medium"); setAffAddr("");
+        setAffMsg(t.aff_requested); haptic("medium"); setAffAddr(""); setAffAmount("");
         api("/api/affiliate").then((d) => setAffInfo(d || {})).catch(() => {});
+        setTimeout(() => setAffPage("main"), 900);
       } else {
         setAffMsg(r?.error === "min" ? t.aff_min.replace("{n}", String(r.min || 1000))
-          : r?.error === "pro" ? t.aff_pro_only : r?.error === "address" ? t.aff_need_addr : t.aff_failed);
+          : r?.error === "pro" ? t.aff_pro_only : r?.error === "address" ? t.aff_need_addr
+          : r?.error === "amount" ? t.aff_amount_invalid : t.aff_failed);
       }
     } catch { setAffMsg(t.aff_failed); }
     setAffBusy(false);
@@ -4019,7 +4251,11 @@ export default function App() {
 
   const renderGiftCard = (item, i = 0, promoted = false, sold = false) => {
     const poster = item.image || giftImage(item.slug, item.num);
-    const anim = giftAnimation(item.slug, item.num);
+    const anim = item.animation || giftAnimation(item.slug, item.num);
+    // Fragment's per-item CDN image can lag days behind a brand-new collection
+    // (Fragment has to crawl/index it themselves); the collection's own
+    // Telegram-sourced preview has no such lag, so it's the fallback.
+    const fallbackPoster = collections.find((c) => String(c.gift_id) === String(item.gift_id))?.preview || null;
     const saved = isSavedGift(item);
     const dotHex = item.backdropHex;
     // item.slug already carries "{collectionSlug}-{num}" (see backend cdn_full),
@@ -4029,8 +4265,7 @@ export default function App() {
     return (
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
-          <LottieGift src={anim} poster={poster} size={132} radius={18} />
-          {promoted && <div className="promo-badge">{t.promoted}</div>}
+          <LottieGift src={anim} fallbackSrc={item.animationFallback} poster={poster} fallbackPoster={[item.imageFallback, fallbackPoster]} backdropColor={dotHex} symbolPattern={item.symbolImage} size={132} radius={18} />
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
             {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
@@ -4072,7 +4307,7 @@ export default function App() {
     const num = promo.num ? Number(promo.num) : null;
     const collImg = collections.find((c) => String(c.gift_id) === String(promo.gift_id))?.preview;
     const poster = num != null ? giftImage(promo.slug, num) : (collImg || giftImage(promo.slug, 1));
-    const anim = giftAnimation(promo.slug, num != null ? num : 1);
+    const anim = promo.animation || giftAnimation(promo.slug, num != null ? num : 1);
     const amt = (promo.amount || "").toString().trim();
     const n = amt ? Number(amt.replace(/,/g, "")) : null;
     const item = {
@@ -4096,8 +4331,7 @@ export default function App() {
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }}
         onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero">
-          <LottieGift src={anim} poster={poster} size={132} radius={18} />
-          <div className="promo-badge">{t.promoted}</div>
+          <LottieGift src={anim} poster={poster} fallbackPoster={collImg || null} size={132} radius={18} />
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
             {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
@@ -4108,7 +4342,10 @@ export default function App() {
           {item.backdrop && <div className="meta-row"><span className="meta-icon-slot" /><span>{item.backdrop}</span></div>}
         </div>
         {item.model && (
-          <div className="result-model"><span className="model-rarity">{item.model}</span></div>
+          <div className="result-model">
+            <span className="model-rarity">{item.model}</span>
+            {item.modelRarity != null && <span style={{ marginLeft: 6 }}>{fmtRarity(item.modelRarity)}</span>}
+          </div>
         )}
         <div className="result-foot">
           <div className="result-price">{item.price != null ? <PriceTag item={item} size={17} exact={isDesktop} /> : <span className="result-view">{t.view_on}</span>}</div>
@@ -4267,92 +4504,6 @@ export default function App() {
         </BottomSheet>
       );
     }
-    if (activeSheet === "affiliate") {
-      const a = affInfo && affInfo.ok ? affInfo : null;
-      const isPro = !!(a && a.is_pro);
-      const pct = (a && a.pct) || 30;
-      const minW = (a && a.min_withdraw) || 1000;
-      const avail = (a && a.available) || 0;
-      const canWithdraw = isPro && avail >= minW;
-      const series = (a && a.series) || [];
-      const maxV = Math.max(1, ...series.map((d) => d.v || 0));
-      const hasEarn = series.some((d) => (d.v || 0) > 0);
-      const payouts = (a && a.payouts) || [];
-      const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
-      return (
-        <BottomSheet onClose={() => setActiveSheet(null)}>
-          <SheetMotion gifts={collections} />
-          <div className="sheet-body">
-            <div className="sheet-title-row"><div className="sheet-title">{t.affiliate_title}</div><button className="sheet-info-btn" onClick={() => setDetailNote("affiliate")}><IconInfo /></button></div>
-            {!a ? (
-              <p className="vanity-help" style={{ textAlign: "center", padding: "32px 0" }}>{affInfo === null ? "\u2026" : t.aff_failed}</p>
-            ) : !isPro ? (
-              <>
-                <div className="aff-locked">
-                  <div className="aff-locked-icon"><LottieGift src={HOTON_STAR_LOTTIE} size={52} radius={14} eager /></div>
-                  <div className="aff-locked-title">{t.aff_locked_title}</div>
-                  <div className="aff-locked-sub">{t.aff_locked_sub.replace("{n}", String(pct))}</div>
-                </div>
-                <button className="action-btn" onClick={() => { haptic(); setActiveSheet("premium"); }}>{t.aff_upgrade}</button>
-              </>
-            ) : (
-              <>
-                <div className="aff-balance">
-                  <div className="aff-bal-label">{t.aff_available}</div>
-                  <div className="aff-bal-value"><span className="aff-bal-star"><LottieGift src={HOTON_STAR_LOTTIE} size={28} radius={8} eager /></span> {compactNum(avail)}</div>
-                  {a.gram_value != null
-                    ? <div className="aff-bal-ton">{t.aff_withdraw_as.replace("{v}", compactNum(a.gram_value))}</div>
-                    : <div className="aff-bal-ton">{t.aff_track_note}</div>}
-                </div>
-                <div className="aff-stats">
-                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.earned || 0)}</div><div className="aff-stat-l">{t.aff_earned}</div></div>
-                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.pending || 0)}</div><div className="aff-stat-l">{t.aff_pending}</div></div>
-                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.referees || 0)}</div><div className="aff-stat-l">{t.aff_referred}</div></div>
-                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.payers || 0)}</div><div className="aff-stat-l">{t.aff_payers}</div></div>
-                </div>
-
-                <div className="aff-card-title">{t.aff_earnings_30d}</div>
-                <div className="aff-chart-wrap">
-                  {hasEarn ? (
-                    <div className="aff-chart">
-                      {series.map((d, i) => (
-                        <div key={i} className="aff-bar" style={{ height: `${Math.max(2, (d.v / maxV) * 100)}%` }} />
-                      ))}
-                    </div>
-                  ) : <div className="aff-chart-empty">{t.aff_no_earnings}</div>}
-                  <div className="aff-chart-axis"><span>{t.aff_30d_ago}</span><span>{t.aff_today}</span></div>
-                </div>
-
-                <div className="promo-field-label" style={{ marginTop: 18 }}>{t.aff_ton_addr}</div>
-                <input className="ios-input" value={affAddr} placeholder={t.aff_addr_ph}
-                  onChange={(e) => setAffAddr(e.target.value.trim())} />
-                <button className="action-btn" style={{ marginTop: 14 }} disabled={!canWithdraw || affBusy} onClick={withdrawAffiliate}>
-                  {affBusy ? t.opening : canWithdraw ? t.aff_withdraw : t.aff_min.replace("{n}", String(minW))}
-                </button>
-                {affMsg && <p className="vanity-msg" style={{ textAlign: "center" }}>{affMsg}</p>}
-
-                {payouts.length > 0 && (
-                  <>
-                    <div className="aff-card-title" style={{ marginTop: 22 }}>{t.aff_history}</div>
-                    <div className="ios-group">
-                      {payouts.map((p) => (
-                        <div key={p.id} className="aff-payout-row">
-                          <div>
-                            <div className="aff-payout-amt">{Number(p.stars).toLocaleString("en-US")} {"\u2605"}</div>
-                            <div className="aff-payout-date">{new Date((p.ts || 0) * 1000).toLocaleDateString()}</div>
-                          </div>
-                          <span className={`aff-payout-status st-${p.status}`}>{payoutLabel(p.status)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </BottomSheet>
-      );
-    }
     if (activeSheet === "faq" || activeSheet === "terms" || activeSheet === "privacy") {
       const title = activeSheet === "faq" ? "FAQ" : activeSheet === "terms" ? "Terms of Service" : "Privacy Policy";
       const rows = LEGAL[activeSheet] || [];
@@ -4378,11 +4529,12 @@ export default function App() {
       const saved = isSavedGift(g);
       const anim = g.animation || giftAnimation(g.slug, g.num);
       const img = g.image || giftImage(g.slug, g.num);
+      const detailFallback = collections.find((c) => String(c.gift_id) === String(g.gift_id))?.preview || null;
       const dot = g.backdropHex;
       return (
         <BottomSheet onClose={() => setActiveSheet(null)}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginBottom: 18 }}>
-              <LottieGift src={anim} poster={img} size={132} radius={24} />
+              <LottieGift src={anim} fallbackSrc={g.animationFallback} poster={img} fallbackPoster={[g.imageFallback, detailFallback]} backdropColor={dot} symbolPattern={g.symbolImage} size={132} radius={24} />
               <div className="sheet-title" style={{ margin: 0 }}>{g.name}{g.num != null ? ` #${g.num}` : ""}</div>
             </div>
             <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 15, fontWeight: 500, marginBottom: 20 }}>{g.market}</div>
@@ -4398,14 +4550,19 @@ export default function App() {
               {g.backdrop && (
                 <div className="ios-row" style={{ cursor: "default" }}>
                   <span style={{ color: "var(--text-secondary)" }}>{t.backdrop}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {dot && <span className="color-dot" style={{ background: dot }} />}{g.backdrop}
+                    {g.backdropRarity != null && <span className={`model-rarity ${rarityClass(g.backdropRarity)}`}>{fmtRarity(g.backdropRarity)}</span>}
                   </span>
                 </div>
               )}
               {g.symbol && (
                 <div className="ios-row" style={{ cursor: "default" }}>
-                  <span style={{ color: "var(--text-secondary)" }}>{t.symbol}</span><span>{g.symbol}</span>
+                  <span style={{ color: "var(--text-secondary)" }}>{t.symbol}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {g.symbol}
+                    {g.symbolRarity != null && <span className={`model-rarity ${rarityClass(g.symbolRarity)}`}>{fmtRarity(g.symbolRarity)}</span>}
+                  </span>
                 </div>
               )}
               <div className="ios-row" style={{ cursor: "default" }}>
@@ -4753,10 +4910,7 @@ export default function App() {
         </div>
 
         {renderCount < results.length && (
-          <>
-            <SkeletonCards n={4} desktop={desktop} />
-            <RevealSentinel onReveal={() => setRenderCount((c) => Math.min(results.length, c + RENDER_CHUNK))} />
-          </>
+          <RevealSentinel onReveal={() => setRenderCount((c) => Math.min(results.length, c + RENDER_CHUNK))} />
         )}
 
         {nextOffset && renderCount >= results.length && (
@@ -4816,7 +4970,7 @@ export default function App() {
           <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #ff9f0a, #ff375f)" }}><TGStar size={16} /></div>{t.promote_row}</div>
           <IconChevronRight />
         </div>
-        <div className="ios-row" onClick={() => { haptic(); setActiveSheet("affiliate"); }}>
+        <div className="ios-row" onClick={() => { haptic(); setAffPage("main"); }}>
           <div className="row-left"><div className="row-icon-box" style={{ background: "linear-gradient(135deg, #30d158, #0a84ff)" }}><IconHeart /></div>{t.affiliate_row}</div>
           <IconChevronRight />
         </div>
@@ -4883,7 +5037,7 @@ export default function App() {
             {clearArmed ? "Confirm clear" : "Clear my data"}
           </span>
           <span className="dot">|</span>
-          <span onClick={() => { haptic(); setActiveSheet("affiliate"); }}>Affiliate Program</span>
+          <span onClick={() => { haptic(); setAffPage("main"); }}>Affiliate Program</span>
           <span className="dot">|</span>
           <span className="footer-api-item" onClick={() => { haptic(); setSoonNote(true); }}>Agent API <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,verticalAlign:"-0.15em",opacity:0.7}}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
         </div>
@@ -4910,23 +5064,54 @@ export default function App() {
         <GoldDefs />
         <div className={`splash${splashLeaving ? " splash-leaving" : ""}`} data-theme={theme}
           style={{ "--splash-ms": `${splashMs}ms` }}>
-          <div className="splash-aurora" aria-hidden="true"><span className="a1" /><span className="a2" /><span className="a3" /></div>
-          <div className="splash-center">
-            <div className="glass-stage">
-              <div className="glass-panel">
-                <div className="glass-sheen" />
+          <div className="splash-glow" />
+
+          <div className="splash-layout">
+            <div className="splash-top">
+              <div className="splash-eyebrow">{t.splash_eyebrow}</div>
+              <div className="splash-hero">GiftTrove</div>
+            </div>
+
+            <div className="splash-subject">
+              <div className="splash-orbit-wrap">
                 <img src={MASCOT_URL} alt="" className="splash-mascot"
                   onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                <div className="glass-floor" />
+
+                {/* Marketplace badges — the inner, prominent triangle (top-left,
+                    top-right, bottom-centre). Dark glass badges: the real marks
+                    are white/light (Telegram, Fragment) or blue (MarketApp), so a
+                    dark backing is what actually makes them read clearly — a
+                    white badge would hide the white ones. */}
+                <div className="splash-badge b-tg" style={{ animationDelay: "0.5s" }}>
+                  <img src="/marks/telegram.png" alt="Telegram" />
+                </div>
+                <div className="splash-badge b-frag" style={{ animationDelay: "0.62s" }}>
+                  <img src="/marks/fragment.png" alt="Fragment" />
+                </div>
+                <div className="splash-badge b-ma" style={{ animationDelay: "0.74s" }}>
+                  <img src="/marks/marketapp.png" alt="MarketApp" />
+                </div>
+
+                {/* Gift stickers — the outer, secondary triangle, interleaved in
+                    the gaps between the marketplace badges (top-centre, mid-left,
+                    mid-right). Smaller and softer so the marketplaces stay the
+                    visual focus. */}
+                <div className="splash-charm c-durov" style={{ animationDelay: "0.86s" }}>
+                  <img src="/lottie-posters/gift_minidurov.png" alt="" className="splash-charm-img" />
+                </div>
+                <div className="splash-charm c-cat" style={{ animationDelay: "0.98s" }}>
+                  <img src="/lottie-posters/gift_scaredcat.png" alt="" className="splash-charm-img" />
+                </div>
+                <div className="splash-charm c-cream" style={{ animationDelay: "1.1s" }}>
+                  <img src="/lottie-posters/gift_vicecream.png" alt="" className="splash-charm-img" />
+                </div>
               </div>
-              <div className="glass-orbit" aria-hidden="true">
-                <span className="orb orb-gram"><GramMark size={18} /></span>
-                <span className="orb orb-star"><TGStar size={16} /></span>
-              </div>
+              <div className="splash-bar"><span /></div>
             </div>
-            <div className="splash-brand">GiftTrove</div>
-            <div className="splash-tagline">{t.fastest_way}</div>
-            <div className="glass-progress"><span /></div>
+
+            <div className="splash-footer">
+              <div className="splash-tagline">{t.fastest_way}</div>
+            </div>
           </div>
         </div>
       </>
@@ -5036,9 +5221,6 @@ export default function App() {
         {consentOverlay}
         <div className="desktop-layout" data-theme={theme}>
           <div className="desktop-sidebar">
-            <div className="desktop-logo">
-              <span className="logo-tile lg"><img src={LOGO_URL} alt="GiftTrove" /></span>
-            </div>
             {tabs.map((tab) => (
               <button key={tab.id} className={`desktop-nav-btn ${activeTab === tab.id ? "active" : ""}`}
                 onClick={() => { haptic(); bump(tab.id); setActiveTab(tab.id); }}>
@@ -5053,6 +5235,202 @@ export default function App() {
           <div className="desktop-content">{renderActiveTab(true)}</div>
           {renderSheet()}
         </div>
+      </>
+    );
+  }
+
+  // ── AFFILIATE FULL-SCREEN (slides in from right, two sub-pages: main + history) ──
+  if (affPage !== null) {
+    const a = affInfo && affInfo.ok ? affInfo : null;
+    const isPro = !!(a && a.is_pro);
+    const pct = (a && a.pct) || 30;
+    const minW = (a && a.min_withdraw) || 1000;
+    const avail = (a && a.available) || 0;
+    const canWithdraw = isPro && avail >= minW;
+    const series = (a && a.series) || [];
+    const hasEarn = series.some((d) => (d.v || 0) > 0);
+    const payouts = (a && a.payouts) || [];
+    const payoutLabel = (st) => st === "paid" ? t.aff_st_paid : st === "requested" ? t.aff_st_pending : t.aff_st_declined;
+
+    if (affPage === "history") {
+      return (
+        <>
+          <style>{styles}</style>
+          <div className={`aff-screen${affClosing ? " aff-screen-leaving" : ""}`} data-theme={theme}>
+            <div className="aff-topbar">
+              <div className="aff-topbar-title">{t.aff_history}</div>
+            </div>
+            <div className="aff-scroll">
+              {payouts.length === 0 ? (
+                <p style={{ textAlign: "center", color: "var(--text-secondary)", padding: "48px 0", fontSize: 15 }}>{t.aff_no_earnings}</p>
+              ) : (
+                <div className="ios-group" style={{ margin: 0 }}>
+                  {payouts.map((p) => (
+                    <div key={p.id} className="aff-payout-row">
+                      <div>
+                        <div className="aff-payout-amt">{Number(p.stars).toLocaleString("en-US")} {"\u2605"}</div>
+                        <div className="aff-payout-date">{new Date((p.ts || 0) * 1000).toLocaleDateString()}</div>
+                      </div>
+                      <span className={`aff-payout-status st-${p.status}`}>{payoutLabel(p.status)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    if (affPage === "withdraw") {
+      const amtNum = parseInt(affAmount, 10) || 0;
+      const validAmt = amtNum >= minW && amtNum <= avail;
+      const canSubmit = affAddr.trim() && validAmt && !affBusy;
+      return (
+        <>
+          <style>{styles}</style>
+          <div className={`aff-screen${affClosing ? " aff-screen-leaving" : ""}`} data-theme={theme}>
+            <div className="aff-topbar">
+              <div className="aff-topbar-title">{t.aff_withdraw_earnings}</div>
+            </div>
+            <div className="aff-scroll">
+              <div className="aff-hero-card" style={{ marginBottom: 22 }}>
+                <div className="aff-hero-label">{t.aff_available}</div>
+                <div className="aff-hero-value">
+                  <LottieGift src={HOTON_STAR_LOTTIE} size={28} radius={8} eager />
+                  <span>{compactNum(avail)}</span>
+                </div>
+                {a?.gram_value != null && <div className="aff-hero-sub">{"\u2248"} {compactNum(a.gram_value)} GRAM</div>}
+              </div>
+
+              <div className="aff-section-head">{t.aff_amount}</div>
+              <div className="aff-amount-row">
+                <input className="ios-input" inputMode="numeric" value={affAmount} placeholder={t.aff_amount_ph}
+                  onChange={(e) => setAffAmount(e.target.value.replace(/[^0-9]/g, ""))} style={{ marginBottom: 0 }} />
+                <button className="aff-max-btn" onClick={() => { haptic(); setAffAmount(String(avail)); }}>{t.aff_max}</button>
+              </div>
+              <div className="aff-hint">{t.aff_amount_range.replace("{min}", minW.toLocaleString())}</div>
+
+              <div className="aff-section-head" style={{ marginTop: 18 }}>{t.aff_ton_addr}</div>
+              <input className="ios-input" value={affAddr} placeholder={t.aff_addr_ph}
+                onChange={(e) => setAffAddr(e.target.value.trim())} />
+
+              <button className="action-btn" style={{ marginTop: 16 }} disabled={!canSubmit} onClick={withdrawAffiliate}>
+                {affBusy ? t.opening : t.aff_withdraw}
+              </button>
+              {affMsg && <p className="vanity-msg" style={{ textAlign: "center", marginTop: 10 }}>{affMsg}</p>}
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // main affiliate page
+    return (
+      <>
+        <style>{styles}</style>
+        <div className={`aff-screen${affClosing ? " aff-screen-leaving" : ""}`} data-theme={theme}>
+          <div className="aff-topbar">
+            <div className="aff-topbar-title">{t.affiliate_title}</div>
+            <button className="aff-close" onClick={() => setDetailNote("affiliate")}><IconInfo /></button>
+          </div>
+          <div className="aff-scroll">
+            {!a ? (
+              <p style={{ textAlign: "center", color: "var(--text-secondary)", padding: "56px 0", fontSize: 15 }}>
+                {affInfo === null ? "…" : t.aff_failed}
+              </p>
+            ) : !isPro ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, paddingTop: 8 }}>
+                <div className="aff-locked-hero">
+                  <div className="aff-locked-icon"><LottieGift src={HOTON_STAR_LOTTIE} size={56} radius={16} eager /></div>
+                  <div className="aff-locked-title">{t.aff_locked_title}</div>
+                </div>
+
+                <div className="ios-group" style={{ marginTop: 14 }}>
+                  {[t.aff_locked_perk1.replace("{n}", String(pct)), t.aff_locked_perk2, t.aff_locked_perk3].map((perk, i) => (
+                    <div key={i} className="aff-perk-row">
+                      <span className="aff-perk-check"><IconCheck /></span>
+                      <span>{perk}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="aff-section-head" style={{ marginTop: 22 }}>{t.aff_locked_preview}</div>
+                <div className="aff-preview-wrap">
+                  <div className="aff-preview-blur">
+                    <div className="aff-hero-card" style={{ marginBottom: 14 }}>
+                      <div className="aff-hero-label">{t.aff_available}</div>
+                      <div className="aff-hero-value"><span>12,400</span></div>
+                    </div>
+                    <div className="aff-stats">
+                      <div className="aff-stat"><div className="aff-stat-n">18.2K</div><div className="aff-stat-l">{t.aff_earned}</div></div>
+                      <div className="aff-stat"><div className="aff-stat-n">640</div><div className="aff-stat-l">{t.aff_pending}</div></div>
+                      <div className="aff-stat"><div className="aff-stat-n">37</div><div className="aff-stat-l">{t.aff_referred}</div></div>
+                      <div className="aff-stat"><div className="aff-stat-n">21</div><div className="aff-stat-l">{t.aff_payers}</div></div>
+                    </div>
+                  </div>
+                  <div className="aff-preview-lock"><IconLock size={22} /></div>
+                </div>
+
+                <button className="action-btn" style={{ marginTop: 20 }} onClick={() => closeAffiliate("premium")}>{t.aff_upgrade}</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+
+                {/* ── balance hero card ── */}
+                <div className="aff-hero-card">
+                  <div className="aff-hero-label">{t.aff_available}</div>
+                  <div className="aff-hero-value">
+                    <LottieGift src={HOTON_STAR_LOTTIE} size={32} radius={9} eager />
+                    <span>{compactNum(avail)}</span>
+                  </div>
+                  {a.gram_value != null
+                    ? <div className="aff-hero-sub">≈ {compactNum(a.gram_value)} GRAM</div>
+                    : <div className="aff-hero-sub">{t.aff_track_note}</div>}
+                </div>
+
+                {/* ── four-stat grid ── */}
+                <div className="aff-stats" style={{ marginBottom: 20 }}>
+                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.earned || 0)}</div><div className="aff-stat-l">{t.aff_earned}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.pending || 0)}</div><div className="aff-stat-l">{t.aff_pending}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.referees || 0)}</div><div className="aff-stat-l">{t.aff_referred}</div></div>
+                  <div className="aff-stat"><div className="aff-stat-n">{compactNum(a.payers || 0)}</div><div className="aff-stat-l">{t.aff_payers}</div></div>
+                </div>
+
+                {/* ── 30-day chart ── */}
+                <div className="aff-section-head">{t.aff_earnings_30d}</div>
+                <div className="aff-chart-wrap" style={{ marginBottom: 20 }}>
+                  {hasEarn
+                    ? <AffEarningsChart series={series} />
+                    : <div className="aff-chart-empty">{t.aff_no_earnings}</div>}
+                  <div className="aff-chart-axis"><span>{t.aff_30d_ago}</span><span>{t.aff_today}</span></div>
+                </div>
+
+                {/* ── withdraw ── */}
+                <button className="action-btn" style={{ marginTop: 4 }}
+                  onClick={() => { haptic(); setAffMsg(""); setAffPage("withdraw"); }}>
+                  {t.aff_withdraw_earnings}
+                </button>
+
+                {/* ── payout history nav row ── */}
+                {payouts.length > 0 && (
+                  <div className="ios-group" style={{ marginTop: 22 }}>
+                    <div className="ios-row" onClick={() => { haptic(); setAffPage("history"); }}>
+                      <span>{t.aff_history}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-secondary)" }}>
+                        <span style={{ fontSize: 13 }}>{payouts.length}</span>
+                        <IconChevronRight />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+        </div>
+        {renderSheet()}
+        {renderDetailNote()}
       </>
     );
   }
@@ -5089,8 +5467,7 @@ export default function App() {
         {renderDetailNote()}
         {consentOverlay}
 
-        <div className="top-nav">
-          <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>
+        <div className="top-nav" style={{ justifyContent: "flex-end" }}>
           <div className="top-icons">
             <div className="icon-btn" onClick={() => { bump("globe"); setActiveSheet("lang"); }}><IconGlobe trigger={pulse.globe} /></div>
             <div className="icon-btn" onClick={toggleTheme}><IconContrast trigger={pulse.theme} /></div>
@@ -5098,7 +5475,17 @@ export default function App() {
         </div>
 
         <div className="content ptr-container" ref={contentRef}
-          onScroll={(e) => { const s = e.currentTarget.scrollTop; setScrollDepth(s); }}
+          onScroll={(e) => {
+            const s = e.currentTarget.scrollTop;
+            if (scrollRaf.current) return;
+            scrollRaf.current = requestAnimationFrame(() => {
+              scrollRaf.current = null;
+              setShowBackToTop((prev) => {
+                const next = s > 320;
+                return prev === next ? prev : next;   // no-op setState if unchanged -> React bails, no re-render
+              });
+            });
+          }}
           onTouchStart={ptrOff() ? undefined : handleTouchStart}
           onTouchMove={ptrOff() ? undefined : handleTouchMove}
           onTouchEnd={ptrOff() ? undefined : handleTouchEnd}
@@ -5114,11 +5501,26 @@ export default function App() {
         {/* Branded back-to-top: appears when the user has scrolled deep enough
             that the scouting strip / result header is completely out of view. The
             amber gem icon uses the GiftTrove visual language (4-point star rising). */}
-        {activeTab === "results" && scrollDepth > 320 && (
-          <button className="back-to-top" onClick={() => { haptic(); if (contentRef.current) contentRef.current.scrollTop = 0; }} aria-label="Back to top">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M10 2.5L4.5 9.5H8V15H12V9.5H15.5L10 2.5Z" fill="white"/>
-              <circle cx="10" cy="6.5" r="1.3" fill="rgba(255,255,255,0.55)"/>
+        {activeTab === "results" && showBackToTop && (
+          <button className="back-to-top" onClick={() => {
+            haptic();
+            const el = contentRef.current;
+            if (!el) return;
+            el.scrollTop = 0;
+            setShowBackToTop(false);
+            // WebKit/Telegram-webview quirk: a programmatic scrollTop jump doesn't
+            // always re-run IntersectionObserver callbacks or hit-testing until the
+            // next real user gesture — which is why a tap was needed to "wake" the
+            // page. A tiny 1px-then-0 nudge on the next two frames forces a real
+            // layout/scroll event so lazy Lottie loaders and touch targets are live
+            // immediately, with no visible movement.
+            requestAnimationFrame(() => {
+              el.scrollTop = 1;
+              requestAnimationFrame(() => { el.scrollTop = 0; });
+            });
+          }} aria-label="Back to top">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M9 13.5V5.5M9 5.5L5.5 9M9 5.5L12.5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
