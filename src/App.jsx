@@ -1417,7 +1417,7 @@ const T = {
     promo_review: "Submitted \u2014 your promotion goes live once an admin approves it.",
     aff_withdraw_as: "Withdraw as \u2248 {v} GRAM", aff_track_note: "Tracked earnings \u2014 withdrawn as GRAM to your wallet.",
     footer_live: "Live", footer_for_devs: "For Developers", footer_api_agents: "API for Agents", footer_powered: "Powered by GRAM (ex TON)",
-    promo_ma_link: "MarketApp listing link", promo_ma_note: "Enter the gift ID. The bot finds its listing on MarketApp automatically.",
+    promo_ma_link: "MarketApp listing link", promo_ma_note: "Enter the gift ID. The bot finds its listing on MarketApp automatically.", promo_thermos_note: "Enter the gift ID. The bot finds its listing on Thermos automatically.",
     promo_bad_ma_link: "That doesn\u2019t look like a marketapp.org link.",
     aff_earnings_30d: "Earnings (30 days)", aff_no_earnings: "No earnings yet", aff_30d_ago: "30d ago", aff_today: "Today",
     aff_history: "Payout history", aff_st_paid: "Paid", aff_st_pending: "Pending", aff_st_declined: "Declined",
@@ -1492,7 +1492,7 @@ const T = {
     promo_review: "Отправлено — реклама появится после одобрения админом.",
     aff_withdraw_as: "Вывод ≈ {v} GRAM", aff_track_note: "Отслеживаемый доход — выводится в GRAM на ваш кошелёк.",
     footer_live: "Активно", footer_for_devs: "Разработчикам", footer_api_agents: "API для агентов", footer_powered: "Работает на GRAM (экс TON)",
-    promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Введите номер подарка. Бот автоматически найдёт его на MarketApp.",
+    promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Введите номер подарка. Бот автоматически найдёт его на MarketApp.", promo_thermos_note: "Введите номер подарка. Бот автоматически найдёт его на Thermos.",
     promo_bad_ma_link: "Это не похоже на ссылку marketapp.org.",
     aff_earnings_30d: "Доход (30 дней)", aff_no_earnings: "Пока нет дохода", aff_30d_ago: "30 дн. назад", aff_today: "Сегодня",
     aff_history: "История выплат", aff_st_paid: "Выплачено", aff_st_pending: "В обработке", aff_st_declined: "Отклонено",
@@ -1567,7 +1567,7 @@ const T = {
     promo_review: "已提交 — 管理员批准后推广即上线。",
     aff_withdraw_as: "提现 ≈ {v} GRAM", aff_track_note: "追踪收益 — 以 GRAM 提现至您的钱包。",
     footer_live: "已上线", footer_for_devs: "开发者", footer_api_agents: "智能体 API", footer_powered: "基于 GRAM（原 TON）",
-    promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "输入礼物 ID，机器人将在 MarketApp 上自动查找。",
+    promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "输入礼物 ID，机器人将在 MarketApp 上自动查找。", promo_thermos_note: "输入礼物 ID，机器人将在 Thermos 上自动查找。",
     promo_bad_ma_link: "这看起来不是 marketapp.org 链接。",
     aff_earnings_30d: "收益（30 天）", aff_no_earnings: "暂无收益", aff_30d_ago: "30 天前", aff_today: "今天",
     aff_history: "提现记录", aff_st_paid: "已支付", aff_st_pending: "处理中", aff_st_declined: "已拒绝",
@@ -4066,7 +4066,7 @@ export default function App() {
     if (!window.Telegram?.WebApp?.initData) { showToast(t.open_in_tg); return; }
     if (!tg?.openInvoice) { showToast(t.update_tg); return; }
     setPromoBusy(true); setPromoMsg("");
-    const isExternal = promoMarket === "Fragment" || promoMarket === "MarketApp";
+    const isExternal = promoMarket === "Fragment" || promoMarket === "MarketApp" || promoMarket === "Thermos";
     try {
       const r = await api("/api/promote/create", { method: "POST", body: {
         gift_id: promoColl.gift_id, slug: promoColl.slug || "", name: promoColl.name || "",
@@ -4475,7 +4475,7 @@ export default function App() {
 
           <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_marketplace}</div>
           <div className="promo-market-row">
-            {["Telegram", "MarketApp"].map((m) => (
+            {["Telegram", "MarketApp", "Thermos"].map((m) => (
               <button key={m} className={`promo-market-btn ${promoMarket === m ? "active" : ""}`}
                 onClick={() => { haptic(); setPromoMarket(m); setPromoLink(""); }}>{m}</button>
             ))}
@@ -4494,6 +4494,13 @@ export default function App() {
               <input className="ios-input" inputMode="numeric" value={promoNum}
                 placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
               <p className="promo-hint">{t.promo_ma_note}</p>
+            </>
+          ) : promoMarket === "Thermos" ? (
+            <>
+              <div className="promo-field-label" style={{ marginTop: 14 }}>{t.promo_num_label} <span style={{ color: "#ff3b30" }}>*</span></div>
+              <input className="ios-input" inputMode="numeric" value={promoNum}
+                placeholder={t.promo_num_ph} onChange={(e) => setPromoNum(e.target.value.replace(/[^\d]/g, ""))} />
+              <p className="promo-hint">{t.promo_thermos_note}</p>
             </>
           ) : (
             <>
