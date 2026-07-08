@@ -1681,6 +1681,44 @@ const styles = `
   /* Full-height layout: eyebrow+hero cluster near the top; mascot+bar docked
      low, just above the tagline — a plain, calm composition with a single
      ambient glow behind it. No rings, sparks, beam, or watermark. */
+  /* ── Channel join bottom sheet ──────────────────────────────────────────── */
+  .channel-sheet-backdrop { position: fixed; inset: 0; z-index: 1200;
+    background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; }
+  .channel-sheet { width: 100%; max-width: 500px; margin: 0 auto;
+    background: var(--bg-sheet); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border-radius: 28px 28px 0 0; border-top: 1.5px solid var(--border);
+    border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
+    padding: 28px 24px 36px; display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 0;
+    box-shadow: 0 -12px 48px rgba(10,132,255,0.14);
+    animation: channelSlideUp 0.38s cubic-bezier(0.32,0.72,0,1) both; }
+  .channel-sheet.leaving { animation: channelSlideDown 0.28s ease-in both; }
+  @keyframes channelSlideUp   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes channelSlideDown { from { transform: translateY(0); } to { transform: translateY(110%); } }
+  .channel-sheet-drag { width: 40px; height: 4px; border-radius: 2px;
+    background: var(--text-secondary); opacity: 0.3; margin: 0 auto 20px; }
+  .channel-sheet-logos { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 18px; }
+  .channel-sheet-logo { width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(135deg, #1FA8F0, #0061d1);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(10,132,255,0.3); overflow: hidden; }
+  .channel-sheet-logo img { width: 46px; height: 46px; object-fit: contain; }
+  .channel-sheet-mascot { width: 84px; height: 84px; object-fit: contain;
+    margin-left: -12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); }
+  .channel-sheet-title { font-size: 20px; font-weight: 800; color: var(--text-primary);
+    letter-spacing: -0.4px; margin-bottom: 10px; line-height: 1.2; }
+  .channel-sheet-body { font-size: 14px; color: var(--text-secondary); line-height: 1.55;
+    max-width: 300px; margin: 0 auto 24px; }
+  .channel-sheet-btn { width: 100%; max-width: 320px; padding: 15px 24px;
+    background: linear-gradient(135deg, #1FA8F0, #0061d1); color: #fff;
+    font-size: 16px; font-weight: 700; border-radius: 14px; border: none;
+    cursor: pointer; letter-spacing: -0.2px;
+    box-shadow: 0 6px 20px rgba(10,132,255,0.35); transition: opacity .15s; }
+  .channel-sheet-btn:active { opacity: 0.82; }
+  .channel-sheet-later { margin-top: 14px; font-size: 14px; color: var(--text-secondary);
+    cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: color .15s; }
+  .channel-sheet-later:active { color: var(--text-primary); }
+
   .splash-layout { position: relative; z-index: 1; width: 100%; height: 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding: calc(64px + var(--safe-top, 0px)) clamp(16px, 5vw, 24px) calc(40px + var(--safe-bottom, 16px)); box-sizing: border-box; }
@@ -3112,6 +3150,8 @@ export default function App() {
   }, []);
 
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
+  const [showChannelSheet, setShowChannelSheet] = useState(false);
+  const [channelLeaving, setChannelLeaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [soonNote, setSoonNote] = useState(false);
   const [marketSoonNote, setMarketSoonNote] = useState("");   // "" | "GetGems" | "Portals" | "MRKT" | "Tonnel"
@@ -3164,6 +3204,38 @@ export default function App() {
   // Service and Privacy Policy are still reachable from the Profile footer; we
   // simply no longer block the app on an explicit "Agree and continue" tap.
   const consentOverlay = null;
+
+  const dismissChannelSheet = () => {
+    setChannelLeaving(true);
+    setTimeout(() => { setShowChannelSheet(false); setChannelLeaving(false); }, 290);
+  };
+  const channelSheetEl = showChannelSheet ? (
+    <div className="channel-sheet-backdrop" onClick={dismissChannelSheet}>
+      <div className={`channel-sheet${channelLeaving ? " leaving" : ""}`} onClick={(e) => e.stopPropagation()}>
+        <div className="channel-sheet-drag" />
+        <div className="channel-sheet-logos">
+          <div className="channel-sheet-logo">
+            <img src={LOGO_URL} alt="GiftTrove" />
+          </div>
+          <img className="channel-sheet-mascot" src={MASCOT_URL} alt="" aria-hidden="true" />
+        </div>
+        <div className="channel-sheet-title">Stay in the loop</div>
+        <p className="channel-sheet-body">
+          Join the GiftTrove community for new gift releases and exclusive updates.
+        </p>
+        <button className="channel-sheet-btn" onClick={() => {
+          safeOpen("https://t.me/gifttrove");
+          dismissChannelSheet();
+        }}>
+          Join Channel
+        </button>
+        <div className="channel-sheet-later" onClick={() => {
+          sessionStorage.setItem("gt_channel_skip", "1");
+          dismissChannelSheet();
+        }}>Maybe later</div>
+      </div>
+    </div>
+  ) : null;
   const [selectedGift, setSelectedGift] = useState(null);
 
   // results / sorting / pagination
@@ -3517,6 +3589,16 @@ export default function App() {
     const uid = tgUser?.id || "";
     const savedCode = localStorage.getItem("gt_code") || "";
     askAccess(uid, savedCode).catch(() => {});
+    // Channel join check — fire-and-forget, 1.8s delay so the splash clears first.
+    // "Maybe later" suppresses for this session only (sessionStorage flag).
+    // If user left the channel since last time, shows again fresh.
+    if (!sessionStorage.getItem("gt_channel_skip")) {
+      setTimeout(() => {
+        api(`/api/channel_member?uid=${encodeURIComponent(uid)}`)
+          .then((r) => { if (r && r.is_member === false) setShowChannelSheet(true); })
+          .catch(() => {});
+      }, 1800);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -4262,21 +4344,16 @@ export default function App() {
 
   const renderGiftCard = (item, i = 0, promoted = false, sold = false) => {
     const poster = item.image || giftImage(item.slug, item.num);
-    const anim = item.animation || giftAnimation(item.slug, item.num);
-    // Fragment's per-item CDN image can lag days behind a brand-new collection
-    // (Fragment has to crawl/index it themselves); the collection's own
-    // Telegram-sourced preview has no such lag, so it's the fallback.
     const fallbackPoster = collections.find((c) => String(c.gift_id) === String(item.gift_id))?.preview || null;
     const saved = isSavedGift(item);
     const dotHex = item.backdropHex;
-    // item.slug already carries "{collectionSlug}-{num}" (see backend cdn_full),
-    // so this produces the exact t.me/nft/{gift-name}-{gift-ID} format.
     const giftLink = item.slug ? `https://t.me/nft/${item.slug}` : (item.url || "");
     const handleSoldClick = (e) => { e?.stopPropagation?.(); haptic(); if (giftLink) safeOpen(giftLink); };
     return (
       <div key={item.id} className="result-card" style={{ animationDelay: `${Math.min(i, 16) * 0.035}s` }} onClick={() => { haptic(); setSelectedGift(item); setActiveSheet("gift_details"); }}>
         <div className="result-gift-hero" style={dotHex ? { background: `radial-gradient(circle at 50% 35%, ${dotHex}33, transparent 70%)` } : undefined}>
-          <LottieGift src={anim} fallbackSrc={item.animationFallback} poster={poster} fallbackPoster={[item.imageFallback, fallbackPoster]} backdropColor={dotHex} symbolPattern={item.symbolImage} size={132} radius={18} />
+          {/* Static in list — animation only plays in the detail sheet when the user taps */}
+          <LottieGift src={null} poster={poster} fallbackPoster={[item.imageFallback, fallbackPoster]} backdropColor={dotHex} size={132} radius={18} />
           <div className="result-save" onClick={(e) => { e.stopPropagation(); toggleSave(item); }} style={{ color: saved ? "var(--tg-blue)" : "#fff" }}>
             {saved ? <IconBookmarkFilled /> : <IconBookmark />}
           </div>
@@ -4291,7 +4368,6 @@ export default function App() {
         {item.model && (
           <div className="result-model">
             <span className={`model-rarity ${rarityClass(item.modelRarity)}`}>{item.model}</span>
-            {item.modelRarity != null && <span style={{ marginLeft: 6 }}>{fmtRarity(item.modelRarity)}</span>}
           </div>
         )}
         <div className="result-foot">
@@ -4355,7 +4431,6 @@ export default function App() {
         {item.model && (
           <div className="result-model">
             <span className="model-rarity">{item.model}</span>
-            {item.modelRarity != null && <span style={{ marginLeft: 6 }}>{fmtRarity(item.modelRarity)}</span>}
           </div>
         )}
         <div className="result-foot">
@@ -4561,7 +4636,7 @@ export default function App() {
                 <div className="ios-row" style={{ cursor: "default" }}>
                   <span style={{ color: "var(--text-secondary)" }}>{t.model}</span>
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {g.model}<span className={`model-rarity ${rarityClass(g.modelRarity)}`}>{fmtRarity(g.modelRarity)}</span>
+                    {g.model}<span className={`model-rarity ${rarityClass(g.modelRarity)}`}></span>
                   </span>
                 </div>
               )}
@@ -4570,7 +4645,7 @@ export default function App() {
                   <span style={{ color: "var(--text-secondary)" }}>{t.backdrop}</span>
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {dot && <span className="color-dot" style={{ background: dot }} />}{g.backdrop}
-                    {g.backdropRarity != null && <span className={`model-rarity ${rarityClass(g.backdropRarity)}`}>{fmtRarity(g.backdropRarity)}</span>}
+                    {g.backdropRarity != null && <span className={`model-rarity ${rarityClass(g.backdropRarity)}`}></span>}
                   </span>
                 </div>
               )}
@@ -4579,7 +4654,7 @@ export default function App() {
                   <span style={{ color: "var(--text-secondary)" }}>{t.symbol}</span>
                   <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {g.symbol}
-                    {g.symbolRarity != null && <span className={`model-rarity ${rarityClass(g.symbolRarity)}`}>{fmtRarity(g.symbolRarity)}</span>}
+                    {g.symbolRarity != null && <span className={`model-rarity ${rarityClass(g.symbolRarity)}`}></span>}
                   </span>
                 </div>
               )}
@@ -4672,7 +4747,7 @@ export default function App() {
                         : <span className="gift-tile"><IconGiftBox /></span>}
                       <div className="model-info">
                         <span className="model-name">{m.name}</span>
-                        {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}>{fmtRarity(m.rarity)} {t.rarity}</span>}
+                        {m.rarity != null && <span className={`model-rarity ${rarityClass(m.rarity)}`}></span>}
                       </div>
                     </div>
                     {arr.includes(m.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
@@ -4737,7 +4812,7 @@ export default function App() {
                   <div key={c.name} className="sheet-list-item" onClick={() => toggleAttr("backdrop", c.name)}>
                     <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       {c.hex && <span className="backdrop-swatch" style={{ background: c.edge ? `radial-gradient(circle at 50% 35%, ${c.hex}, ${c.edge})` : c.hex }} />}{c.name}
-                      {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}>{fmtRarity(c.rarity)}</span>}
+                      {c.rarity != null && <span className={`model-rarity ${rarityClass(c.rarity)}`} style={{ marginLeft: 4 }}></span>}
                     </span>
                     {arr.includes(c.name) && <span style={{ color: "var(--tg-blue)" }}><IconCheck /></span>}
                   </div>
@@ -5244,6 +5319,7 @@ export default function App() {
         )}
         {renderDetailNote()}
         {consentOverlay}
+        {channelSheetEl}
         <div className="desktop-layout" data-theme={theme}>
           <div className="desktop-sidebar">
             {tabs.map((tab) => (
@@ -5495,6 +5571,7 @@ export default function App() {
         {renderDetailNote()}
         {consentOverlay}
 
+        {channelSheetEl}
         <div className="top-nav" style={{ justifyContent: activeTab === "profile" ? "flex-end" : "space-between" }}>
           {activeTab !== "profile" && <div className="logo-tile"><img src={LOGO_URL} alt="GiftTrove" /></div>}
           <div className="top-icons">
