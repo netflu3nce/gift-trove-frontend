@@ -4367,7 +4367,7 @@ export default function App() {
         </div>
         {item.model && (
           <div className="result-model">
-            <span className={`model-rarity ${rarityClass(item.modelRarity)}`}>{item.model}</span>
+            <span className="model-rarity">{item.model}</span>
           </div>
         )}
         <div className="result-foot">
