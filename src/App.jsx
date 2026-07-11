@@ -13,9 +13,13 @@ try {
       _th = localStorage.getItem("gt_theme_v4") ? (localStorage.getItem("gt_theme") || "light") : "light";
     } catch { /* noop */ }
     document.documentElement.setAttribute("data-theme", _th);
-    document.documentElement.style.background = _th === "light" ? "#f2f2f7" : "#000000";
+    // Paint the splash background colour instantly — before React mounts —
+    // so there is ZERO flash of white/unstyled content while the JS bundle
+    // executes. The splash overlay covers the entire viewport; once onDone
+    // fires we restore the correct app background for the chosen theme.
+    document.documentElement.style.background = "#0A84FF";
   }
-} catch { /* noop */ }
+} catch { /* noop */ } 
 
 /* ════════════════════════════════════════════════════════════════════════
    GiftTrove — Telegram Gift Scouting Mini App
@@ -1418,6 +1422,7 @@ const T = {
     aff_withdraw_as: "Withdraw as \u2248 {v} GRAM", aff_track_note: "Tracked earnings \u2014 withdrawn as GRAM to your wallet.",
     footer_live: "Live", footer_for_devs: "For Developers", footer_api_agents: "API for Agents", footer_powered: "Powered by GRAM (ex TON)",
     promo_ma_link: "MarketApp listing link", promo_ma_note: "Enter the gift ID. The bot finds its listing on MarketApp automatically.", promo_thermos_note: "Enter the gift ID. The bot finds its listing on Thermos automatically.",
+    channel_headline: "Join GiftTrove Community", channel_body: "New gift releases & exclusive updates", channel_btn: "Join Channel",
     promo_bad_ma_link: "That doesn\u2019t look like a marketapp.org link.",
     aff_earnings_30d: "Earnings (30 days)", aff_no_earnings: "No earnings yet", aff_30d_ago: "30d ago", aff_today: "Today",
     aff_history: "Payout history", aff_st_paid: "Paid", aff_st_pending: "Pending", aff_st_declined: "Declined",
@@ -1493,6 +1498,7 @@ const T = {
     aff_withdraw_as: "Вывод ≈ {v} GRAM", aff_track_note: "Отслеживаемый доход — выводится в GRAM на ваш кошелёк.",
     footer_live: "Активно", footer_for_devs: "Разработчикам", footer_api_agents: "API для агентов", footer_powered: "Работает на GRAM (экс TON)",
     promo_ma_link: "Ссылка на листинг MarketApp", promo_ma_note: "Введите номер подарка. Бот автоматически найдёт его на MarketApp.", promo_thermos_note: "Введите номер подарка. Бот автоматически найдёт его на Thermos.",
+    channel_headline: "Присоединяйтесь к GiftTrove", channel_body: "Новые коллекции и эксклюзивные обновления", channel_btn: "Подписаться на канал",
     promo_bad_ma_link: "Это не похоже на ссылку marketapp.org.",
     aff_earnings_30d: "Доход (30 дней)", aff_no_earnings: "Пока нет дохода", aff_30d_ago: "30 дн. назад", aff_today: "Сегодня",
     aff_history: "История выплат", aff_st_paid: "Выплачено", aff_st_pending: "В обработке", aff_st_declined: "Отклонено",
@@ -1568,6 +1574,7 @@ const T = {
     aff_withdraw_as: "提现 ≈ {v} GRAM", aff_track_note: "追踪收益 — 以 GRAM 提现至您的钱包。",
     footer_live: "已上线", footer_for_devs: "开发者", footer_api_agents: "智能体 API", footer_powered: "基于 GRAM（原 TON）",
     promo_ma_link: "MarketApp 挂单链接", promo_ma_note: "输入礼物 ID，机器人将在 MarketApp 上自动查找。", promo_thermos_note: "输入礼物 ID，机器人将在 Thermos 上自动查找。",
+    channel_headline: "加入 GiftTrove 社区", channel_body: "新礼物发布和独家更新", channel_btn: "加入频道",
     promo_bad_ma_link: "这看起来不是 marketapp.org 链接。",
     aff_earnings_30d: "收益（30 天）", aff_no_earnings: "暂无收益", aff_30d_ago: "30 天前", aff_today: "今天",
     aff_history: "提现记录", aff_st_paid: "已支付", aff_st_pending: "处理中", aff_st_declined: "已拒绝",
@@ -1683,42 +1690,101 @@ const styles = `
      ambient glow behind it. No rings, sparks, beam, or watermark. */
   /* ── Channel join bottom sheet ──────────────────────────────────────────── */
   .channel-sheet-backdrop { position: fixed; inset: 0; z-index: 1200;
-    background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; }
+    background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; }
   .channel-sheet { width: 100%; max-width: 500px; margin: 0 auto;
     background: var(--bg-sheet); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    border-radius: 28px 28px 0 0; border-top: 1.5px solid var(--border);
-    border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
-    padding: 28px 24px 36px; display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: 0;
-    box-shadow: 0 -12px 48px rgba(10,132,255,0.14);
+    border-radius: 28px 28px 0 0; overflow: hidden;
+    box-shadow: 0 -12px 48px rgba(10,132,255,0.18);
     animation: channelSlideUp 0.38s cubic-bezier(0.32,0.72,0,1) both; }
   .channel-sheet.leaving { animation: channelSlideDown 0.28s ease-in both; }
   @keyframes channelSlideUp   { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes channelSlideDown { from { transform: translateY(0); } to { transform: translateY(110%); } }
+
+  /* Hero — mirrors .profile-hero exactly: blue gradient, relative+overflow:hidden
+     so the decorative logo gets cleanly cropped by the container edge. */
+  .channel-sheet-hero { position: relative; overflow: hidden;
+    background: linear-gradient(155deg, #1FA8F0 0%, #0A84FF 60%, #0061d1 100%);
+    padding: 22px 24px 28px; display: flex; flex-direction: column;
+    align-items: center; text-align: center; gap: 0; }
+  .channel-sheet-drag-wrap { width: 100%; display: flex; justify-content: center;
+    padding-bottom: 16px; cursor: grab; touch-action: none; }
   .channel-sheet-drag { width: 40px; height: 4px; border-radius: 2px;
-    background: var(--text-secondary); opacity: 0.3; margin: 0 auto 20px; }
-  .channel-sheet-logos { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 18px; }
-  .channel-sheet-logo { width: 64px; height: 64px; border-radius: 18px;
-    background: linear-gradient(135deg, #1FA8F0, #0061d1);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 6px 20px rgba(10,132,255,0.3); overflow: hidden; }
-  .channel-sheet-logo img { width: 46px; height: 46px; object-fit: contain; }
-  .channel-sheet-mascot { width: 84px; height: 84px; object-fit: contain;
-    margin-left: -12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); }
-  .channel-sheet-title { font-size: 20px; font-weight: 800; color: var(--text-primary);
-    letter-spacing: -0.4px; margin-bottom: 10px; line-height: 1.2; }
-  .channel-sheet-body { font-size: 14px; color: var(--text-secondary); line-height: 1.55;
-    max-width: 300px; margin: 0 auto 24px; }
+    background: rgba(255,255,255,0.45); }
+  /* Decorative logo — bottom-right, half-cropped, same treatment as profile */
+  .channel-sheet-deco-logo { position: absolute; z-index: 0; pointer-events: none;
+    width: 180px; height: 180px; right: -55px; bottom: -55px;
+    opacity: 0.14; transform: scaleX(-1) rotate(-56deg);
+    filter: brightness(0) invert(1); }
+  .channel-sheet-mascot { width: 110px; height: 110px; object-fit: contain;
+    position: relative; z-index: 1;
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.22)); }
+  .channel-sheet-headline { position: relative; z-index: 1;
+    font-size: 18px; font-weight: 800; color: #fff;
+    letter-spacing: -0.3px; line-height: 1.25; margin-top: 14px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.18); max-width: 260px; }
+
+  /* Content below the hero */
+  .channel-sheet-content { padding: 22px 24px 28px; display: flex;
+    flex-direction: column; align-items: center; gap: 0; }
+  .channel-sheet-body { font-size: 14px; color: var(--text-secondary);
+    line-height: 1.58; max-width: 290px; text-align: center; margin-bottom: 22px; }
   .channel-sheet-btn { width: 100%; max-width: 320px; padding: 15px 24px;
     background: linear-gradient(135deg, #1FA8F0, #0061d1); color: #fff;
     font-size: 16px; font-weight: 700; border-radius: 14px; border: none;
-    cursor: pointer; letter-spacing: -0.2px;
-    box-shadow: 0 6px 20px rgba(10,132,255,0.35); transition: opacity .15s; }
+    cursor: pointer; box-shadow: 0 6px 20px rgba(10,132,255,0.35); transition: opacity .15s; }
   .channel-sheet-btn:active { opacity: 0.82; }
   .channel-sheet-later { margin-top: 14px; font-size: 14px; color: var(--text-secondary);
     cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: color .15s; }
   .channel-sheet-later:active { color: var(--text-primary); }
 
+  /* ── Expanding white-mask splash ───────────────────────────────────────────
+     Phase 1 : brand-blue backdrop, white circle grows from center outward.
+               Logo (blue SVG) is independently z-positioned — it never
+               scales with the circle, just sits still while white floods in.
+     Phase 2 : white fully covers the viewport; JS shifts the logo left and
+               slides "GIFTTOVE" in from the left.
+     Phase 3 : 3-second hold, then an instant (≈100 ms) fade reveals the app.
+  ─────────────────────────────────────────────────────────────────────────── */
+  .splash-mask {
+    position: fixed; inset: 0; z-index: 9999; overflow: hidden;
+    background: #0A84FF;                       /* brand-blue backdrop          */
+  }
+  .splash-white-circle {
+    position: absolute;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: #ffffff;                       /* white circle expands to cover */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(1); /* JS animates scale            */
+    will-change: transform;
+  }
+  /* Logo sits above the expanding circle — independently centered.
+     Never a child of the circle, so it never warps or widens. */
+  .splash-logo-outer {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);          /* JS shifts this left later     */
+    z-index: 2;
+    will-change: transform;
+    display: flex; align-items: center;
+  }
+  .splash-logo-mark {
+    width: 72px; height: 72px; object-fit: contain;
+    display: block; flex-shrink: 0;
+  }
+  /* Wordmark: lives inside .splash-logo-outer (flex sibling of the logo img).
+     Starts invisible and to the left; JS slides it in after expansion. */
+  .splash-wordmark {
+    font-size: 30px; font-weight: 900; letter-spacing: -0.8px;
+    color: #0A84FF;
+    white-space: nowrap;
+    margin-left: 11px;
+    opacity: 0;
+    transform: translateX(-48px);             /* starts left of its slot       */
+    will-change: transform, opacity;
+    /* Use the same system font stack as the rest of the app */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
   .splash-layout { position: relative; z-index: 1; width: 100%; height: 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding: calc(64px + var(--safe-top, 0px)) clamp(16px, 5vw, 24px) calc(40px + var(--safe-bottom, 16px)); box-sizing: border-box; }
@@ -2051,7 +2117,10 @@ const styles = `
   @keyframes shimmer { 100% { transform: translateX(100%); } }
   .sk-line { height: 12px; border-radius: 6px; margin-top: 8px; }
 
-  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 46vh; padding: 32px 20px; color: var(--text-secondary); }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; min-height: 46vh; padding: 32px 20px; color: var(--text-secondary); gap: 10px; }
+  .empty-state-row { display: flex; align-items: center; justify-content: center; gap: 9px; }
+  .empty-state-row .es-title { margin: 0; }
   .empty-state > svg, .empty-state > div:first-child { margin: 0 auto; }
   .desktop-content .empty-state { min-height: 56vh; }
   .empty-state .es-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 14px 0 6px; }
@@ -3055,6 +3124,143 @@ function AdminDashboard({ t, uid, code, onToggleTheme, safeOpen, haptic, desktop
   );
 }
 
+// ── Expanding white-mask splash ────────────────────────────────────────────────
+//
+// ANIMATION TIMELINE  (all durations in ms from the moment run() fires)
+//
+//  0 ─────────── 120 ms   Initial hold: blue bg + small white circle + blue logo
+//                          visible long enough for the eye to register the brand.
+//  120 ────────── 740 ms  Phase 1 – WHITE CIRCLE EXPANDS (620 ms).
+//                          Circle scales from 160 px to cover the full diagonal.
+//                          Logo stays perfectly still (it is NOT a child of the
+//                          circle element, so its size/position never changes).
+//  740 ────────── 760 ms  20 ms gap — circle finish settles before brand moves.
+//  760 ──────── ~1 100 ms Phase 2 – BRAND REVEAL (340 ms).
+//                          a) Logo shifts LEFT by ~50 px (making room for text).
+//                          b) "GIFTTOVE" slides in from the left with a spring
+//                             overshoot (cubic-bezier bounce).
+// ~1 100 ───── ~4 100 ms  Phase 3 – 3 SECOND HOLD.
+//                          The complete wordmark is visible on a pure white bg.
+// ~4 100 ───── ~4 200 ms  Phase 4 – INSTANT FADE (100 ms).
+//                          Fast snap-to-hidden, not a slow dissolve.
+//  ~4 200 ms              Done — overlay removed from the DOM, onDone fires.
+//
+// FOUC prevention: index.html (or the inline script above) must paint
+// `document.documentElement.style.background = "#0A84FF"` immediately so that
+// any gap between HTML parse and first React paint shows blue, not white.
+// ────────────────────────────────────────────────────────────────────────────────
+function SplashMask({ onDone }) {
+  const overlayRef  = useRef(null);
+  const circleRef   = useRef(null);
+  const logoOutRef  = useRef(null);  // .splash-logo-outer (wraps img + wordmark)
+  const wordmarkRef = useRef(null);  // .splash-wordmark  (the text)
+  const firedRef    = useRef(false);
+  const [gone, setGone] = useState(false);
+
+  const run = useCallback(() => {
+    if (firedRef.current) return;
+    const overlay  = overlayRef.current;
+    const circle   = circleRef.current;
+    const logoOut  = logoOutRef.current;
+    const wordmark = wordmarkRef.current;
+    if (!overlay || !circle || !logoOut || !wordmark) return;
+    firedRef.current = true;
+
+    // ── Phase 1: white circle expands to cover the brand-blue backdrop ──────
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // The circle starts at 160 px diameter. Its centre is the viewport centre.
+    // The farthest pixel from centre is a corner: dist = √(w²+h²)/2.
+    // To cover that corner with the circle's RADIUS (= diameter/2 after scale):
+    //   scale × 160/2 ≥ √(w²+h²)/2  →  scale ≥ √(w²+h²) / 160
+    // Add 4 % safety margin so sub-pixel rounding never leaves a sliver.
+    const finalScale = (Math.sqrt(w * w + h * h) / 160) * 1.04;
+
+    circle.animate(
+      [
+        { transform: "translate(-50%, -50%) scale(1)"            },
+        { transform: `translate(-50%, -50%) scale(${finalScale})` },
+      ],
+      { duration: 620, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" }
+    );
+
+    // ── Phase 2: logo shifts left; wordmark slides in from the left ──────────
+    const PHASE2_START = 620 + 140;  // 760 ms — 140 ms after circle finishes
+
+    // a) Logo outer container translates left.
+    //    The logo img is 72 px wide; we shift it roughly half-a-logo left so the
+    //    final wordmark+logo group ends up centred on screen.
+    setTimeout(() => {
+      logoOut.animate(
+        [
+          { transform: "translate(-50%, -50%)"          },
+          { transform: "translate(calc(-50% - 50px), -50%)" },
+        ],
+        { duration: 340, easing: "cubic-bezier(0.34, 1.40, 0.64, 1)", fill: "forwards" }
+      );
+
+      // b) "GIFTTOVE" text slides in from the left with a spring overshoot.
+      //    Starts at translateX(-60px) opacity:0, arrives at translateX(0) opacity:1.
+      wordmark.animate(
+        [
+          { opacity: "0", transform: "translateX(-60px)" },
+          { opacity: "1", transform: "translateX(0)"     },
+        ],
+        {
+          duration: 380,
+          delay:    60,   // tiny delay after logo starts moving
+          easing:   "cubic-bezier(0.34, 1.56, 0.64, 1)",  // spring overshoot
+          fill:     "forwards",
+        }
+      );
+    }, PHASE2_START);
+
+    // ── Phase 4: instant fade after 3-second hold ────────────────────────────
+    const HOLD_MS    = 3000;
+    const FADE_START = PHASE2_START + 380 + HOLD_MS;   // animations done + hold
+
+    setTimeout(() => {
+      if (!overlay) return;
+      // ~100 ms snap — "fades instantly" per spec.
+      overlay.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 100, easing: "ease-in", fill: "forwards" }
+      );
+    }, FADE_START);
+
+    // Remove from the DOM 20 ms after fade ends so there is no lingering layer.
+    setTimeout(() => { setGone(true); onDone?.(); }, FADE_START + 120);
+  }, [onDone]);
+
+  useEffect(() => {
+    // 120 ms initial hold — just long enough for the first painted frame to
+    // register before the expansion begins. Prevents the animation starting
+    // on an unpainted frame on slow devices.
+    const t = setTimeout(run, 120);
+    return () => clearTimeout(t);
+  }, [run]);
+
+  if (gone) return null;
+  return (
+    <div ref={overlayRef} className="splash-mask">
+      {/* White circle that expands to cover the blue backdrop.
+          It is NOT the logo's parent — the logo position is independent. */}
+      <div ref={circleRef} className="splash-white-circle" />
+
+      {/* Brand mark: logo + wordmark in a flex row.
+          Independently centred; JS shifts it left as the wordmark slides in. */}
+      <div ref={logoOutRef} className="splash-logo-outer">
+        {/* /logo-blue.svg — a blue-only version of the logo (no background
+            gradient), supplied by the developer in /public/logo-blue.svg.
+            It reads clearly on both the initial white circle and the final
+            pure-white screen. */}
+        <img src="/logo-blue.svg" className="splash-logo-mark" alt="" />
+        <span ref={wordmarkRef} className="splash-wordmark">GIFTTOVE</span>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
   const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, first_name: "Scout" };
@@ -3078,21 +3284,10 @@ export default function App() {
   // Launch splash: show the animated mascot on cold start (long enough for the
   // squish-and-stretch loop to play through), then reveal the app.
   const [booting, setBooting] = useState(true);
-  const [splashLeaving, setSplashLeaving] = useState(false);
-  const [splashMs, setSplashMs] = useState(3000);
-  useEffect(() => {
-    // Cold start gets a 3s branded launch (data loads run underneath it the
-    // whole time, so this masks the slowest part of boot without ADDING wait).
-    // A warm reload — e.g. Telegram reviving a backgrounded mini app — gets a
-    // quick 0.65s splash so returning never replays the whole launch.
-    let warm = false;
-    try { warm = sessionStorage.getItem("gt_booted") === "1"; sessionStorage.setItem("gt_booted", "1"); } catch { /* noop */ }
-    const ms = warm ? 650 : 6500;
-    setSplashMs(ms);
-    const fade = setTimeout(() => setSplashLeaving(true), Math.max(0, ms - 450));
-    const tmr = setTimeout(() => setBooting(false), ms);
-    return () => { clearTimeout(tmr); clearTimeout(fade); };
-  }, []);
+  // splashLeaving and splashMs kept as dead state to avoid breaking any
+  // downstream refs until a cleanup pass — SplashMask owns its own timing now.
+  const [splashLeaving] = useState(false);
+  const [splashMs] = useState(1800);
 
   // "Joined" date for the profile. Stored locally on first launch so it works
   // with no backend round-trip. (For a date that's accurate across devices,
@@ -3152,6 +3347,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(savedSearch.hasSearched ? "results" : "scout");
   const [showChannelSheet, setShowChannelSheet] = useState(false);
   const [channelLeaving, setChannelLeaving] = useState(false);
+  const [CHANNEL_INVITE_URL, setChannelInviteUrl] = useState("https://t.me/gifttrove");
   const [toast, setToast] = useState(null);
   const [soonNote, setSoonNote] = useState(false);
   const [marketSoonNote, setMarketSoonNote] = useState("");   // "" | "GetGems" | "Portals" | "MRKT" | "Tonnel"
@@ -3205,34 +3401,54 @@ export default function App() {
   // simply no longer block the app on an explicit "Agree and continue" tap.
   const consentOverlay = null;
 
+  const channelDragRef = useRef(null);
+  const channelDragStartY = useRef(0);
+
   const dismissChannelSheet = () => {
     setChannelLeaving(true);
     setTimeout(() => { setShowChannelSheet(false); setChannelLeaving(false); }, 290);
   };
+
+  const onChannelDragStart = (e) => {
+    channelDragStartY.current = (e.touches ? e.touches[0].clientY : e.clientY);
+  };
+  const onChannelDragMove = (e) => {
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    if (y - channelDragStartY.current > 52) dismissChannelSheet();
+  };
+
   const channelSheetEl = showChannelSheet ? (
     <div className="channel-sheet-backdrop" onClick={dismissChannelSheet}>
       <div className={`channel-sheet${channelLeaving ? " leaving" : ""}`} onClick={(e) => e.stopPropagation()}>
-        <div className="channel-sheet-drag" />
-        <div className="channel-sheet-logos">
-          <div className="channel-sheet-logo">
-            <img src={LOGO_URL} alt="GiftTrove" />
+        {/* ─ Blue gradient hero — mirrors profile-hero ─ */}
+        <div className="channel-sheet-hero">
+          {/* Drag handle — finger can swipe down from anywhere in the hero */}
+          <div className="channel-sheet-drag-wrap"
+            onTouchStart={onChannelDragStart} onTouchMove={onChannelDragMove}
+            onMouseDown={onChannelDragStart} onMouseMove={(e) => e.buttons === 1 && onChannelDragMove(e)}>
+            <div className="channel-sheet-drag" />
           </div>
+          {/* Mascot — stagnant, centered */}
           <img className="channel-sheet-mascot" src={MASCOT_URL} alt="" aria-hidden="true" />
+          {/* Decorative logo — half-cropped bottom-right, same as profile */}
+          <img className="channel-sheet-deco-logo" src={LOGO_URL} alt="" aria-hidden="true" />
+          {/* Bold white headline on the gradient */}
+          <div className="channel-sheet-headline">{t.channel_headline || "Join GiftTrove Community"}</div>
         </div>
-        <div className="channel-sheet-title">Stay in the loop</div>
-        <p className="channel-sheet-body">
-          Join the GiftTrove community for new gift releases and exclusive updates.
-        </p>
-        <button className="channel-sheet-btn" onClick={() => {
-          safeOpen("https://t.me/gifttrove");
-          dismissChannelSheet();
-        }}>
-          Join Channel
-        </button>
-        <div className="channel-sheet-later" onClick={() => {
-          sessionStorage.setItem("gt_channel_skip", "1");
-          dismissChannelSheet();
-        }}>Maybe later</div>
+        {/* ─ Content below the gradient ─ */}
+        <div className="channel-sheet-content">
+          <p className="channel-sheet-body">{t.channel_body || "New gift releases & exclusive updates."}</p>
+          <button className="channel-sheet-btn" onClick={() => {
+            safeOpen(CHANNEL_INVITE_URL || "https://t.me/gifttrove");
+            dismissChannelSheet();
+          }}>
+            {t.channel_btn || "Join Channel"}
+          </button>
+          <div className="channel-sheet-later" onClick={() => {
+            sessionStorage.setItem("gt_channel_skip", "1");
+            dismissChannelSheet();
+          }}>Maybe later</div>
+        </div>
       </div>
     </div>
   ) : null;
@@ -3595,7 +3811,10 @@ export default function App() {
     if (!sessionStorage.getItem("gt_channel_skip")) {
       setTimeout(() => {
         api(`/api/channel_member?uid=${encodeURIComponent(uid)}`)
-          .then((r) => { if (r && r.is_member === false) setShowChannelSheet(true); })
+          .then((r) => {
+            if (r && r.invite_url) setChannelInviteUrl(r.invite_url);
+            if (r && r.is_member === false) setShowChannelSheet(true);
+          })
           .catch(() => {});
       }, 1800);
     }
@@ -4950,10 +5169,11 @@ export default function App() {
         <div className="fade-in-up">
           <div className={desktop ? "page-header desktop" : "page-header"}>{t.results_tab}</div>
           <div className="empty-state">
-            <IconGlobe />
-            <div className="es-title">{t.offline_title}</div>
-            <div>{t.offline_sub}</div>
-            <button className="action-btn" style={{ marginTop: 20 }} onClick={handleScout}>{t.try_again}</button>
+            <div className="empty-state-row">
+              <IconGlobe />
+              <div className="es-title">{t.offline_title}</div>
+            </div>
+            <button className="action-btn" onClick={handleScout}>{t.try_again}</button>
           </div>
         </div>
       );
@@ -4962,15 +5182,17 @@ export default function App() {
       const ls = lastSearch.current || {};
       const unknown = hasSearched && ls.query && ls.known === false;
       const title = !hasSearched ? t.results_empty_title : (unknown ? t.unknown_gift_title : t.no_results);
-      const sub = !hasSearched ? t.results_empty_sub : (unknown ? t.unknown_gift_sub.replace("{q}", ls.query) : t.no_listings_sub);
       return (
         <div className="fade-in-up">
           <div className={desktop ? "page-header desktop" : "page-header"}>{t.results_tab}</div>
           <div className="empty-state">
-            <IconClipboard trigger={activeTab === "results"} size={30} />
-            <div className="es-title">{title}</div>
-            <div>{sub}</div>
-            <button className="action-btn" style={{ marginTop: 20 }} onClick={() => { haptic(); setActiveTab("scout"); }}>{t.scout_tab}</button>
+            <div className="empty-state-row">
+              <IconClipboard trigger={activeTab === "results"} size={26} />
+              <div className="es-title">{title}</div>
+            </div>
+            {!hasSearched && <div style={{ fontSize: 13 }}>{t.results_empty_sub}</div>}
+            {unknown && <div style={{ fontSize: 13 }}>{(t.unknown_gift_sub || "").replace("{q}", ls.query)}</div>}
+            <button className="action-btn" onClick={() => { haptic(); setActiveTab("scout"); }}>{t.scout_tab}</button>
           </div>
         </div>
       );
@@ -5152,68 +5374,22 @@ export default function App() {
     }
   };
 
-  // ── LAUNCH SPLASH: mascot load screen (replaces the old access page) ──
+  // ── LAUNCH SPLASH: expanding mask reveal ────────────────────────────────────
   if (booting) {
     return (
       <>
         <style>{styles}</style>
         <GoldDefs />
-        <div className={`splash${splashLeaving ? " splash-leaving" : ""}`} data-theme={theme}
-          style={{ "--splash-ms": `${splashMs}ms` }}>
-          <div className="splash-glow" />
-
-          <div className="splash-layout">
-            <div className="splash-top">
-              <div className="splash-eyebrow">{t.splash_eyebrow}</div>
-              <div className="splash-hero">GiftTrove</div>
-            </div>
-
-            <div className="splash-subject">
-              <div className="splash-orbit-wrap">
-                <img src={MASCOT_URL} alt="" className="splash-mascot"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }} />
-
-                {/* Marketplace badges — 4 corners around the mascot, symmetric
-                    top-left/top-right/bottom-left/bottom-right. Dark glass
-                    badges: Telegram/Fragment/Thermos marks are white/light and
-                    MarketApp's is blue, so a dark backing is what actually
-                    makes all of them read clearly — a white badge would hide
-                    the white ones. */}
-                <div className="splash-badge b-tg" style={{ animationDelay: "0.5s" }}>
-                  <img src="/marks/telegram.png" alt="Telegram" />
-                </div>
-                <div className="splash-badge b-frag" style={{ animationDelay: "0.62s" }}>
-                  <img src="/marks/fragment.png" alt="Fragment" />
-                </div>
-                <div className="splash-badge b-ma" style={{ animationDelay: "0.74s" }}>
-                  <img src="/marks/marketapp.png" alt="MarketApp" />
-                </div>
-                <div className="splash-badge b-thermos" style={{ animationDelay: "0.86s" }}>
-                  <img src="/marks/thermos.svg" alt="Thermos" />
-                </div>
-
-                {/* Gift stickers — the outer, secondary triangle, interleaved in
-                    the gaps between the marketplace badges (top-centre, mid-left,
-                    mid-right). Smaller and softer so the marketplaces stay the
-                    visual focus. */}
-                <div className="splash-charm c-durov" style={{ animationDelay: "0.86s" }}>
-                  <img src="/lottie-posters/gift_minidurov.png" alt="" className="splash-charm-img" />
-                </div>
-                <div className="splash-charm c-cat" style={{ animationDelay: "0.98s" }}>
-                  <img src="/lottie-posters/gift_scaredcat.png" alt="" className="splash-charm-img" />
-                </div>
-                <div className="splash-charm c-cream" style={{ animationDelay: "1.1s" }}>
-                  <img src="/lottie-posters/gift_vicecream.png" alt="" className="splash-charm-img" />
-                </div>
-              </div>
-              <div className="splash-bar"><span /></div>
-            </div>
-
-            <div className="splash-footer">
-              <div className="splash-tagline">{t.fastest_way}</div>
-            </div>
-          </div>
-        </div>
+        <SplashMask onDone={() => {
+          // Restore the correct app background now that the splash has gone.
+          // (The inline script at the top of this file painted #0A84FF for
+          // FOUC prevention; here we correct it to the user's saved theme.)
+          try {
+            const th = localStorage.getItem("gt_theme") || "light";
+            document.documentElement.style.background = th === "light" ? "#f2f2f7" : "#000000";
+          } catch { /* noop */ }
+          setBooting(false);
+        }} />
       </>
     );
   }
