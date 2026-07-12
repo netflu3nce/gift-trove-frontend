@@ -4918,7 +4918,7 @@ export default function App() {
       const fragmentOnly = selectedMarkets.length === 1 && selectedMarkets[0] === "Fragment";
       if (fragmentOnly) {
         return (
-          <BottomSheet onClose={() => setActiveSheet(null)}>
+          <BottomSheet key={lang} onClose={() => setActiveSheet(null)}>
               <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
                 {t.frag_attr_note}
@@ -4932,7 +4932,7 @@ export default function App() {
       const q = attrSearch.trim().toLowerCase();
       const filteredList = q ? list.filter((m) => (m.name || "").toLowerCase().includes(q)) : list;
       return (
-        <BottomSheet onClose={() => setActiveSheet(null)}>
+        <BottomSheet key={lang} onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{isModel ? t.model : t.symbol}</div>
             {attrCap > 1
               ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
@@ -4989,7 +4989,7 @@ export default function App() {
       const fragmentOnlyB = selectedMarkets.length === 1 && selectedMarkets[0] === "Fragment";
       if (fragmentOnlyB) {
         return (
-          <BottomSheet onClose={() => setActiveSheet(null)}>
+          <BottomSheet key={lang} onClose={() => setActiveSheet(null)}>
               <div className="sheet-title">{t.backdrop}</div>
               <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: 16, fontSize: 14 }}>
                 {t.frag_attr_note}
@@ -5002,7 +5002,7 @@ export default function App() {
       const qb = attrSearch.trim().toLowerCase();
       const filteredBackdrops = qb ? list.filter((c) => (c.name || "").toLowerCase().includes(qb)) : list;
       return (
-        <BottomSheet onClose={() => setActiveSheet(null)}>
+        <BottomSheet key={lang} onClose={() => setActiveSheet(null)}>
             <div className="sheet-title">{t.backdrop}</div>
             {attrCap > 1
               ? <div className="filter-cap-note">{arr.length}/{attrCap >= 999 ? "\u221E" : attrCap} {t.selected_n}</div>
